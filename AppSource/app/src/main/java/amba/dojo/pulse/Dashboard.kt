@@ -28,7 +28,7 @@ import amba.dojo.pulse.ui.theme.DojoPulseTheme
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun DashboardPage() {
+fun DashboardPage(onLogout: () -> Unit = {}) {
     val backgroundColor = Color(0xFF121212)
     val surfaceColor = Color(0xFF1E1E1E)
     val accentRed = Color(0xFF4A1525)
@@ -39,7 +39,7 @@ fun DashboardPage() {
     Scaffold(
         containerColor = backgroundColor,
         bottomBar = { DashboardBottomNav() },
-        topBar = { DashboardTopBar() }
+        topBar = { DashboardTopBar(onLogout) }
     ) { innerPadding ->
         Column(
             modifier = Modifier
@@ -84,7 +84,7 @@ fun DashboardPage() {
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun DashboardTopBar() {
+fun DashboardTopBar(onLogout: () -> Unit = {}) {
     TopAppBar(
         title = { 
             Row(verticalAlignment = Alignment.CenterVertically) {
@@ -102,7 +102,10 @@ fun DashboardTopBar() {
             IconButton(onClick = { /*TODO*/ }) {
                 Icon(Icons.Default.Notifications, contentDescription = "Notifications", tint = Color.LightGray)
             }
-            IconButton(onClick = { /*TODO*/ }) {
+            IconButton(onClick = { 
+                com.google.firebase.auth.FirebaseAuth.getInstance().signOut()
+                onLogout() 
+            }) {
                 Box(
                     modifier = Modifier
                         .size(32.dp)
