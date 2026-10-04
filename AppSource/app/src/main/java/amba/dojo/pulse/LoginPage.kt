@@ -5,6 +5,7 @@ import android.util.Log
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
@@ -33,14 +34,14 @@ import com.google.firebase.auth.GoogleAuthProvider
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun LoginPage() {
+fun LoginPage(onLoginSuccess: () -> Unit, onNavigateToRegister: () -> Unit) {
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
     var isLoading by remember { mutableStateOf(false) }
     var errorMessage by remember { mutableStateOf<String?>(null) }
 
     val context = LocalContext.current
-    val backgroundColor = Color(0xFF5A5A5A)
+    val backgroundColor = Color(0xFF121212)
     val buttonColor = Color(0xFF3B0918)
     val textColor = Color.White
     
@@ -63,7 +64,7 @@ fun LoginPage() {
                     isLoading = false
                     if (authTask.isSuccessful) {
                         errorMessage = "Signed in successfully via Google!"
-                        // Handle actual navigation here
+                        onLoginSuccess()
                     } else {
                         errorMessage = authTask.exception?.message ?: "Google Firebase Authentication failed"
                     }
@@ -205,7 +206,7 @@ fun LoginPage() {
                                     isLoading = false
                                     if (task.isSuccessful) {
                                         errorMessage = "Signed in successfully!"
-                                        // Handle success
+                                        onLoginSuccess()
                                     } else {
                                         errorMessage = task.exception?.message ?: "Authentication failed"
                                     }
@@ -242,6 +243,26 @@ fun LoginPage() {
             }
 
             Spacer(modifier = Modifier.height(32.dp))
+
+            // Register Link
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text(
+                    text = "Don't have an account? ",
+                    color = Color.LightGray,
+                    fontSize = 14.sp,
+                    fontFamily = FontFamily.SansSerif
+                )
+                Text(
+                    text = "Register",
+                    color = textColor,
+                    fontSize = 14.sp,
+                    fontWeight = FontWeight.Bold,
+                    fontFamily = FontFamily.SansSerif,
+                    modifier = Modifier.clickable { onNavigateToRegister() }
+                )
+            }
+
+            Spacer(modifier = Modifier.height(16.dp))
 
             // Forget Password
             TextButton(onClick = { /* Handle Forget Password */ }) {
@@ -295,6 +316,6 @@ fun LoginPage() {
 @Composable
 fun LoginPagePreview() {
     DojoPulseTheme {
-        LoginPage()
+        LoginPage(onLoginSuccess = {}, onNavigateToRegister = {})
     }
 }
