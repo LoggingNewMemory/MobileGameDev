@@ -9,7 +9,11 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
 import androidx.compose.ui.Modifier
+import androidx.navigation.compose.NavHost
+import androidx.navigation.compose.composable
+import androidx.navigation.compose.rememberNavController
 import amba.dojo.pulse.ui.theme.DojoPulseTheme
+import com.google.firebase.auth.FirebaseAuth
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -17,9 +21,43 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
         setContent {
             DojoPulseTheme {
+                val navController = rememberNavController()
+                
+                // Determine starting destination
+                val auth = FirebaseAuth.getInstance()
+                val startDestination = if (auth.currentUser != null) "dashboard" else "login"
+                
                 Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
                     Box(modifier = Modifier.padding(innerPadding)) {
-                        LoginPage()
+                        NavHost(navController = navController, startDestination = startDestination) {
+                            composable("login") {
+                                LoginPage(
+                                    onLoginSuccess = {
+                                        navController.navigate("dashboard") {
+                                            popUpTo("login") { inclusive = true }
+                                        }
+                                    },
+                                    onNavigateToRegister = {
+                                        navController.navigate("register")
+                                    }
+                                )
+                            }
+                            composable("register") {
+                                RegisterPage(
+                                    onRegisterSuccess = {
+                                        navController.navigate("dashboard") {
+                                            popUpTo("login") { inclusive = true }
+                                        }
+                                    },
+                                    onNavigateToLogin = {
+                                        navController.popBackStack()
+                                    }
+                                )
+                            }
+                            composable("dashboard") {
+                                DashboardPage()
+                            }
+                        }
                     }
                 }
             }
