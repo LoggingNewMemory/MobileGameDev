@@ -11,8 +11,6 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.ui.Modifier
 import amba.dojo.pulse.ui.theme.DojoPulseTheme
 
-import amba.dojo.pulse.ui.LoginScreen
-
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -21,7 +19,7 @@ class MainActivity : ComponentActivity() {
             DojoPulseTheme {
                 Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
                     Box(modifier = Modifier.padding(innerPadding)) {
-                        LoginScreen()
+                        LoginPage()
                     }
                 }
             }
