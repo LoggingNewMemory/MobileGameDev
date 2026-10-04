@@ -40,7 +40,7 @@ fun LoginPage() {
     var errorMessage by remember { mutableStateOf<String?>(null) }
 
     val context = LocalContext.current
-    val backgroundColor = Color(0xFF5A5A5A)
+    val backgroundColor = Color(0xFF121212)
     val buttonColor = Color(0xFF3B0918)
     val textColor = Color.White
     
