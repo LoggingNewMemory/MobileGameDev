@@ -34,6 +34,11 @@ android {
     buildFeatures {
         compose = true
     }
+    packaging {
+        jniLibs {
+            useLegacyPackaging = false
+        }
+    }
 }
 
 dependencies {
@@ -53,8 +58,8 @@ dependencies {
     implementation(libs.androidx.compose.material.icons.extended)
     implementation("androidx.navigation:navigation-compose:2.7.7")
     
-    // CameraX
-    val cameraxVersion = "1.3.4"
+    // CameraX (1.4.1+ required for 16 KB page size alignment)
+    val cameraxVersion = "1.4.1"
     implementation("androidx.camera:camera-core:$cameraxVersion")
     implementation("androidx.camera:camera-camera2:$cameraxVersion")
     implementation("androidx.camera:camera-lifecycle:$cameraxVersion")
