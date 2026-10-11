@@ -32,7 +32,6 @@ fun DashboardPage(
     onLogout: () -> Unit = {},
     onNavigateToArenas: () -> Unit = {}
 ) {
-    // Warna untuk background utama agar selaras dengan Arenas (0xFF131314)
     val backgroundColor = Color(0xFF131314)
     val surfaceColor = Color(0xFF1E1E1E)
     val accentRed = Color(0xFF4A1525)
@@ -56,19 +55,14 @@ fun DashboardPage(
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            // User Header Profile Card
             UserHeaderCard(surfaceColor, accentRed, textPrimary, textSecondary, textMuted)
 
-            // Main Training Card
             MainTrainingCard(surfaceColor, accentRed, textPrimary, textSecondary)
 
-            // Weekly Telemetry Summary
             WeeklyTelemetrySummary(surfaceColor, textPrimary, textSecondary)
 
-            // Discipline Training List
             DisciplineTrainingList(surfaceColor, textPrimary, textSecondary)
 
-            // Quote Section
             Text(
                 text = "\"Disiplin bukanlah kecepatan menyerang, melainkan ketepatan kembali ke posisi guard sebelum lawan menyadari ruang.\"\n— DOJO BIOMETRICS CODE // RULE 04",
                 color = textSecondary,
@@ -132,7 +126,6 @@ fun DashboardTopBar(onLogout: () -> Unit = {}) {
                         .size(32.dp)
                         .background(primaryColor, shape = CircleShape)
                         .clickable {
-                            // Logout action
                             com.google.firebase.auth.FirebaseAuth.getInstance().signOut()
                             onLogout()
                         },
@@ -169,12 +162,9 @@ fun DashboardBottomNav(onNavigateToArenas: () -> Unit = {}) {
             horizontalArrangement = Arrangement.SpaceAround,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            // Dashboard dalam mode Selected (Aktif)
             BottomNavItem(icon = Icons.Default.GridView, label = "Dashboard", isSelected = true, tintColor = primaryColor, onClick = { /* Stay here */ })
-            // Arenas dalam mode Tidak Aktif, dipasangi navigasi
             BottomNavItem(icon = Icons.Default.SportsKabaddi, label = "Arenas", isSelected = false, tintColor = onSurfaceVariant, onClick = onNavigateToArenas)
 
-            // Training Button Special Icon Container
             Column(
                 horizontalAlignment = Alignment.CenterHorizontally,
                 modifier = Modifier.clickable { }
@@ -196,7 +186,6 @@ fun DashboardBottomNav(onNavigateToArenas: () -> Unit = {}) {
     }
 }
 
-// Komponen BottomNavItem yang sudah dilengkapi onClick
 @Composable
 fun BottomNavItem(icon: androidx.compose.ui.graphics.vector.ImageVector, label: String, isSelected: Boolean, tintColor: Color, onClick: () -> Unit = {}) {
     Column(
@@ -216,9 +205,6 @@ fun BottomNavItem(icon: androidx.compose.ui.graphics.vector.ImageVector, label: 
     }
 }
 
-// ==========================================
-// KODE KOMPONEN KARTU DI BAWAH INI SAMA SEPERTI SEBELUMNYA
-// ==========================================
 
 @Composable
 fun UserHeaderCard(surfaceColor: Color, accentRed: Color, textPrimary: Color, textSecondary: Color, textMuted: Color) {
