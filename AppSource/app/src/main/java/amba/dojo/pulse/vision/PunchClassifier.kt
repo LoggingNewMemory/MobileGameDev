@@ -187,6 +187,14 @@ class PunchClassifier(
                         val durationMs = currentTime - peakTime
                         if (durationMs in 80..800) {
                             lastReturnGuardTime = durationMs / 1000.0
+                            // Coach feedback based on Adnan's gold standard (target <= 0.23s)
+                            if (lastReturnGuardTime <= 0.23) {
+                                feedback = "GUARD EXCELLENT! Fast recovery (${String.format("%.2f", lastReturnGuardTime)}s)"
+                                formScore = (formScore + 1).coerceAtMost(98)
+                            } else if (lastReturnGuardTime > 0.35) {
+                                feedback = "GUARD SLOW! Return to chin faster (Target: <0.23s)"
+                                formScore = (formScore - 1).coerceAtLeast(60)
+                            }
                         }
                     }
                     if (isLeft) leftArmState = ArmState.GUARD else rightArmState = ArmState.GUARD
