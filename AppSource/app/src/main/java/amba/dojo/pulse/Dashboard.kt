@@ -3,6 +3,7 @@ package amba.dojo.pulse
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
@@ -30,7 +31,8 @@ import amba.dojo.pulse.ui.theme.DojoPulseTheme
 @Composable
 fun DashboardPage(
     onLogout: () -> Unit = {},
-    onStartTraining: () -> Unit = {}
+    onStartTraining: () -> Unit = {},
+    onNavigateTutorial: () -> Unit = {}
 ) {
     val backgroundColor = Color(0xFF121212)
     val surfaceColor = Color(0xFF1E1E1E)
@@ -66,7 +68,7 @@ fun DashboardPage(
             Spacer(modifier = Modifier.height(16.dp))
 
             // Discipline Training List
-            DisciplineTrainingList(surfaceColor, textPrimary, textSecondary)
+            DisciplineTrainingList(surfaceColor, textPrimary, textSecondary, onNavigateTutorial)
             
             Spacer(modifier = Modifier.height(24.dp))
             
@@ -338,7 +340,12 @@ fun WeeklyTelemetrySummary(surfaceColor: Color, textPrimary: Color, textSecondar
 }
 
 @Composable
-fun DisciplineTrainingList(surfaceColor: Color, textPrimary: Color, textSecondary: Color) {
+fun DisciplineTrainingList(
+    surfaceColor: Color,
+    textPrimary: Color,
+    textSecondary: Color,
+    onNavigateTutorial: () -> Unit = {}
+) {
     Column(modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp)) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             Box(modifier = Modifier.size(8.dp).background(Color(0xFFFFB3BA)))
@@ -356,7 +363,8 @@ fun DisciplineTrainingList(surfaceColor: Color, textPrimary: Color, textSecondar
             title = "Boxing", 
             tag = "FUNDAMENTAL",
             desc = "Lead jab, cross trajectory, bob and weave",
-            metrics = "14 DRILL   •   PROGRES 72%"
+            metrics = "14 DRILL   •   PANDUAN LENGKAP",
+            onClick = onNavigateTutorial
         )
         Spacer(modifier = Modifier.height(8.dp))
         DisciplineItem(
@@ -380,9 +388,21 @@ fun DisciplineTrainingList(surfaceColor: Color, textPrimary: Color, textSecondar
 }
 
 @Composable
-fun DisciplineItem(surfaceColor: Color, textPrimary: Color, textSecondary: Color, icon: androidx.compose.ui.graphics.vector.ImageVector, title: String, tag: String, desc: String, metrics: String) {
+fun DisciplineItem(
+    surfaceColor: Color,
+    textPrimary: Color,
+    textSecondary: Color,
+    icon: androidx.compose.ui.graphics.vector.ImageVector,
+    title: String,
+    tag: String,
+    desc: String,
+    metrics: String,
+    onClick: () -> Unit = {}
+) {
     Card(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable { onClick() },
         colors = CardDefaults.cardColors(containerColor = surfaceColor)
     ) {
         Row(modifier = Modifier.padding(16.dp), verticalAlignment = Alignment.CenterVertically) {

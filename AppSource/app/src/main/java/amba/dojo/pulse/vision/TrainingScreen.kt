@@ -14,6 +14,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -39,7 +40,8 @@ import java.util.concurrent.Executors
 @Composable
 fun TrainingScreen(
     onFinishTraining: (TrainingTelemetry) -> Unit,
-    onNavigateBack: () -> Unit
+    onNavigateBack: () -> Unit,
+    onOpenTutorial: () -> Unit = {}
 ) {
     val context = LocalContext.current
     val lifecycleOwner = LocalLifecycleOwner.current
@@ -209,7 +211,8 @@ fun TrainingScreen(
             isFrontCamera = isFrontCamera,
             onToggleCamera = { isFrontCamera = !isFrontCamera },
             onFinish = { onFinishTraining(telemetry) },
-            onBack = onNavigateBack
+            onBack = onNavigateBack,
+            onOpenTutorial = onOpenTutorial
         )
     }
 }
@@ -221,7 +224,8 @@ fun TrainingHudOverlay(
     isFrontCamera: Boolean,
     onToggleCamera: () -> Unit,
     onFinish: () -> Unit,
-    onBack: () -> Unit
+    onBack: () -> Unit,
+    onOpenTutorial: () -> Unit = {}
 ) {
     val accentRed = Color(0xFF4A1525)
     val accentPink = Color(0xFFFFB3BA)
@@ -248,7 +252,11 @@ fun TrainingHudOverlay(
                         .size(40.dp)
                         .background(Color(0x88121212), CircleShape)
                 ) {
-                    Icon(Icons.Default.ArrowBack, contentDescription = "Back", tint = Color.White)
+                    Icon(
+                        imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                        contentDescription = "Back",
+                        tint = Color.White
+                    )
                 }
 
                 Row(verticalAlignment = Alignment.CenterVertically) {
@@ -263,13 +271,26 @@ fun TrainingHudOverlay(
                     )
                 }
 
-                IconButton(
-                    onClick = onToggleCamera,
-                    modifier = Modifier
-                        .size(40.dp)
-                        .background(Color(0x88121212), CircleShape)
-                ) {
-                    Icon(Icons.Default.FlipCameraAndroid, contentDescription = "Switch Camera", tint = Color.White)
+                Row {
+                    IconButton(
+                        onClick = onOpenTutorial,
+                        modifier = Modifier
+                            .size(40.dp)
+                            .background(Color(0x88121212), CircleShape)
+                    ) {
+                        Icon(Icons.Default.HelpOutline, contentDescription = "Tutorial", tint = Color.White)
+                    }
+
+                    Spacer(modifier = Modifier.width(8.dp))
+
+                    IconButton(
+                        onClick = onToggleCamera,
+                        modifier = Modifier
+                            .size(40.dp)
+                            .background(Color(0x88121212), CircleShape)
+                    ) {
+                        Icon(Icons.Default.FlipCameraAndroid, contentDescription = "Switch Camera", tint = Color.White)
+                    }
                 }
             }
 

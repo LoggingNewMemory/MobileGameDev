@@ -63,6 +63,9 @@ class MainActivity : ComponentActivity() {
                                     },
                                     onStartTraining = {
                                         navController.navigate("training")
+                                    },
+                                    onNavigateTutorial = {
+                                        navController.navigate("tutorial")
                                     }
                                 )
                             }
@@ -73,6 +76,21 @@ class MainActivity : ComponentActivity() {
                                     },
                                     onNavigateBack = {
                                         navController.popBackStack()
+                                    },
+                                    onOpenTutorial = {
+                                        navController.navigate("tutorial")
+                                    }
+                                )
+                            }
+                            composable("tutorial") {
+                                BoxingTutorialScreen(
+                                    onNavigateBack = {
+                                        navController.popBackStack()
+                                    },
+                                    onStartDrill = {
+                                        navController.navigate("training") {
+                                            popUpTo("tutorial") { inclusive = true }
+                                        }
                                     }
                                 )
                             }
