@@ -2,7 +2,7 @@ package amba.dojo.pulse
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
@@ -28,8 +28,12 @@ import amba.dojo.pulse.ui.theme.DojoPulseTheme
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun DashboardPage(onLogout: () -> Unit = {}) {
-    val backgroundColor = Color(0xFF121212)
+fun DashboardPage(
+    onLogout: () -> Unit = {},
+    onNavigateToArenas: () -> Unit = {}
+) {
+    // Warna untuk background utama agar selaras dengan Arenas (0xFF131314)
+    val backgroundColor = Color(0xFF131314)
     val surfaceColor = Color(0xFF1E1E1E)
     val accentRed = Color(0xFF4A1525)
     val textPrimary = Color.White
@@ -38,7 +42,7 @@ fun DashboardPage(onLogout: () -> Unit = {}) {
 
     Scaffold(
         containerColor = backgroundColor,
-        bottomBar = { DashboardBottomNav() },
+        bottomBar = { DashboardBottomNav(onNavigateToArenas = onNavigateToArenas) },
         topBar = { DashboardTopBar(onLogout) }
     ) { innerPadding ->
         Column(
@@ -46,85 +50,180 @@ fun DashboardPage(onLogout: () -> Unit = {}) {
                 .fillMaxSize()
                 .padding(innerPadding)
                 .verticalScroll(rememberScrollState())
+                .padding(horizontal = 16.dp),
+            verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
+
+            Spacer(modifier = Modifier.height(16.dp))
+
             // User Header Profile Card
             UserHeaderCard(surfaceColor, accentRed, textPrimary, textSecondary, textMuted)
-            
-            Spacer(modifier = Modifier.height(16.dp))
 
             // Main Training Card
             MainTrainingCard(surfaceColor, accentRed, textPrimary, textSecondary)
 
-            Spacer(modifier = Modifier.height(16.dp))
-
             // Weekly Telemetry Summary
             WeeklyTelemetrySummary(surfaceColor, textPrimary, textSecondary)
 
-            Spacer(modifier = Modifier.height(16.dp))
-
             // Discipline Training List
             DisciplineTrainingList(surfaceColor, textPrimary, textSecondary)
-            
-            Spacer(modifier = Modifier.height(24.dp))
-            
+
             // Quote Section
             Text(
                 text = "\"Disiplin bukanlah kecepatan menyerang, melainkan ketepatan kembali ke posisi guard sebelum lawan menyadari ruang.\"\n— DOJO BIOMETRICS CODE // RULE 04",
                 color = textSecondary,
                 fontSize = 12.sp,
                 fontStyle = androidx.compose.ui.text.font.FontStyle.Italic,
-                modifier = Modifier.padding(horizontal = 24.dp),
+                modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp),
                 textAlign = TextAlign.Left
             )
-            
-            Spacer(modifier = Modifier.height(32.dp))
+
+            Spacer(modifier = Modifier.height(16.dp))
         }
     }
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun DashboardTopBar(onLogout: () -> Unit = {}) {
-    TopAppBar(
-        title = { 
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Box(modifier = Modifier.size(12.dp).background(Color(0xFFFFB3BA)))
-                Spacer(modifier = Modifier.width(8.dp))
+    val surfaceColor = Color(0xFF131314)
+    val primaryColor = Color(0xFFfab4b8)
+    val onSurface = Color(0xFFe4e2e2)
+    val onSurfaceVariant = Color(0xFFd6c2c2)
+
+    Surface(
+        color = surfaceColor.copy(alpha = 0.8f),
+        modifier = Modifier
+            .fillMaxWidth()
+            .windowInsetsPadding(WindowInsets.statusBars)
+    ) {
+        Row(
+            modifier = Modifier
+                .height(64.dp)
+                .padding(horizontal = 16.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                Box(modifier = Modifier.size(8.dp).background(primaryColor))
                 Text(
-                    "DASHBOARD", 
-                    color = Color.White, 
+                    text = "DASHBOARD",
+                    style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Bold,
-                    letterSpacing = 1.sp
+                    color = onSurface,
+                    letterSpacing = (-0.5).sp
                 )
             }
-        },
-        actions = {
-            IconButton(onClick = { /*TODO*/ }) {
-                Icon(Icons.Default.Notifications, contentDescription = "Notifications", tint = Color.LightGray)
-            }
-            IconButton(onClick = { 
-                com.google.firebase.auth.FirebaseAuth.getInstance().signOut()
-                onLogout() 
-            }) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(4.dp)
+            ) {
+                IconButton(onClick = { /* TODO: Notifications */ }) {
+                    Icon(
+                        imageVector = Icons.Default.Notifications,
+                        contentDescription = "Notifications",
+                        tint = onSurfaceVariant
+                    )
+                }
                 Box(
                     modifier = Modifier
                         .size(32.dp)
-                        .background(Color(0xFFFFB3BA), CircleShape),
+                        .background(primaryColor, shape = CircleShape)
+                        .clickable {
+                            // Logout action
+                            com.google.firebase.auth.FirebaseAuth.getInstance().signOut()
+                            onLogout()
+                        },
                     contentAlignment = Alignment.Center
                 ) {
-                    Icon(Icons.Default.Person, contentDescription = "Profile", tint = Color.Black, modifier = Modifier.size(20.dp))
+                    Icon(
+                        imageVector = Icons.Default.Person,
+                        contentDescription = "Profile",
+                        tint = Color(0xFF4f2227),
+                        modifier = Modifier.size(18.dp)
+                    )
                 }
             }
-        },
-        colors = TopAppBarDefaults.topAppBarColors(containerColor = Color(0xFF121212))
-    )
+        }
+    }
 }
 
 @Composable
+fun DashboardBottomNav(onNavigateToArenas: () -> Unit = {}) {
+    val surfaceColor = Color(0xFF131314)
+    val primaryColor = Color(0xFFfab4b8)
+    val primaryContainer = Color(0xFF381015)
+    val onSurfaceVariant = Color(0xFFd6c2c2)
+
+    Surface(
+        color = surfaceColor.copy(alpha = 0.9f),
+        modifier = Modifier.fillMaxWidth()
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(64.dp)
+                .padding(horizontal = 4.dp),
+            horizontalArrangement = Arrangement.SpaceAround,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            // Dashboard dalam mode Selected (Aktif)
+            BottomNavItem(icon = Icons.Default.GridView, label = "Dashboard", isSelected = true, tintColor = primaryColor, onClick = { /* Stay here */ })
+            // Arenas dalam mode Tidak Aktif, dipasangi navigasi
+            BottomNavItem(icon = Icons.Default.SportsKabaddi, label = "Arenas", isSelected = false, tintColor = onSurfaceVariant, onClick = onNavigateToArenas)
+
+            // Training Button Special Icon Container
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally,
+                modifier = Modifier.clickable { }
+            ) {
+                Box(
+                    modifier = Modifier
+                        .size(32.dp)
+                        .background(primaryContainer),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(imageVector = Icons.Default.Timer, contentDescription = "Training", tint = primaryColor, modifier = Modifier.size(20.dp))
+                }
+                Spacer(modifier = Modifier.height(2.dp))
+                Text(text = "Training", fontSize = 10.sp, fontWeight = FontWeight.Bold, color = primaryColor)
+            }
+            BottomNavItem(icon = Icons.Default.Assessment, label = "History", isSelected = false, tintColor = onSurfaceVariant)
+            BottomNavItem(icon = Icons.Default.Person, label = "Profile", isSelected = false, tintColor = onSurfaceVariant)
+        }
+    }
+}
+
+// Komponen BottomNavItem yang sudah dilengkapi onClick
+@Composable
+fun BottomNavItem(icon: androidx.compose.ui.graphics.vector.ImageVector, label: String, isSelected: Boolean, tintColor: Color, onClick: () -> Unit = {}) {
+    Column(
+        horizontalAlignment = Alignment.CenterHorizontally,
+        modifier = Modifier
+            .clickable { onClick() }
+            .padding(horizontal = 8.dp)
+    ) {
+        Icon(imageVector = icon, contentDescription = label, tint = tintColor, modifier = Modifier.size(20.dp))
+        Spacer(modifier = Modifier.height(2.dp))
+        Text(
+            text = label,
+            fontSize = 10.sp,
+            fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
+            color = tintColor
+        )
+    }
+}
+
+// ==========================================
+// KODE KOMPONEN KARTU DI BAWAH INI SAMA SEPERTI SEBELUMNYA
+// ==========================================
+
+@Composable
 fun UserHeaderCard(surfaceColor: Color, accentRed: Color, textPrimary: Color, textSecondary: Color, textMuted: Color) {
-    Column(modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp)) {
+    Column(modifier = Modifier.fillMaxWidth()) {
         Row(verticalAlignment = Alignment.CenterVertically) {
-            // Avatar
             Box(
                 modifier = Modifier
                     .size(56.dp)
@@ -133,16 +232,11 @@ fun UserHeaderCard(surfaceColor: Color, accentRed: Color, textPrimary: Color, te
             ) {
                 Text("AC", color = Color.White, fontWeight = FontWeight.Bold, fontSize = 20.sp)
             }
-            
             Spacer(modifier = Modifier.width(16.dp))
-            
-            // Info
             Column(modifier = Modifier.weight(1f)) {
                 Text("DOJO PULSE // ID.884", color = textMuted, fontSize = 10.sp, letterSpacing = 1.sp)
                 Text("Alex Chen", color = textPrimary, fontWeight = FontWeight.Bold, fontSize = 22.sp)
             }
-            
-            // Badges
             Row {
                 Box(modifier = Modifier.background(Color(0xFF8B4A5B), RoundedCornerShape(4.dp)).padding(horizontal = 8.dp, vertical = 4.dp)) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
@@ -175,7 +269,7 @@ fun UserHeaderCard(surfaceColor: Color, accentRed: Color, textPrimary: Color, te
 @Composable
 fun MainTrainingCard(surfaceColor: Color, accentRed: Color, textPrimary: Color, textSecondary: Color) {
     Card(
-        modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp),
+        modifier = Modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(containerColor = surfaceColor),
         shape = RoundedCornerShape(12.dp)
     ) {
@@ -191,17 +285,15 @@ fun MainTrainingCard(surfaceColor: Color, accentRed: Color, textPrimary: Color, 
                 Spacer(modifier = Modifier.width(4.dp))
                 Text("3:00 MENIT", color = textSecondary, fontSize = 10.sp, fontWeight = FontWeight.Bold)
             }
-            
+
             Spacer(modifier = Modifier.height(16.dp))
-            
-            // Image Placeholder (A dark box with overlay text)
+
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(160.dp)
                     .background(Color.Black, RoundedCornerShape(8.dp))
             ) {
-                // We'd normally use an Image here. For now a placeholder box
                 Column(modifier = Modifier.fillMaxSize().padding(12.dp), verticalArrangement = Arrangement.SpaceBetween) {
                     Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
                         Column {
@@ -219,9 +311,9 @@ fun MainTrainingCard(surfaceColor: Color, accentRed: Color, textPrimary: Color, 
                     }
                 }
             }
-            
+
             Spacer(modifier = Modifier.height(16.dp))
-            
+
             Text("STANCE & 1-2 COMBO", color = textPrimary, fontSize = 20.sp, fontWeight = FontWeight.Bold)
             Spacer(modifier = Modifier.height(4.dp))
             Text(
@@ -230,9 +322,9 @@ fun MainTrainingCard(surfaceColor: Color, accentRed: Color, textPrimary: Color, 
                 fontSize = 12.sp,
                 lineHeight = 16.sp
             )
-            
+
             Spacer(modifier = Modifier.height(16.dp))
-            
+
             Row(modifier = Modifier.fillMaxWidth().background(Color(0xFF161616), RoundedCornerShape(8.dp)).padding(12.dp)) {
                 Column(modifier = Modifier.weight(1f)) {
                     Text("TARGET PUKULAN", color = textSecondary, fontSize = 10.sp, fontWeight = FontWeight.Bold)
@@ -243,9 +335,9 @@ fun MainTrainingCard(surfaceColor: Color, accentRed: Color, textPrimary: Color, 
                     Text("> 85% Akurat", color = Color(0xFFFFB3BA), fontSize = 14.sp, fontWeight = FontWeight.Bold)
                 }
             }
-            
+
             Spacer(modifier = Modifier.height(16.dp))
-            
+
             Button(
                 onClick = { /* TODO */ },
                 modifier = Modifier.fillMaxWidth().height(48.dp),
@@ -262,7 +354,7 @@ fun MainTrainingCard(surfaceColor: Color, accentRed: Color, textPrimary: Color, 
 
 @Composable
 fun WeeklyTelemetrySummary(surfaceColor: Color, textPrimary: Color, textSecondary: Color) {
-    Column(modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp)) {
+    Column(modifier = Modifier.fillMaxWidth()) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             Box(modifier = Modifier.size(8.dp).background(Color(0xFFFFB3BA)))
             Spacer(modifier = Modifier.width(8.dp))
@@ -270,11 +362,10 @@ fun WeeklyTelemetrySummary(surfaceColor: Color, textPrimary: Color, textSecondar
             Spacer(modifier = Modifier.weight(1f))
             Text("MINGGU 14", color = textSecondary, fontSize = 10.sp, fontWeight = FontWeight.Bold)
         }
-        
+
         Spacer(modifier = Modifier.height(12.dp))
-        
+
         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            // Workouts
             Card(modifier = Modifier.weight(1f), colors = CardDefaults.cardColors(containerColor = surfaceColor)) {
                 Column(modifier = Modifier.padding(12.dp)) {
                     Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
@@ -290,8 +381,6 @@ fun WeeklyTelemetrySummary(surfaceColor: Color, textPrimary: Color, textSecondar
                     }
                 }
             }
-            
-            // Form Score
             Card(modifier = Modifier.weight(1f), colors = CardDefaults.cardColors(containerColor = surfaceColor)) {
                 Column(modifier = Modifier.padding(12.dp)) {
                     Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
@@ -307,8 +396,6 @@ fun WeeklyTelemetrySummary(surfaceColor: Color, textPrimary: Color, textSecondar
                     }
                 }
             }
-            
-            // Mat Time
             Card(modifier = Modifier.weight(1f), colors = CardDefaults.cardColors(containerColor = surfaceColor)) {
                 Column(modifier = Modifier.padding(12.dp)) {
                     Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
@@ -330,7 +417,7 @@ fun WeeklyTelemetrySummary(surfaceColor: Color, textPrimary: Color, textSecondar
 
 @Composable
 fun DisciplineTrainingList(surfaceColor: Color, textPrimary: Color, textSecondary: Color) {
-    Column(modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp)) {
+    Column(modifier = Modifier.fillMaxWidth()) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             Box(modifier = Modifier.size(8.dp).background(Color(0xFFFFB3BA)))
             Spacer(modifier = Modifier.width(8.dp))
@@ -338,31 +425,31 @@ fun DisciplineTrainingList(surfaceColor: Color, textPrimary: Color, textSecondar
             Spacer(modifier = Modifier.weight(1f))
             Text("PILIH MODUL", color = textSecondary, fontSize = 10.sp, fontWeight = FontWeight.Bold)
         }
-        
+
         Spacer(modifier = Modifier.height(12.dp))
-        
+
         DisciplineItem(
-            surfaceColor, textPrimary, textSecondary, 
-            icon = Icons.Default.SportsMma, 
-            title = "Boxing", 
+            surfaceColor, textPrimary, textSecondary,
+            icon = Icons.Default.SportsMma,
+            title = "Boxing",
             tag = "FUNDAMENTAL",
             desc = "Lead jab, cross trajectory, bob and weave",
             metrics = "14 DRILL   •   PROGRES 72%"
         )
         Spacer(modifier = Modifier.height(8.dp))
         DisciplineItem(
-            surfaceColor, textPrimary, textSecondary, 
-            icon = Icons.Default.SportsMartialArts, 
-            title = "Muay Thai", 
+            surfaceColor, textPrimary, textSecondary,
+            icon = Icons.Default.SportsMartialArts,
+            title = "Muay Thai",
             tag = "POWER STRIKES",
             desc = "Rotasi pinggul roundhouse, siku klinch & teep",
             metrics = "9 DRILL   •   PROGRES 45%"
         )
         Spacer(modifier = Modifier.height(8.dp))
         DisciplineItem(
-            surfaceColor, textPrimary, textSecondary, 
-            icon = Icons.Default.SelfImprovement, 
-            title = "Senam Mobility", 
+            surfaceColor, textPrimary, textSecondary,
+            icon = Icons.Default.SelfImprovement,
+            title = "Senam Mobility",
             tag = "PEMULIHAN",
             desc = "Dekompresi panggul, pergelangan kaki, dan...",
             metrics = "6 SESI   •   SIAP MULAI"
@@ -394,56 +481,6 @@ fun DisciplineItem(surfaceColor: Color, textPrimary: Color, textSecondary: Color
             }
             Icon(Icons.Default.ChevronRight, contentDescription = null, tint = textSecondary)
         }
-    }
-}
-
-@Composable
-fun DashboardBottomNav() {
-    NavigationBar(
-        containerColor = Color(0xFF121212),
-        contentColor = Color.LightGray
-    ) {
-        NavigationBarItem(
-            selected = true,
-            onClick = { /*TODO*/ },
-            icon = { Icon(Icons.Default.GridView, contentDescription = "Dashboard") },
-            label = { Text("DASHBOARD", fontSize = 8.sp) },
-            colors = NavigationBarItemDefaults.colors(
-                selectedIconColor = Color(0xFFFFB3BA),
-                selectedTextColor = Color(0xFFFFB3BA),
-                indicatorColor = Color.Transparent
-            )
-        )
-        NavigationBarItem(
-            selected = false,
-            onClick = { /*TODO*/ },
-            icon = { Icon(Icons.Default.SportsKabaddi, contentDescription = "Arenas") },
-            label = { Text("ARENAS", fontSize = 8.sp) }
-        )
-        NavigationBarItem(
-            selected = false,
-            onClick = { /*TODO*/ },
-            icon = { 
-                Box(
-                    modifier = Modifier.background(Color(0xFF4A1525), RoundedCornerShape(8.dp)).padding(8.dp)
-                ) {
-                    Icon(Icons.Default.Timer, contentDescription = "Training", tint = Color.White) 
-                }
-            },
-            label = { Text("TRAINING", fontSize = 8.sp, color = Color(0xFFFFB3BA)) }
-        )
-        NavigationBarItem(
-            selected = false,
-            onClick = { /*TODO*/ },
-            icon = { Icon(Icons.Default.InsertChartOutlined, contentDescription = "History") },
-            label = { Text("HISTORY", fontSize = 8.sp) }
-        )
-        NavigationBarItem(
-            selected = false,
-            onClick = { /*TODO*/ },
-            icon = { Icon(Icons.Default.PersonOutline, contentDescription = "Profile") },
-            label = { Text("PROFILE", fontSize = 8.sp) }
-        )
     }
 }
 

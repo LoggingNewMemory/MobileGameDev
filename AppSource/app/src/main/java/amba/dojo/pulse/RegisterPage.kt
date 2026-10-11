@@ -18,6 +18,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
@@ -39,7 +40,7 @@ fun RegisterPage(onRegisterSuccess: () -> Unit, onNavigateToLogin: () -> Unit) {
     var name by remember { mutableStateOf("") }
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
-    
+
     var isLoading by remember { mutableStateOf(false) }
     var errorMessage by remember { mutableStateOf<String?>(null) }
 
@@ -47,12 +48,13 @@ fun RegisterPage(onRegisterSuccess: () -> Unit, onNavigateToLogin: () -> Unit) {
     val backgroundColor = Color(0xFF121212)
     val buttonColor = Color(0xFF3B0918)
     val textColor = Color.White
-    
-    val auth = remember { 
-        try { FirebaseAuth.getInstance() } catch (e: Exception) { null }
+
+    val clientId = stringResource(id = R.string.default_web_client_id)
+
+    val auth = remember {
+        try { FirebaseAuth.getInstance() } catch (_: Exception) { null }
     }
 
-    // Google Sign-In Setup
     val googleSignInLauncher = rememberLauncherForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
         if (result.resultCode == Activity.RESULT_OK) {
             val task = GoogleSignIn.getSignedInAccountFromIntent(result.data)
@@ -117,7 +119,7 @@ fun RegisterPage(onRegisterSuccess: () -> Unit, onNavigateToLogin: () -> Unit) {
                         modifier = Modifier.size(16.dp)
                     )
                 }
-                
+
                 TextField(
                     value = name,
                     onValueChange = { name = it; errorMessage = null },
@@ -137,7 +139,6 @@ fun RegisterPage(onRegisterSuccess: () -> Unit, onNavigateToLogin: () -> Unit) {
 
             Spacer(modifier = Modifier.height(24.dp))
 
-            // Email Field
             Column(modifier = Modifier.fillMaxWidth()) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Text(
@@ -155,7 +156,7 @@ fun RegisterPage(onRegisterSuccess: () -> Unit, onNavigateToLogin: () -> Unit) {
                         modifier = Modifier.size(16.dp)
                     )
                 }
-                
+
                 TextField(
                     value = email,
                     onValueChange = { email = it; errorMessage = null },
@@ -213,7 +214,7 @@ fun RegisterPage(onRegisterSuccess: () -> Unit, onNavigateToLogin: () -> Unit) {
                     singleLine = true
                 )
             }
-            
+
             if (errorMessage != null) {
                 Spacer(modifier = Modifier.height(16.dp))
                 Text(
@@ -239,7 +240,7 @@ fun RegisterPage(onRegisterSuccess: () -> Unit, onNavigateToLogin: () -> Unit) {
                                         val profileUpdates = UserProfileChangeRequest.Builder()
                                             .setDisplayName(name)
                                             .build()
-                                        
+
                                         user?.updateProfile(profileUpdates)
                                             ?.addOnCompleteListener {
                                                 isLoading = false
@@ -300,28 +301,21 @@ fun RegisterPage(onRegisterSuccess: () -> Unit, onNavigateToLogin: () -> Unit) {
                     modifier = Modifier.clickable { onNavigateToLogin() }
                 )
             }
-            
+
             Spacer(modifier = Modifier.height(16.dp))
 
             // Register With Google Button
             TextButton(
-                onClick = { 
+                onClick = {
                     isLoading = true
                     try {
-                        val clientIdRes = context.resources.getIdentifier("default_web_client_id", "string", context.packageName)
-                        if (clientIdRes != 0) {
-                            val clientId = context.getString(clientIdRes)
-                            val gso = GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
-                                .requestIdToken(clientId)
-                                .requestEmail()
-                                .build()
-                                
-                            val googleSignInClient = GoogleSignIn.getClient(context, gso)
-                            googleSignInLauncher.launch(googleSignInClient.signInIntent)
-                        } else {
-                            isLoading = false
-                            errorMessage = "Google Web Client ID not found. Ensure google-services.json is valid."
-                        }
+                        val gso = GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
+                            .requestIdToken(clientId) // Langsung menggunakan clientId statis
+                            .requestEmail()
+                            .build()
+
+                        val googleSignInClient = GoogleSignIn.getClient(context, gso)
+                        googleSignInLauncher.launch(googleSignInClient.signInIntent)
                     } catch (e: Exception) {
                         isLoading = false
                         errorMessage = "Error initiating Google Register: ${e.message}"

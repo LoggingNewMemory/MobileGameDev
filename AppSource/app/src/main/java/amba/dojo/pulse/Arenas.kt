@@ -144,11 +144,14 @@ fun ArenasScreen() {
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(innerPadding)
+                .padding(innerPadding) // Konsisten dengan Dashboard.kt
                 .verticalScroll(rememberScrollState())
-                .padding(horizontal = 16.dp, vertical = 12.dp),
+                .padding(horizontal = 16.dp), // Hanya horizontal, tanpa padding vertikal tambahan
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
+
+            Spacer(modifier = Modifier.height(16.dp)) // Jarak atas disamakan
+
             // Sub-header context & Arena telemetry badge
             Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
                 Row(
@@ -543,6 +546,8 @@ fun ArenasScreen() {
                     )
                 }
             }
+
+            Spacer(modifier = Modifier.height(16.dp)) // Jarak bawah disamakan
         }
     }
 }

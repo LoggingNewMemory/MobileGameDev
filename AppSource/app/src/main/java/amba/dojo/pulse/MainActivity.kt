@@ -13,6 +13,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import amba.dojo.pulse.ui.theme.DojoPulseTheme
+import amba.dojo.pulse.ui.theme.ArenasScreen // Pastikan ini di-import
 import com.google.firebase.auth.FirebaseAuth
 
 class MainActivity : ComponentActivity() {
@@ -22,11 +23,11 @@ class MainActivity : ComponentActivity() {
         setContent {
             DojoPulseTheme {
                 val navController = rememberNavController()
-                
+
                 // Determine starting destination
                 val auth = FirebaseAuth.getInstance()
                 val startDestination = if (auth.currentUser != null) "dashboard" else "login"
-                
+
                 Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
                     Box(modifier = Modifier.padding(innerPadding)) {
                         NavHost(navController = navController, startDestination = startDestination) {
@@ -60,8 +61,16 @@ class MainActivity : ComponentActivity() {
                                         navController.navigate("login") {
                                             popUpTo("dashboard") { inclusive = true }
                                         }
+                                    },
+                                    // Fungsi navigasi ke Arenas
+                                    onNavigateToArenas = {
+                                        navController.navigate("arenas")
                                     }
                                 )
+                            }
+                            // Rute halaman Arenas
+                            composable("arenas") {
+                                ArenasScreen()
                             }
                         }
                     }
