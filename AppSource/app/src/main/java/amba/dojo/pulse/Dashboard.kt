@@ -28,7 +28,10 @@ import amba.dojo.pulse.ui.theme.DojoPulseTheme
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun DashboardPage(onLogout: () -> Unit = {}) {
+fun DashboardPage(
+    onLogout: () -> Unit = {},
+    onStartTraining: () -> Unit = {}
+) {
     val backgroundColor = Color(0xFF121212)
     val surfaceColor = Color(0xFF1E1E1E)
     val accentRed = Color(0xFF4A1525)
@@ -38,7 +41,7 @@ fun DashboardPage(onLogout: () -> Unit = {}) {
 
     Scaffold(
         containerColor = backgroundColor,
-        bottomBar = { DashboardBottomNav() },
+        bottomBar = { DashboardBottomNav(onStartTraining) },
         topBar = { DashboardTopBar(onLogout) }
     ) { innerPadding ->
         Column(
@@ -53,7 +56,7 @@ fun DashboardPage(onLogout: () -> Unit = {}) {
             Spacer(modifier = Modifier.height(16.dp))
 
             // Main Training Card
-            MainTrainingCard(surfaceColor, accentRed, textPrimary, textSecondary)
+            MainTrainingCard(surfaceColor, accentRed, textPrimary, textSecondary, onStartTraining)
 
             Spacer(modifier = Modifier.height(16.dp))
 
@@ -173,7 +176,13 @@ fun UserHeaderCard(surfaceColor: Color, accentRed: Color, textPrimary: Color, te
 }
 
 @Composable
-fun MainTrainingCard(surfaceColor: Color, accentRed: Color, textPrimary: Color, textSecondary: Color) {
+fun MainTrainingCard(
+    surfaceColor: Color,
+    accentRed: Color,
+    textPrimary: Color,
+    textSecondary: Color,
+    onStartTraining: () -> Unit = {}
+) {
     Card(
         modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp),
         colors = CardDefaults.cardColors(containerColor = surfaceColor),
@@ -247,7 +256,7 @@ fun MainTrainingCard(surfaceColor: Color, accentRed: Color, textPrimary: Color, 
             Spacer(modifier = Modifier.height(16.dp))
             
             Button(
-                onClick = { /* TODO */ },
+                onClick = onStartTraining,
                 modifier = Modifier.fillMaxWidth().height(48.dp),
                 shape = RoundedCornerShape(8.dp),
                 colors = ButtonDefaults.buttonColors(containerColor = accentRed)
@@ -398,7 +407,7 @@ fun DisciplineItem(surfaceColor: Color, textPrimary: Color, textSecondary: Color
 }
 
 @Composable
-fun DashboardBottomNav() {
+fun DashboardBottomNav(onStartTraining: () -> Unit = {}) {
     NavigationBar(
         containerColor = Color(0xFF121212),
         contentColor = Color.LightGray
@@ -422,7 +431,7 @@ fun DashboardBottomNav() {
         )
         NavigationBarItem(
             selected = false,
-            onClick = { /*TODO*/ },
+            onClick = onStartTraining,
             icon = { 
                 Box(
                     modifier = Modifier.background(Color(0xFF4A1525), RoundedCornerShape(8.dp)).padding(8.dp)

@@ -60,6 +60,19 @@ class MainActivity : ComponentActivity() {
                                         navController.navigate("login") {
                                             popUpTo("dashboard") { inclusive = true }
                                         }
+                                    },
+                                    onStartTraining = {
+                                        navController.navigate("training")
+                                    }
+                                )
+                            }
+                            composable("training") {
+                                amba.dojo.pulse.vision.TrainingScreen(
+                                    onFinishTraining = {
+                                        navController.popBackStack()
+                                    },
+                                    onNavigateBack = {
+                                        navController.popBackStack()
                                     }
                                 )
                             }
