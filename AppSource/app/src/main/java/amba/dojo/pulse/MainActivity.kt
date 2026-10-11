@@ -60,6 +60,37 @@ class MainActivity : ComponentActivity() {
                                         navController.navigate("login") {
                                             popUpTo("dashboard") { inclusive = true }
                                         }
+                                    },
+                                    onStartTraining = {
+                                        navController.navigate("training")
+                                    },
+                                    onNavigateTutorial = {
+                                        navController.navigate("tutorial")
+                                    }
+                                )
+                            }
+                            composable("training") {
+                                amba.dojo.pulse.vision.TrainingScreen(
+                                    onFinishTraining = {
+                                        navController.popBackStack()
+                                    },
+                                    onNavigateBack = {
+                                        navController.popBackStack()
+                                    },
+                                    onOpenTutorial = {
+                                        navController.navigate("tutorial")
+                                    }
+                                )
+                            }
+                            composable("tutorial") {
+                                BoxingTutorialScreen(
+                                    onNavigateBack = {
+                                        navController.popBackStack()
+                                    },
+                                    onStartDrill = {
+                                        navController.navigate("training") {
+                                            popUpTo("tutorial") { inclusive = true }
+                                        }
                                     }
                                 )
                             }
