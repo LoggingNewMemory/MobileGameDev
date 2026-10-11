@@ -1,3 +1,5 @@
-
 # Ignore exported design files
 EXPORTED/
+
+# Ignore Adnan Boxing Data
+AdnanBoxing/
