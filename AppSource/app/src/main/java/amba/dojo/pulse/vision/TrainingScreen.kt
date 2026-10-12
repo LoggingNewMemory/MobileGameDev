@@ -236,6 +236,7 @@ fun TrainingHudOverlay(
     Column(
         modifier = Modifier
             .fillMaxSize()
+            .systemBarsPadding()
             .padding(16.dp),
         verticalArrangement = Arrangement.SpaceBetween
     ) {
@@ -343,8 +344,8 @@ fun TrainingHudOverlay(
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
                 AnimatedVisibility(
                     visible = telemetry.detectedPunch != PunchType.IDLE && telemetry.detectedPunch != PunchType.GUARD,
-                    enter = fadeIn() + scaleIn(),
-                    exit = fadeOut() + scaleOut()
+                    enter = fadeIn(animationSpec = androidx.compose.animation.core.tween(150)),
+                    exit = fadeOut(animationSpec = androidx.compose.animation.core.tween(150))
                 ) {
                     Box(
                         modifier = Modifier

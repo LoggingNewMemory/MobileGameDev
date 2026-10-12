@@ -39,15 +39,22 @@ val ErrorColor = Color(0xFFffb4ab)
 val OutlineVar = Color(0xFF524344)
 
 @Composable
-fun ArenasScreen() {
+fun ArenasScreen(
+    onNavigateToDashboard: () -> Unit = {},
+    onStartTraining: () -> Unit = {}
+) {
     var currentStage by remember { mutableIntStateOf(0) }
 
     if (currentStage == 0) {
-        ArenaDashboardContent(onStartAR = { currentStage = 1 })
+        ArenaDashboardContent(
+            onStartAR = { currentStage = 1 },
+            onNavigateToDashboard = onNavigateToDashboard,
+            onStartTraining = onStartTraining
+        )
     } else {
         ARTrainingFlowManager(
             stage = currentStage,
-            onNext = { if (currentStage < 4) currentStage++ else currentStage = 0 },
+            onNext = { if (currentStage < 4) currentStage++ else onNavigateToDashboard() },
             onClose = { currentStage = 0 }
         )
     }
@@ -57,7 +64,7 @@ fun ArenasScreen() {
 fun ARTrainingFlowManager(stage: Int, onNext: () -> Unit, onClose: () -> Unit) {
     Scaffold(
         topBar = {
-            Surface(color = BgSurface.copy(alpha = 0.95f), modifier = Modifier.fillMaxWidth()) {
+            Surface(color = BgSurface.copy(alpha = 0.95f), modifier = Modifier.fillMaxWidth().windowInsetsPadding(WindowInsets.statusBars)) {
                 Row(
                     modifier = Modifier.height(64.dp).padding(horizontal = 16.dp),
                     verticalAlignment = Alignment.CenterVertically,
@@ -330,7 +337,11 @@ fun DebriefStatCard(modifier: Modifier = Modifier, title: String, value: String,
     }
 }
 @Composable
-fun ArenaDashboardContent(onStartAR: () -> Unit) {
+fun ArenaDashboardContent(
+    onStartAR: () -> Unit,
+    onNavigateToDashboard: () -> Unit = {},
+    onStartTraining: () -> Unit = {}
+) {
     var selectedMode by remember { mutableStateOf("venue") }
     var isInitializing by remember { mutableStateOf(false) }
     var buttonText by remember { mutableStateOf("Mulai Panduan AR") }
@@ -340,7 +351,12 @@ fun ArenaDashboardContent(onStartAR: () -> Unit) {
         topBar = {
             Surface(color = BgSurface.copy(alpha = 0.8f), modifier = Modifier.fillMaxWidth().windowInsetsPadding(WindowInsets.statusBars)) {
                 Row(modifier = Modifier.height(64.dp).padding(horizontal = 16.dp), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
-                    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        modifier = Modifier.clickable { onNavigateToDashboard() }
+                    ) {
+                        Icon(imageVector = Icons.Default.ArrowBack, contentDescription = "Back to Dashboard", tint = OnSurface)
                         Box(modifier = Modifier.size(8.dp).background(Primary))
                         Text(text = "ARENAS", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = OnSurface, letterSpacing = (-0.5).sp)
                     }
@@ -354,19 +370,24 @@ fun ArenaDashboardContent(onStartAR: () -> Unit) {
             }
         },
         bottomBar = {
-            Surface(color = BgSurface.copy(alpha = 0.9f), modifier = Modifier.fillMaxWidth()) {
+            Surface(
+                color = BgSurface.copy(alpha = 0.9f),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .windowInsetsPadding(WindowInsets.navigationBars)
+            ) {
                 Row(modifier = Modifier.fillMaxWidth().height(64.dp).padding(horizontal = 4.dp), horizontalArrangement = Arrangement.SpaceAround, verticalAlignment = Alignment.CenterVertically) {
-                    BottomNavItem(icon = Icons.Default.GridView, label = "Dashboard", isSelected = false, OnSurfaceVar)
-                    BottomNavItem(icon = Icons.Default.SportsKabaddi, label = "Arenas", isSelected = true, Primary)
-                    Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.clickable { }) {
+                    BottomNavItem(icon = Icons.Default.GridView, label = "Dashboard", isSelected = false, tintColor = OnSurfaceVar, onClick = onNavigateToDashboard)
+                    BottomNavItem(icon = Icons.Default.SportsKabaddi, label = "Arenas", isSelected = true, tintColor = Primary)
+                    Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.clickable { onStartTraining() }) {
                         Box(modifier = Modifier.size(32.dp).background(PrimaryContainer), contentAlignment = Alignment.Center) {
                             Icon(imageVector = Icons.Default.Timer, contentDescription = "Training", tint = Primary, modifier = Modifier.size(20.dp))
                         }
                         Spacer(modifier = Modifier.height(2.dp))
                         Text(text = "Training", fontSize = 10.sp, fontWeight = FontWeight.Bold, color = Primary)
                     }
-                    BottomNavItem(icon = Icons.Default.Assessment, label = "History", isSelected = false, OnSurfaceVar)
-                    BottomNavItem(icon = Icons.Default.Person, label = "Profile", isSelected = false, OnSurfaceVar)
+                    BottomNavItem(icon = Icons.Default.Assessment, label = "History", isSelected = false, tintColor = OnSurfaceVar)
+                    BottomNavItem(icon = Icons.Default.Person, label = "Profile", isSelected = false, tintColor = OnSurfaceVar)
                 }
             }
         },
@@ -376,7 +397,7 @@ fun ArenaDashboardContent(onStartAR: () -> Unit) {
             modifier = Modifier.fillMaxSize().padding(innerPadding).verticalScroll(rememberScrollState()).padding(horizontal = 16.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(5.dp))
 
             Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
                 Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
@@ -432,8 +453,8 @@ fun ArenaDashboardContent(onStartAR: () -> Unit) {
 }
 
 @Composable
-fun BottomNavItem(icon: androidx.compose.ui.graphics.vector.ImageVector, label: String, isSelected: Boolean, tintColor: Color) {
-    Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.clickable { }.padding(horizontal = 8.dp)) {
+fun BottomNavItem(icon: androidx.compose.ui.graphics.vector.ImageVector, label: String, isSelected: Boolean, tintColor: Color, onClick: () -> Unit = {}) {
+    Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.clickable { onClick() }.padding(horizontal = 8.dp)) {
         Icon(imageVector = icon, contentDescription = label, tint = tintColor, modifier = Modifier.size(20.dp))
         Spacer(modifier = Modifier.height(2.dp))
         Text(text = label, fontSize = 10.sp, fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal, color = tintColor)

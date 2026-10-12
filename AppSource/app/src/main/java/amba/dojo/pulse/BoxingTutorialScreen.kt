@@ -71,7 +71,9 @@ fun BoxingTutorialScreen(
         bottomBar = {
             Surface(
                 color = surfaceColor,
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .windowInsetsPadding(WindowInsets.navigationBars)
             ) {
                 Box(modifier = Modifier.padding(16.dp)) {
                     Button(

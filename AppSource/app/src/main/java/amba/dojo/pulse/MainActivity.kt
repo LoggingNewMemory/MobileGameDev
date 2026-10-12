@@ -5,10 +5,15 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.dp
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
@@ -28,9 +33,19 @@ class MainActivity : ComponentActivity() {
                 val auth = FirebaseAuth.getInstance()
                 val startDestination = if (auth.currentUser != null) "dashboard" else "login"
 
-                Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
-                    Box(modifier = Modifier.padding(innerPadding)) {
-                        NavHost(navController = navController, startDestination = startDestination) {
+                Scaffold(
+                    modifier = Modifier.fillMaxSize(),
+                    contentWindowInsets = WindowInsets(0.dp)
+                ) { innerPadding ->
+                    Box(modifier = Modifier.fillMaxSize().padding(innerPadding)) {
+                        NavHost(
+                            navController = navController,
+                            startDestination = startDestination,
+                            enterTransition = { fadeIn(animationSpec = tween(200)) },
+                            exitTransition = { fadeOut(animationSpec = tween(200)) },
+                            popEnterTransition = { fadeIn(animationSpec = tween(200)) },
+                            popExitTransition = { fadeOut(animationSpec = tween(200)) }
+                        ) {
                             composable("login") {
                                 LoginPage(
                                     onLoginSuccess = {
@@ -74,7 +89,16 @@ class MainActivity : ComponentActivity() {
                                 )
                             }
                             composable("arenas") {
-                                ArenasScreen()
+                                ArenasScreen(
+                                    onNavigateToDashboard = {
+                                        navController.navigate("dashboard") {
+                                            popUpTo("dashboard") { inclusive = true }
+                                        }
+                                    },
+                                    onStartTraining = {
+                                        navController.navigate("training")
+                                    }
+                                )
                             }
                             composable("training") {
                                 amba.dojo.pulse.vision.TrainingScreen(

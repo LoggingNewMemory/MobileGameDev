@@ -49,8 +49,7 @@ fun DashboardPage(
                 onNavigateToArenas = onNavigateToArenas,
                 onStartTraining = onStartTraining
             )
-        },
-        topBar = { DashboardTopBar(onLogout) }
+        }
     ) { innerPadding ->
         Column(
             modifier = Modifier
@@ -60,8 +59,7 @@ fun DashboardPage(
                 .padding(horizontal = 16.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-
-            Spacer(modifier = Modifier.height(16.dp))
+            DashboardTopBar(onLogout)
 
             UserHeaderCard(surfaceColor, accentRed, textPrimary, textSecondary, textMuted)
 
@@ -70,14 +68,6 @@ fun DashboardPage(
             WeeklyTelemetrySummary(surfaceColor, textPrimary, textSecondary)
 
             DisciplineTrainingList(surfaceColor, textPrimary, textSecondary, onNavigateTutorial)
-            Text(
-                text = "\"Disiplin bukanlah kecepatan menyerang, melainkan ketepatan kembali ke posisi guard sebelum lawan menyadari ruang.\"\n— DOJO BIOMETRICS CODE // RULE 04",
-                color = textSecondary,
-                fontSize = 12.sp,
-                fontStyle = androidx.compose.ui.text.font.FontStyle.Italic,
-                modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp),
-                textAlign = TextAlign.Left
-            )
 
             Spacer(modifier = Modifier.height(16.dp))
         }
@@ -86,66 +76,45 @@ fun DashboardPage(
 
 @Composable
 fun DashboardTopBar(onLogout: () -> Unit = {}) {
-    val surfaceColor = Color(0xFF131314)
     val primaryColor = Color(0xFFfab4b8)
     val onSurface = Color(0xFFe4e2e2)
-    val onSurfaceVariant = Color(0xFFd6c2c2)
 
-    Surface(
-        color = surfaceColor.copy(alpha = 0.8f),
+    Row(
         modifier = Modifier
             .fillMaxWidth()
-            .windowInsetsPadding(WindowInsets.statusBars)
+            .padding(top = 8.dp),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically
     ) {
         Row(
-            modifier = Modifier
-                .height(64.dp)
-                .padding(horizontal = 16.dp),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
         ) {
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                Box(modifier = Modifier.size(8.dp).background(primaryColor))
-                Text(
-                    text = "DASHBOARD",
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold,
-                    color = onSurface,
-                    letterSpacing = (-0.5).sp
-                )
-            }
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(4.dp)
-            ) {
-                IconButton(onClick = { /* TODO: Notifications */ }) {
-                    Icon(
-                        imageVector = Icons.Default.Notifications,
-                        contentDescription = "Notifications",
-                        tint = onSurfaceVariant
-                    )
-                }
-                Box(
-                    modifier = Modifier
-                        .size(32.dp)
-                        .background(primaryColor, shape = CircleShape)
-                        .clickable {
-                            com.google.firebase.auth.FirebaseAuth.getInstance().signOut()
-                            onLogout()
-                        },
-                    contentAlignment = Alignment.Center
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.Person,
-                        contentDescription = "Profile",
-                        tint = Color(0xFF4f2227),
-                        modifier = Modifier.size(18.dp)
-                    )
-                }
-            }
+            Box(modifier = Modifier.size(8.dp).background(primaryColor))
+            Text(
+                text = "DASHBOARD",
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.Bold,
+                color = onSurface,
+                letterSpacing = (-0.5).sp
+            )
+        }
+        Box(
+            modifier = Modifier
+                .size(32.dp)
+                .background(primaryColor, shape = CircleShape)
+                .clickable {
+                    com.google.firebase.auth.FirebaseAuth.getInstance().signOut()
+                    onLogout()
+                },
+            contentAlignment = Alignment.Center
+        ) {
+            Icon(
+                imageVector = Icons.Default.Person,
+                contentDescription = "Profile",
+                tint = Color(0xFF4f2227),
+                modifier = Modifier.size(18.dp)
+            )
         }
     }
 }
@@ -162,7 +131,9 @@ fun DashboardBottomNav(
 
     Surface(
         color = surfaceColor.copy(alpha = 0.9f),
-        modifier = Modifier.fillMaxWidth()
+        modifier = Modifier
+            .fillMaxWidth()
+            .windowInsetsPadding(WindowInsets.navigationBars)
     ) {
         Row(
             modifier = Modifier
@@ -233,31 +204,6 @@ fun UserHeaderCard(surfaceColor: Color, accentRed: Color, textPrimary: Color, te
                 Text("DOJO PULSE // ID.884", color = textMuted, fontSize = 10.sp, letterSpacing = 1.sp)
                 Text("Alex Chen", color = textPrimary, fontWeight = FontWeight.Bold, fontSize = 22.sp)
             }
-            Row {
-                Box(modifier = Modifier.background(Color(0xFF8B4A5B), RoundedCornerShape(4.dp)).padding(horizontal = 8.dp, vertical = 4.dp)) {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Icon(Icons.Default.EmojiEvents, contentDescription = null, tint = Color.White, modifier = Modifier.size(12.dp))
-                        Spacer(modifier = Modifier.width(4.dp))
-                        Text("LVL 4\nSTRIKER", color = Color.White, fontSize = 9.sp, fontWeight = FontWeight.Bold, lineHeight = 10.sp)
-                    }
-                }
-                Spacer(modifier = Modifier.width(8.dp))
-                Box(modifier = Modifier.background(accentRed, RoundedCornerShape(4.dp)).padding(horizontal = 8.dp, vertical = 4.dp)) {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Icon(Icons.Default.LocalFireDepartment, contentDescription = null, tint = Color.White, modifier = Modifier.size(12.dp))
-                        Spacer(modifier = Modifier.width(4.dp))
-                        Text("5\nHARI", color = Color.White, fontSize = 9.sp, fontWeight = FontWeight.Bold, lineHeight = 10.sp)
-                    }
-                }
-            }
-        }
-        Spacer(modifier = Modifier.height(12.dp))
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            Box(modifier = Modifier.size(8.dp).background(Color(0xFF8B4A5B)))
-            Spacer(modifier = Modifier.width(8.dp))
-            Text("SENSOR LINK: STABIL (120FPS HUD)", color = textSecondary, fontSize = 10.sp, fontWeight = FontWeight.SemiBold)
-            Spacer(modifier = Modifier.weight(1f))
-            Text("SINKRONISASI TEPAT WAKTU", color = Color(0xFFFFB3BA), fontSize = 10.sp, fontWeight = FontWeight.SemiBold)
         }
     }
 }
@@ -429,8 +375,6 @@ fun DisciplineTrainingList(
             Box(modifier = Modifier.size(8.dp).background(Color(0xFFFFB3BA)))
             Spacer(modifier = Modifier.width(8.dp))
             Text("DISIPLIN LATIHAN", color = textPrimary, fontSize = 14.sp, fontWeight = FontWeight.Bold, letterSpacing = 1.sp)
-            Spacer(modifier = Modifier.weight(1f))
-            Text("PILIH MODUL", color = textSecondary, fontSize = 10.sp, fontWeight = FontWeight.Bold)
         }
 
         Spacer(modifier = Modifier.height(12.dp))
@@ -443,24 +387,6 @@ fun DisciplineTrainingList(
             desc = "Lead jab, cross trajectory, bob and weave",
             metrics = "14 DRILL   •   PANDUAN LENGKAP",
             onClick = onNavigateTutorial
-        )
-        Spacer(modifier = Modifier.height(8.dp))
-        DisciplineItem(
-            surfaceColor, textPrimary, textSecondary,
-            icon = Icons.Default.SportsMartialArts,
-            title = "Muay Thai",
-            tag = "POWER STRIKES",
-            desc = "Rotasi pinggul roundhouse, siku klinch & teep",
-            metrics = "9 DRILL   •   PROGRES 45%"
-        )
-        Spacer(modifier = Modifier.height(8.dp))
-        DisciplineItem(
-            surfaceColor, textPrimary, textSecondary,
-            icon = Icons.Default.SelfImprovement,
-            title = "Senam Mobility",
-            tag = "PEMULIHAN",
-            desc = "Dekompresi panggul, pergelangan kaki, dan...",
-            metrics = "6 SESI   •   SIAP MULAI"
         )
     }
 }
