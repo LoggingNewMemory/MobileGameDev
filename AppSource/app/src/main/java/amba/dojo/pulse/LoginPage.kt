@@ -25,7 +25,7 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import amba.dojo.pulse.ui.theme.DojoPulseTheme // Pastikan nama tema ini sesuai dengan yang ada di Theme.kt
+import amba.dojo.pulse.ui.theme.DojoPulseTheme
 import com.google.android.gms.auth.api.signin.GoogleSignIn
 import com.google.android.gms.auth.api.signin.GoogleSignInOptions
 import com.google.android.gms.common.api.ApiException
@@ -44,20 +44,16 @@ fun LoginPage(onLoginSuccess: () -> Unit, onNavigateToRegister: () -> Unit) {
     val backgroundColor = Color(0xFF121212)
     val buttonColor = Color(0xFF3B0918)
     val textColor = Color.White
-
-    // Ambil Client ID secara langsung (tidak menggunakan reflection)
-    // R.string.default_web_client_id digenerate otomatis oleh plugin google-services
     val clientId = stringResource(id = R.string.default_web_client_id)
 
     val auth = remember {
         try {
             FirebaseAuth.getInstance()
-        } catch (_: Exception) { // Mengabaikan parameter exception yang tidak dipakai
+        } catch (_: Exception) {
             null
         }
     }
 
-    // Google Sign-In Setup
     val googleSignInLauncher = rememberLauncherForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
         if (result.resultCode == Activity.RESULT_OK) {
             val task = GoogleSignIn.getSignedInAccountFromIntent(result.data)
@@ -104,7 +100,6 @@ fun LoginPage(onLoginSuccess: () -> Unit, onNavigateToRegister: () -> Unit) {
 
             Spacer(modifier = Modifier.height(64.dp))
 
-            // Email Field
             Column(modifier = Modifier.fillMaxWidth()) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Text(
@@ -146,7 +141,6 @@ fun LoginPage(onLoginSuccess: () -> Unit, onNavigateToRegister: () -> Unit) {
 
             Spacer(modifier = Modifier.height(32.dp))
 
-            // Password Field
             Column(modifier = Modifier.fillMaxWidth()) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Text(
@@ -199,7 +193,6 @@ fun LoginPage(onLoginSuccess: () -> Unit, onNavigateToRegister: () -> Unit) {
 
             Spacer(modifier = Modifier.height(32.dp))
 
-            // Authentication Button
             Button(
                 onClick = {
                     if (email.isNotEmpty() && password.isNotEmpty()) {
@@ -248,7 +241,6 @@ fun LoginPage(onLoginSuccess: () -> Unit, onNavigateToRegister: () -> Unit) {
 
             Spacer(modifier = Modifier.height(32.dp))
 
-            // Register Link
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Text(
                     text = "Don't have an account? ",
@@ -268,8 +260,7 @@ fun LoginPage(onLoginSuccess: () -> Unit, onNavigateToRegister: () -> Unit) {
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            // Forget Password
-            TextButton(onClick = { /* Handle Forget Password */ }) {
+            TextButton(onClick = { }) {
                 Text(
                     text = "Forget Password?",
                     color = textColor,
@@ -278,7 +269,6 @@ fun LoginPage(onLoginSuccess: () -> Unit, onNavigateToRegister: () -> Unit) {
                 )
             }
 
-            // Login With Google
             TextButton(
                 onClick = {
                     isLoading = true
@@ -290,14 +280,13 @@ fun LoginPage(onLoginSuccess: () -> Unit, onNavigateToRegister: () -> Unit) {
 
                         val googleSignInClient = GoogleSignIn.getClient(context, gso)
                         googleSignInLauncher.launch(googleSignInClient.signInIntent)
-
                     } catch (e: Exception) {
                         isLoading = false
                         errorMessage = "Error initiating Google Sign In: ${e.message}"
                     }
                 },
                 enabled = !isLoading
-            )  {
+            ) {
                 Text(
                     text = "Login With Google",
                     color = textColor,
