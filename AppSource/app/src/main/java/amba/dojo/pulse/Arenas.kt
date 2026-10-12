@@ -370,7 +370,12 @@ fun ArenaDashboardContent(
             }
         },
         bottomBar = {
-            Surface(color = BgSurface.copy(alpha = 0.9f), modifier = Modifier.fillMaxWidth()) {
+            Surface(
+                color = BgSurface.copy(alpha = 0.9f),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .windowInsetsPadding(WindowInsets.navigationBars)
+            ) {
                 Row(modifier = Modifier.fillMaxWidth().height(64.dp).padding(horizontal = 4.dp), horizontalArrangement = Arrangement.SpaceAround, verticalAlignment = Alignment.CenterVertically) {
                     BottomNavItem(icon = Icons.Default.GridView, label = "Dashboard", isSelected = false, tintColor = OnSurfaceVar, onClick = onNavigateToDashboard)
                     BottomNavItem(icon = Icons.Default.SportsKabaddi, label = "Arenas", isSelected = true, tintColor = Primary)
@@ -392,7 +397,7 @@ fun ArenaDashboardContent(
             modifier = Modifier.fillMaxSize().padding(innerPadding).verticalScroll(rememberScrollState()).padding(horizontal = 16.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(5.dp))
 
             Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
                 Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {

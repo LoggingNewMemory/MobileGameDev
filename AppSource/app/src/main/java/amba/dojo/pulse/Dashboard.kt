@@ -61,7 +61,7 @@ fun DashboardPage(
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
 
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(5.dp))
 
             UserHeaderCard(surfaceColor, accentRed, textPrimary, textSecondary, textMuted)
 
@@ -162,7 +162,9 @@ fun DashboardBottomNav(
 
     Surface(
         color = surfaceColor.copy(alpha = 0.9f),
-        modifier = Modifier.fillMaxWidth()
+        modifier = Modifier
+            .fillMaxWidth()
+            .windowInsetsPadding(WindowInsets.navigationBars)
     ) {
         Row(
             modifier = Modifier
