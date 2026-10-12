@@ -74,7 +74,16 @@ class MainActivity : ComponentActivity() {
                                 )
                             }
                             composable("arenas") {
-                                ArenasScreen()
+                                ArenasScreen(
+                                    onNavigateToDashboard = {
+                                        navController.navigate("dashboard") {
+                                            popUpTo("dashboard") { inclusive = true }
+                                        }
+                                    },
+                                    onStartTraining = {
+                                        navController.navigate("training")
+                                    }
+                                )
                             }
                             composable("training") {
                                 amba.dojo.pulse.vision.TrainingScreen(
