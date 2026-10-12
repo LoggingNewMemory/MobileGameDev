@@ -64,7 +64,7 @@ fun ArenasScreen(
 fun ARTrainingFlowManager(stage: Int, onNext: () -> Unit, onClose: () -> Unit) {
     Scaffold(
         topBar = {
-            Surface(color = BgSurface.copy(alpha = 0.95f), modifier = Modifier.fillMaxWidth()) {
+            Surface(color = BgSurface.copy(alpha = 0.95f), modifier = Modifier.fillMaxWidth().windowInsetsPadding(WindowInsets.statusBars)) {
                 Row(
                     modifier = Modifier.height(64.dp).padding(horizontal = 16.dp),
                     verticalAlignment = Alignment.CenterVertically,
