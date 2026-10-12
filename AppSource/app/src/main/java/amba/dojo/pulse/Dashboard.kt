@@ -49,8 +49,7 @@ fun DashboardPage(
                 onNavigateToArenas = onNavigateToArenas,
                 onStartTraining = onStartTraining
             )
-        },
-        topBar = { DashboardTopBar(onLogout) }
+        }
     ) { innerPadding ->
         Column(
             modifier = Modifier
@@ -60,8 +59,7 @@ fun DashboardPage(
                 .padding(horizontal = 16.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-
-            Spacer(modifier = Modifier.height(5.dp))
+            DashboardTopBar(onLogout)
 
             UserHeaderCard(surfaceColor, accentRed, textPrimary, textSecondary, textMuted)
 
@@ -86,24 +84,17 @@ fun DashboardPage(
 
 @Composable
 fun DashboardTopBar(onLogout: () -> Unit = {}) {
-    val surfaceColor = Color(0xFF131314)
     val primaryColor = Color(0xFFfab4b8)
     val onSurface = Color(0xFFe4e2e2)
     val onSurfaceVariant = Color(0xFFd6c2c2)
 
-    Surface(
-        color = surfaceColor.copy(alpha = 0.8f),
+    Row(
         modifier = Modifier
             .fillMaxWidth()
-            .windowInsetsPadding(WindowInsets.statusBars)
+            .padding(top = 8.dp),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically
     ) {
-        Row(
-            modifier = Modifier
-                .height(64.dp)
-                .padding(horizontal = 16.dp),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
             Row(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
@@ -147,7 +138,6 @@ fun DashboardTopBar(onLogout: () -> Unit = {}) {
                 }
             }
         }
-    }
 }
 
 @Composable
