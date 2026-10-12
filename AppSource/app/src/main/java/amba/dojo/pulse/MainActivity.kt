@@ -11,6 +11,9 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
@@ -35,7 +38,14 @@ class MainActivity : ComponentActivity() {
                     contentWindowInsets = WindowInsets(0.dp)
                 ) { innerPadding ->
                     Box(modifier = Modifier.fillMaxSize().padding(innerPadding)) {
-                        NavHost(navController = navController, startDestination = startDestination) {
+                        NavHost(
+                            navController = navController,
+                            startDestination = startDestination,
+                            enterTransition = { fadeIn(animationSpec = tween(200)) },
+                            exitTransition = { fadeOut(animationSpec = tween(200)) },
+                            popEnterTransition = { fadeIn(animationSpec = tween(200)) },
+                            popExitTransition = { fadeOut(animationSpec = tween(200)) }
+                        ) {
                             composable("login") {
                                 LoginPage(
                                     onLoginSuccess = {
