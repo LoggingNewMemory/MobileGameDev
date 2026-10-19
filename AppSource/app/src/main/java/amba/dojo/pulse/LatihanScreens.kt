@@ -58,11 +58,6 @@ private val Disciplines = listOf(
         "swim", "Swim", "Swim",
         "Aquatic endurance sets focused on stroke efficiency, breathing and pace.",
         listOf(Color(0xFF0E4A5C), Color(0xFF071318))
-    ),
-    Discipline(
-        "gym", "Gymnastics", "Gymnastics",
-        "Strength, balance and flexibility circuits for explosive body control.",
-        listOf(Color(0xFF5C3B14), Color(0xFF140E07))
     )
 )
 

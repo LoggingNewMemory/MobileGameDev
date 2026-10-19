@@ -16,6 +16,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.VpnKey
 import androidx.compose.material.icons.outlined.Email
 import androidx.compose.material3.*
@@ -252,6 +253,21 @@ fun LoginPage(onLoginSuccess: () -> Unit, onNavigateToRegister: () -> Unit) {
                 Text("G", color = Dojo.Red, fontWeight = FontWeight.Bold, fontSize = 15.sp)
                 Spacer(modifier = Modifier.width(10.dp))
                 Text("Login With Google", color = Dojo.Text, fontSize = 12.sp, fontFamily = Dojo.Mono)
+            }
+
+            Spacer(modifier = Modifier.height(12.dp))
+
+            OutlinedButton(
+                onClick = { onLoginSuccess() },
+                modifier = Modifier.fillMaxWidth().height(48.dp),
+                shape = RoundedCornerShape(10.dp),
+                border = BorderStroke(1.dp, Dojo.Red.copy(alpha = 0.6f)),
+                colors = ButtonDefaults.outlinedButtonColors(contentColor = Dojo.Red),
+                enabled = !isLoading
+            ) {
+                Icon(Icons.Default.Person, contentDescription = null, tint = Dojo.Red, modifier = Modifier.size(16.dp))
+                Spacer(modifier = Modifier.width(10.dp))
+                Text("Continue as Guest", color = Dojo.Red, fontSize = 12.sp, fontFamily = Dojo.Mono)
             }
 
             Spacer(modifier = Modifier.height(20.dp))
