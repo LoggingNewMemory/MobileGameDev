@@ -29,9 +29,9 @@ fun BoxingTutorialScreen(
     onNavigateBack: () -> Unit,
     onStartDrill: () -> Unit
 ) {
-    val backgroundColor = Color(0xFF121212)
-    val surfaceColor = Color(0xFF1E1E1E)
-    val accentRed = Color(0xFF4A1525)
+    val backgroundColor = Color(0xFF0B0B0F)
+    val surfaceColor = Color(0xFF141418)
+    val accentRed = Color(0xFFE23A3A)
     val accentPink = Color(0xFFFFB3BA)
     val textPrimary = Color.White
     val textSecondary = Color.LightGray
@@ -263,8 +263,8 @@ fun SixPunchesSection(
     Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
         PunchTutorialCard(
             number = "1",
-            title = "LEAD JAB",
-            subtitle = "Pukulan lurus cepat tangan depan (kiri)",
+            title = "LEFT JAB",
+            subtitle = "Pukulan lurus cepat tangan kiri",
             targetAngle = "140° - 165°",
             targetRecovery = "< 0.20s",
             howTo = "Luncurkan tangan kiri lurus ke depan target. Putar kepalan tangan mendatar tepat saat mengenai sasaran. Segera tarik kembali ke pipi kiri secepat kilat.",
@@ -278,11 +278,11 @@ fun SixPunchesSection(
 
         PunchTutorialCard(
             number = "2",
-            title = "REAR CROSS",
-            subtitle = "Pukulan lurus bertenaga tangan belakang (kanan)",
+            title = "STRIKE",
+            subtitle = "Pukulan lurus bertenaga tangan kanan",
             targetAngle = "140° - 165°",
             targetRecovery = "< 0.23s",
-            howTo = "Dorong kaki kanan belakang dan putar pinggul kanan ke depan. Luncurkan tangan kanan lurus ke sasaran dengan kekuatan rotasi badan.",
+            howTo = "Dorong kaki kanan belakang dan putar pinggul kanan ke depan. Luncurkan tangan kanan lurus ke sasaran dengan kekuatan rotasi badan penuh.",
             commonMistake = "Tangan kiri harus tetap rapat di pipi untuk melindungi wajah.",
             surfaceColor = surfaceColor,
             accentRed = accentRed,
@@ -293,8 +293,8 @@ fun SixPunchesSection(
 
         PunchTutorialCard(
             number = "3",
-            title = "LEAD HOOK",
-            subtitle = "Pukulan melingkar tangan depan (kiri)",
+            title = "LEFT HOOK",
+            subtitle = "Pukulan melingkar tangan kiri",
             targetAngle = "85° - 110° (Siku Bengkok)",
             targetRecovery = "< 0.30s",
             howTo = "Tekuk siku kiri membentuk sudut 90°. Putar tumit kiri dan pinggul melingkar ke arah kanan, seolah menampar dengan buku jari secara horizontal.",
@@ -308,8 +308,8 @@ fun SixPunchesSection(
 
         PunchTutorialCard(
             number = "4",
-            title = "REAR HOOK",
-            subtitle = "Pukulan melingkar tangan belakang (kanan)",
+            title = "RIGHT HOOK",
+            subtitle = "Pukulan melingkar tangan kanan",
             targetAngle = "85° - 110° (Siku Bengkok)",
             targetRecovery = "< 0.15s",
             howTo = "Putar kaki dan pinggul kanan penuh. Ayunkan tangan kanan melingkar horizontal ke sisi kiri sasaran dengan siku membentuk sudut 90°.",
@@ -323,8 +323,8 @@ fun SixPunchesSection(
 
         PunchTutorialCard(
             number = "5",
-            title = "LEAD UPPERCUT",
-            subtitle = "Pukulan sodok ke atas tangan depan (kiri)",
+            title = "LEFT UPPERCUT",
+            subtitle = "Pukulan sodok ke atas tangan kiri",
             targetAngle = "75° - 105°",
             targetRecovery = "< 0.21s",
             howTo = "Turunkan tangan kiri sedikit saja, tekuk lutut kiri, lalu dorong badan ke atas meluncurkan kepalan tangan ke arah dagu lawan dari bawah ke atas.",
@@ -338,8 +338,8 @@ fun SixPunchesSection(
 
         PunchTutorialCard(
             number = "6",
-            title = "REAR UPPERCUT",
-            subtitle = "Pukulan sodok ke atas tangan belakang (kanan)",
+            title = "RIGHT UPPERCUT",
+            subtitle = "Pukulan sodok ke atas tangan kanan",
             targetAngle = "75° - 105°",
             targetRecovery = "< 0.31s",
             howTo = "Dorong kaki kanan belakang dan putar pinggul ke atas. Luncurkan kepalan tangan kanan vertikal ke arah dagu lawan.",
@@ -471,7 +471,7 @@ fun AiCoachHudSection(
 
                 HudGuideItem(
                     title = "PUNCH ANGLE (Sudut Siku)",
-                    desc = "Mengukur seberapa lurus Anda meluruskan lengan saat jab/cross. Target: 140° - 165°. Jika lengan tidak lurus, skor form akan berkurang.",
+                    desc = "Mengukur seberapa lurus Anda meluruskan lengan saat Left Jab / Strike. Target: 140° - 165°. Jika lengan tidak lurus, skor form akan berkurang.",
                     accentPink = accentPink,
                     textPrimary = textPrimary,
                     textSecondary = textSecondary

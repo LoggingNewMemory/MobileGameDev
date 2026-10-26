@@ -25,12 +25,12 @@ import androidx.compose.ui.unit.sp
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
-val BgSurface = Color(0xFF131314)
-val SurfaceLow = Color(0xFF1b1b1c)
-val SurfaceContainer = Color(0xFF1f2020)
-val SurfaceHigh = Color(0xFF2a2a2a)
-val Primary = Color(0xFFfab4b8)
-val PrimaryContainer = Color(0xFF381015)
+val BgSurface = Color(0xFF0B0B0F)
+val SurfaceLow = Color(0xFF141418)
+val SurfaceContainer = Color(0xFF1A1A20)
+val SurfaceHigh = Color(0xFF26262E)
+val Primary = Color(0xFFFF6B6B)
+val PrimaryContainer = Color(0xFF3A1217)
 val Secondary = Color(0xFFf5b6be)
 val SecondaryContainer = Color(0xFF693c43)
 val OnSurface = Color(0xFFe4e2e2)

@@ -1,0 +1,28 @@
+{
+  "sport": "Renang",
+  "window_size": 16,
+  "feature_dim": 62,
+  "landmark_indices": [
+    0,
+    11,
+    12,
+    13,
+    14,
+    15,
+    16,
+    23,
+    24,
+    25,
+    26,
+    27,
+    28
+  ],
+  "labels": [
+    "Gaya Batang",
+    "Gaya Crawl",
+    "Gaya Katak",
+    "Gaya Kupu-Kupu"
+  ],
+  "validation_accuracy": 1.0,
+  "validation_loss": 0.0036616921424865723
+}

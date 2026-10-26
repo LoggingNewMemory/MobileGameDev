@@ -6,7 +6,8 @@ import kotlin.math.acos
 import kotlin.math.sqrt
 
 class PunchClassifier(
-    private val stance: FighterStance = FighterStance.ORTHODOX
+    private val stance: FighterStance = FighterStance.ORTHODOX,
+    private val aiClassifier: AIPoseMovementClassifier? = null
 ) {
     private enum class ArmState {
         GUARD,
@@ -28,23 +29,28 @@ class PunchClassifier(
     private var totalStrikes = 0
     private var formScore = 88
     private val punchCounts = mutableMapOf(
-        PunchType.JAB to 0,
-        PunchType.CROSS to 0,
-        PunchType.LEAD_HOOK to 0,
-        PunchType.REAR_HOOK to 0,
-        PunchType.LEAD_UPPERCUT to 0,
-        PunchType.REAR_UPPERCUT to 0
+        PunchType.LEFT_HOOK to 0,
+        PunchType.LEFT_JAB to 0,
+        PunchType.LEFT_UPPERCUT to 0,
+        PunchType.RIGHT_HOOK to 0,
+        PunchType.RIGHT_UPPERCUT to 0,
+        PunchType.STRIKE to 0
     )
 
-    private var lastDetectedPunch = PunchType.JAB
+    private var lastDetectedPunch = PunchType.LEFT_JAB
     private var currentPunch = PunchType.IDLE
+    private var currentConfidence = 0f
     private var feedback = "Stance ready. Guard up!"
+    private var lastAiStrikeTimestamp = 0L
 
     // History of wrist positions for velocity / trajectory analysis
     private var prevLeftWristY = 0f
     private var prevLeftWristX = 0f
     private var prevRightWristY = 0f
     private var prevRightWristX = 0f
+    private var hasPrevWrist = false
+    private val strikeDisplayHoldMs = 420L
+    private val minStrikeVelocity = 0.022f
 
     fun processPose(pose: Pose, imageWidth: Int, imageHeight: Int): TrainingTelemetry {
         val landmarksMap = mutableMapOf<Int, PosePoint>()
@@ -121,6 +127,69 @@ class PunchClassifier(
             prevRightWristY = rightWrist.position.y
         }
 
+        val widthF = imageWidth.toFloat().coerceAtLeast(1f)
+        val heightF = imageHeight.toFloat().coerceAtLeast(1f)
+
+        val leftWristNormX = (leftWrist?.position?.x ?: 0f) / widthF
+        val leftWristNormY = (leftWrist?.position?.y ?: 0f) / heightF
+        val rightWristNormX = (rightWrist?.position?.x ?: 0f) / widthF
+        val rightWristNormY = (rightWrist?.position?.y ?: 0f) / heightF
+
+        var leftWristVelocity = 0f
+        var rightWristVelocity = 0f
+        if (hasPrevWrist) {
+            val dLwX = leftWristNormX - prevLeftWristX
+            val dLwY = leftWristNormY - prevLeftWristY
+            leftWristVelocity = sqrt(dLwX * dLwX + dLwY * dLwY)
+
+            val dRwX = rightWristNormX - prevRightWristX
+            val dRwY = rightWristNormY - prevRightWristY
+            rightWristVelocity = sqrt(dRwX * dRwX + dRwY * dRwY)
+        }
+        prevLeftWristX = leftWristNormX
+        prevLeftWristY = leftWristNormY
+        prevRightWristX = rightWristNormX
+        prevRightWristY = rightWristNormY
+        hasPrevWrist = true
+
+        val maxWristVelocity = maxOf(leftWristVelocity, rightWristVelocity)
+
+        // Real-time AI Movement Classifier (Model Inference)
+        val aiPrediction = aiClassifier?.processPose(pose, imageWidth, imageHeight)
+        if (aiPrediction != null) {
+            val predictedType = PunchType.fromLabel(aiPrediction.label)
+            currentConfidence = aiPrediction.confidence
+
+            // Active punch requires sufficient wrist velocity to prevent idle false positives
+            if (predictedType != PunchType.GUARD && predictedType != PunchType.IDLE && aiPrediction.confidence >= 0.58f && maxWristVelocity >= minStrikeVelocity) {
+                if (currentTime - lastAiStrikeTimestamp > 320L || currentPunch != predictedType) {
+                    lastAiStrikeTimestamp = currentTime
+                    currentPunch = predictedType
+                    lastDetectedPunch = predictedType
+                    totalStrikes++
+                    punchCounts[predictedType] = (punchCounts[predictedType] ?: 0) + 1
+
+                    val confPercent = (aiPrediction.confidence * 100).toInt()
+                    feedback = "${predictedType.displayName.uppercase()} ($confPercent% MATCH)"
+                    formScore = (formScore + 1).coerceAtMost(99)
+                }
+            } else if (currentTime - lastAiStrikeTimestamp >= strikeDisplayHoldMs) {
+                if (isCurrentlyInGuard) {
+                    currentPunch = PunchType.GUARD
+                    feedback = "Guard active. Ready to strike!"
+                } else {
+                    currentPunch = PunchType.IDLE
+                    feedback = "Ready stance. Guard up!"
+                }
+            }
+        } else if (currentTime - lastAiStrikeTimestamp >= strikeDisplayHoldMs) {
+            if (isCurrentlyInGuard) {
+                currentPunch = PunchType.GUARD
+            } else {
+                currentPunch = PunchType.IDLE
+            }
+        }
+
         return TrainingTelemetry(
             detectedPunch = currentPunch,
             lastDetectedPunch = lastDetectedPunch,
@@ -132,6 +201,7 @@ class PunchClassifier(
             formScore = formScore,
             strikeCounts = punchCounts.toMap(),
             feedbackMessage = feedback,
+            aiConfidence = currentConfidence,
             landmarks = landmarksMap,
             imageWidth = imageWidth,
             imageHeight = imageHeight
@@ -152,29 +222,27 @@ class PunchClassifier(
         when (currentState) {
             ArmState.GUARD -> {
                 if (!isInGuard && angle > 115.0) {
-                    // Moving out of guard towards strike
                     if (isLeft) leftArmState = ArmState.EXTENDING else rightArmState = ArmState.EXTENDING
                 }
             }
 
             ArmState.EXTENDING -> {
-                if (angle >= 140.0) {
-                    // Straight punch peak (Jab / Cross)
-                    val punch = if (isLead) PunchType.JAB else PunchType.CROSS
-                    registerStrike(punch, angle, currentTime, isLeft)
-                } else if (angle in 80.0..125.0 && kotlin.math.abs(deltaX) > 25) {
-                    // Horizontal hook motion
-                    val punch = if (isLead) PunchType.LEAD_HOOK else PunchType.REAR_HOOK
-                    registerStrike(punch, angle, currentTime, isLeft)
-                } else if (deltaY < -25 && angle in 70.0..115.0) {
-                    // Upward uppercut motion
-                    val punch = if (isLead) PunchType.LEAD_UPPERCUT else PunchType.REAR_UPPERCUT
-                    registerStrike(punch, angle, currentTime, isLeft)
+                // Heuristic fallback only if AI classifier is not active
+                if (aiClassifier == null) {
+                    if (angle >= 140.0) {
+                        val punch = if (isLead) PunchType.LEFT_JAB else PunchType.STRIKE
+                        registerStrike(punch, angle, currentTime, isLeft)
+                    } else if (angle in 80.0..125.0 && kotlin.math.abs(deltaX) > 25) {
+                        val punch = if (isLead) PunchType.LEFT_HOOK else PunchType.RIGHT_HOOK
+                        registerStrike(punch, angle, currentTime, isLeft)
+                    } else if (deltaY < -25 && angle in 70.0..115.0) {
+                        val punch = if (isLead) PunchType.LEFT_UPPERCUT else PunchType.RIGHT_UPPERCUT
+                        registerStrike(punch, angle, currentTime, isLeft)
+                    }
                 }
             }
 
             ArmState.PEAK_STRIKE -> {
-                // Moving from peak back to guard
                 if (angle < 130.0 || isInGuard) {
                     if (isLeft) leftArmState = ArmState.RETURNING else rightArmState = ArmState.RETURNING
                 }
@@ -187,7 +255,6 @@ class PunchClassifier(
                         val durationMs = currentTime - peakTime
                         if (durationMs in 80..800) {
                             lastReturnGuardTime = durationMs / 1000.0
-                            // Coach feedback based on Adnan's gold standard (target <= 0.23s)
                             if (lastReturnGuardTime <= 0.23) {
                                 feedback = "GUARD EXCELLENT! Fast recovery (${String.format("%.2f", lastReturnGuardTime)}s)"
                                 formScore = (formScore + 1).coerceAtMost(98)
@@ -198,7 +265,9 @@ class PunchClassifier(
                         }
                     }
                     if (isLeft) leftArmState = ArmState.GUARD else rightArmState = ArmState.GUARD
-                    currentPunch = PunchType.GUARD
+                    if (aiClassifier == null) {
+                        currentPunch = PunchType.GUARD
+                    }
                 }
             }
         }
@@ -220,8 +289,7 @@ class PunchClassifier(
         currentPunch = punch
         lastDetectedPunch = punch
 
-        // Calculate form feedback
-        if (punch == PunchType.JAB || punch == PunchType.CROSS) {
+        if (punch == PunchType.LEFT_JAB || punch == PunchType.STRIKE) {
             if (angle in 140.0..165.0) {
                 feedback = "${punch.displayName} EXCELLENT! Perfect extension (${angle.toInt()}°)"
                 formScore = (formScore + 1).coerceAtMost(98)
@@ -241,8 +309,6 @@ class PunchClassifier(
         shoulder: PoseLandmark,
         nose: PoseLandmark?
     ): Boolean {
-        val referenceY = nose?.position?.y ?: shoulder.position.y
-        // Wrist is near shoulder or head height
         val isAtGuardHeight = wrist.position.y <= shoulder.position.y + 120
         val isCloseToShoulderX = kotlin.math.abs(wrist.position.x - shoulder.position.x) < 180
         return isAtGuardHeight && isCloseToShoulderX
@@ -273,6 +339,10 @@ class PunchClassifier(
         formScore = 88
         punchCounts.keys.forEach { punchCounts[it] = 0 }
         currentPunch = PunchType.IDLE
+        currentConfidence = 0f
         feedback = "Stance ready. Guard up!"
+        hasPrevWrist = false
+        lastAiStrikeTimestamp = 0L
+        aiClassifier?.reset()
     }
 }

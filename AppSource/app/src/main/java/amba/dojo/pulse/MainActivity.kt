@@ -1,6 +1,8 @@
 package amba.dojo.pulse
 
+import android.graphics.Color
 import android.os.Bundle
+import androidx.activity.SystemBarStyle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
@@ -24,10 +26,20 @@ import com.google.firebase.auth.FirebaseAuth
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        enableEdgeToEdge()
+        enableEdgeToEdge(
+            statusBarStyle = SystemBarStyle.dark(Color.TRANSPARENT),
+            navigationBarStyle = SystemBarStyle.dark(Color.TRANSPARENT)
+        )
         setContent {
             DojoPulseTheme {
                 val navController = rememberNavController()
+                val navigateTab: (String) -> Unit = { route ->
+                    navController.navigate(route) {
+                        popUpTo("dashboard") { saveState = true }
+                        launchSingleTop = true
+                        restoreState = true
+                    }
+                }
 
                 // Determine starting destination
                 val auth = FirebaseAuth.getInstance()
@@ -72,20 +84,58 @@ class MainActivity : ComponentActivity() {
                             }
                             composable("dashboard") {
                                 DashboardPage(
+                                    onNavigate = navigateTab,
+                                    onStartTraining = { navController.navigate("training") },
+                                    onOpenWorkout = { id -> navController.navigate("workout/$id") }
+                                )
+                            }
+                            composable("latihan") {
+                                LatihanScreen(
+                                    onNavigate = navigateTab,
+                                    onOpenTutorial = { navController.navigate("tutorial") },
+                                    onOpenWorkout = { id -> navController.navigate("workout/$id") },
+                                    onOpenArenas = { navController.navigate("arenas") }
+                                )
+                            }
+                            composable("progres") {
+                                ProgresScreen(
+                                    onNavigate = navigateTab,
+                                    onNextCourse = { navController.navigate("latihan") }
+                                )
+                            }
+                            composable("aktivitas") {
+                                AktivitasScreen(
+                                    onNavigate = navigateTab,
+                                    onStartTraining = { navController.navigate("training") }
+                                )
+                            }
+                            composable("profil") {
+                                ProfilScreen(
+                                    onNavigate = navigateTab,
                                     onLogout = {
                                         navController.navigate("login") {
-                                            popUpTo("dashboard") { inclusive = true }
+                                            popUpTo(0) { inclusive = true }
                                         }
-                                    },
-                                    onStartTraining = {
-                                        navController.navigate("training")
-                                    },
-                                    onNavigateTutorial = {
-                                        navController.navigate("tutorial")
-                                    },
-                                    onNavigateToArenas = {
-                                        navController.navigate("arenas")
                                     }
+                                )
+                            }
+                            composable("profile") {
+                                ProfileScreen(
+                                    onNavigateBack = {
+                                        navController.popBackStack()
+                                    },
+                                    onLogout = {
+                                        navController.navigate("login") {
+                                            popUpTo(0) { inclusive = true }
+                                        }
+                                    }
+                                )
+                            }
+                            composable("workout/{id}") { entry ->
+                                WorkoutDetailScreen(
+                                    workoutId = entry.arguments?.getString("id") ?: "striking",
+                                    onNavigateBack = { navController.popBackStack() },
+                                    onStartRound = { navController.navigate("training") }
                                 )
                             }
                             composable("arenas") {
