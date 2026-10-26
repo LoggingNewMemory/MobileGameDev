@@ -29,9 +29,9 @@ fun BoxingTutorialScreen(
     onNavigateBack: () -> Unit,
     onStartDrill: () -> Unit
 ) {
-    val backgroundColor = Color(0xFF121212)
-    val surfaceColor = Color(0xFF1E1E1E)
-    val accentRed = Color(0xFF4A1525)
+    val backgroundColor = Color(0xFF0B0B0F)
+    val surfaceColor = Color(0xFF141418)
+    val accentRed = Color(0xFFE23A3A)
     val accentPink = Color(0xFFFFB3BA)
     val textPrimary = Color.White
     val textSecondary = Color.LightGray

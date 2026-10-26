@@ -26,6 +26,7 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import amba.dojo.pulse.ui.theme.Dojo
 import amba.dojo.pulse.ui.theme.DojoPulseTheme
 import com.google.android.gms.auth.api.signin.GoogleSignIn
 import com.google.android.gms.auth.api.signin.GoogleSignInOptions
@@ -45,8 +46,8 @@ fun RegisterPage(onRegisterSuccess: () -> Unit, onNavigateToLogin: () -> Unit) {
     var errorMessage by remember { mutableStateOf<String?>(null) }
 
     val context = LocalContext.current
-    val backgroundColor = Color(0xFF121212)
-    val buttonColor = Color(0xFF3B0918)
+    val backgroundColor = Dojo.Bg
+    val buttonColor = Dojo.Red
     val textColor = Color.White
 
     val clientId = stringResource(id = R.string.default_web_client_id)
