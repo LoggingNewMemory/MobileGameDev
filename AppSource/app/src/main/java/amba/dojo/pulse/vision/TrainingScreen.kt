@@ -69,7 +69,14 @@ fun TrainingScreen(
 
     var isFrontCamera by remember { mutableStateOf(true) }
     var telemetry by remember { mutableStateOf(TrainingTelemetry()) }
-    val classifier = remember { PunchClassifier(FighterStance.ORTHODOX) }
+    val aiClassifier = remember {
+        AIPoseMovementClassifier(
+            context = context,
+            modelFileName = "boxing_classifier_quantized.tflite",
+            labelsFileName = "boxing_classifier_labels.txt"
+        )
+    }
+    val classifier = remember { PunchClassifier(FighterStance.ORTHODOX, aiClassifier) }
 
     // 3-minute Drill Timer countdown (180 seconds)
     var timeLeftSeconds by remember { mutableIntStateOf(180) }
@@ -92,6 +99,7 @@ fun TrainingScreen(
         onDispose {
             cameraExecutor.shutdown()
             poseDetector.close()
+            aiClassifier.close()
         }
     }
 
@@ -353,13 +361,24 @@ fun TrainingHudOverlay(
                             .border(1.dp, accentPink, RoundedCornerShape(8.dp))
                             .padding(horizontal = 20.dp, vertical = 10.dp)
                     ) {
-                        Text(
-                            text = "${telemetry.detectedPunch.displayName.uppercase()} [${telemetry.detectedPunch.id}]",
-                            color = Color.White,
-                            fontSize = 22.sp,
-                            fontWeight = FontWeight.Black,
-                            letterSpacing = 2.sp
-                        )
+                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                            Text(
+                                text = telemetry.detectedPunch.displayName.uppercase(),
+                                color = Color.White,
+                                fontSize = 22.sp,
+                                fontWeight = FontWeight.Black,
+                                letterSpacing = 2.sp
+                            )
+                            if (telemetry.aiConfidence > 0f) {
+                                Text(
+                                    text = "AI ACCURACY: ${(telemetry.aiConfidence * 100).toInt()}%",
+                                    color = accentPink,
+                                    fontSize = 11.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    fontFamily = FontFamily.Monospace
+                                )
+                            }
+                        }
                     }
                 }
 
@@ -461,15 +480,15 @@ fun TrainingHudOverlay(
 
                 Spacer(modifier = Modifier.height(10.dp))
 
-                // Breakdown of punches 1 to 6
+                // Breakdown of punches matching Dataset categories
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceBetween
                 ) {
-                    Text("JAB: ${telemetry.strikeCounts[PunchType.JAB] ?: 0}", color = Color.LightGray, fontSize = 10.sp)
-                    Text("CROSS: ${telemetry.strikeCounts[PunchType.CROSS] ?: 0}", color = Color.LightGray, fontSize = 10.sp)
-                    Text("HOOK: ${(telemetry.strikeCounts[PunchType.LEAD_HOOK] ?: 0) + (telemetry.strikeCounts[PunchType.REAR_HOOK] ?: 0)}", color = Color.LightGray, fontSize = 10.sp)
-                    Text("UPPER: ${(telemetry.strikeCounts[PunchType.LEAD_UPPERCUT] ?: 0) + (telemetry.strikeCounts[PunchType.REAR_UPPERCUT] ?: 0)}", color = Color.LightGray, fontSize = 10.sp)
+                    Text("JAB: ${telemetry.strikeCounts[PunchType.LEFT_JAB] ?: 0}", color = Color.LightGray, fontSize = 10.sp)
+                    Text("STRIKE: ${telemetry.strikeCounts[PunchType.STRIKE] ?: 0}", color = Color.LightGray, fontSize = 10.sp)
+                    Text("HOOK: ${(telemetry.strikeCounts[PunchType.LEFT_HOOK] ?: 0) + (telemetry.strikeCounts[PunchType.RIGHT_HOOK] ?: 0)}", color = Color.LightGray, fontSize = 10.sp)
+                    Text("UPPER: ${(telemetry.strikeCounts[PunchType.LEFT_UPPERCUT] ?: 0) + (telemetry.strikeCounts[PunchType.RIGHT_UPPERCUT] ?: 0)}", color = Color.LightGray, fontSize = 10.sp)
                 }
 
                 Spacer(modifier = Modifier.height(12.dp))

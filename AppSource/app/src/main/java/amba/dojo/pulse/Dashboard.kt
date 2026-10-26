@@ -17,6 +17,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontFamily
@@ -33,7 +34,8 @@ fun DashboardPage(
     onLogout: () -> Unit = {},
     onStartTraining: () -> Unit = {},
     onNavigateTutorial: () -> Unit = {},
-    onNavigateToArenas: () -> Unit = {}
+    onNavigateToArenas: () -> Unit = {},
+    onNavigateToProfile: () -> Unit = {}
 ) {
     val backgroundColor = Color(0xFF131314)
     val surfaceColor = Color(0xFF1E1E1E)
@@ -47,7 +49,8 @@ fun DashboardPage(
         bottomBar = {
             DashboardBottomNav(
                 onNavigateToArenas = onNavigateToArenas,
-                onStartTraining = onStartTraining
+                onStartTraining = onStartTraining,
+                onNavigateToProfile = onNavigateToProfile
             )
         }
     ) { innerPadding ->
@@ -59,9 +62,9 @@ fun DashboardPage(
                 .padding(horizontal = 16.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            DashboardTopBar(onLogout)
+            DashboardTopBar(onNavigateToProfile)
 
-            UserHeaderCard(surfaceColor, accentRed, textPrimary, textSecondary, textMuted)
+            UserHeaderCard(surfaceColor, accentRed, textPrimary, textSecondary, textMuted, onNavigateToProfile)
 
             MainTrainingCard(surfaceColor, accentRed, textPrimary, textSecondary, onStartTraining)
 
@@ -75,7 +78,7 @@ fun DashboardPage(
 }
 
 @Composable
-fun DashboardTopBar(onLogout: () -> Unit = {}) {
+fun DashboardTopBar(onNavigateToProfile: () -> Unit = {}) {
     val primaryColor = Color(0xFFfab4b8)
     val onSurface = Color(0xFFe4e2e2)
 
@@ -103,10 +106,7 @@ fun DashboardTopBar(onLogout: () -> Unit = {}) {
             modifier = Modifier
                 .size(32.dp)
                 .background(primaryColor, shape = CircleShape)
-                .clickable {
-                    com.google.firebase.auth.FirebaseAuth.getInstance().signOut()
-                    onLogout()
-                },
+                .clickable { onNavigateToProfile() },
             contentAlignment = Alignment.Center
         ) {
             Icon(
@@ -122,7 +122,8 @@ fun DashboardTopBar(onLogout: () -> Unit = {}) {
 @Composable
 fun DashboardBottomNav(
     onNavigateToArenas: () -> Unit = {},
-    onStartTraining: () -> Unit = {}
+    onStartTraining: () -> Unit = {},
+    onNavigateToProfile: () -> Unit = {}
 ) {
     val surfaceColor = Color(0xFF131314)
     val primaryColor = Color(0xFFfab4b8)
@@ -162,7 +163,7 @@ fun DashboardBottomNav(
                 Text(text = "Training", fontSize = 10.sp, fontWeight = FontWeight.Bold, color = primaryColor)
             }
             BottomNavItem(icon = Icons.Default.Assessment, label = "History", isSelected = false, tintColor = onSurfaceVariant)
-            BottomNavItem(icon = Icons.Default.Person, label = "Profile", isSelected = false, tintColor = onSurfaceVariant)
+            BottomNavItem(icon = Icons.Default.Person, label = "Profile", isSelected = false, tintColor = onSurfaceVariant, onClick = onNavigateToProfile)
         }
     }
 }
@@ -186,23 +187,56 @@ fun BottomNavItem(icon: androidx.compose.ui.graphics.vector.ImageVector, label: 
     }
 }
 
-
 @Composable
-fun UserHeaderCard(surfaceColor: Color, accentRed: Color, textPrimary: Color, textSecondary: Color, textMuted: Color) {
+fun UserHeaderCard(
+    surfaceColor: Color,
+    accentRed: Color,
+    textPrimary: Color,
+    textSecondary: Color,
+    textMuted: Color,
+    onNavigateToProfile: () -> Unit = {}
+) {
+    val context = androidx.compose.ui.platform.LocalContext.current
+    val currentUser = com.google.firebase.auth.FirebaseAuth.getInstance().currentUser
+    val userId = currentUser?.uid ?: "guest"
+    val displayName = currentUser?.displayName?.takeIf { it.isNotBlank() } ?: "Alex Chen"
+    val avatarBitmap = remember(currentUser) { loadAvatarBitmap(context, userId) }
+
+    val initials = remember(displayName) {
+        val parts = displayName.trim().split(" ").filter { it.isNotBlank() }
+        when {
+            parts.size >= 2 -> "${parts[0].first()}${parts[1].first()}".uppercase()
+            parts.size == 1 -> parts[0].take(2).uppercase()
+            else -> "AC"
+        }
+    }
+
     Column(modifier = Modifier.fillMaxWidth()) {
-        Row(verticalAlignment = Alignment.CenterVertically) {
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            modifier = Modifier.clickable { onNavigateToProfile() }
+        ) {
             Box(
                 modifier = Modifier
                     .size(56.dp)
-                    .background(accentRed, RoundedCornerShape(8.dp)),
+                    .clip(RoundedCornerShape(8.dp))
+                    .background(accentRed),
                 contentAlignment = Alignment.Center
             ) {
-                Text("AC", color = Color.White, fontWeight = FontWeight.Bold, fontSize = 20.sp)
+                if (avatarBitmap != null) {
+                    Image(
+                        bitmap = avatarBitmap.asImageBitmap(),
+                        contentDescription = "User Avatar",
+                        modifier = Modifier.fillMaxSize(),
+                        contentScale = ContentScale.Crop
+                    )
+                } else {
+                    Text(initials, color = Color.White, fontWeight = FontWeight.Bold, fontSize = 20.sp)
+                }
             }
             Spacer(modifier = Modifier.width(16.dp))
             Column(modifier = Modifier.weight(1f)) {
-                Text("DOJO PULSE // ID.884", color = textMuted, fontSize = 10.sp, letterSpacing = 1.sp)
-                Text("Alex Chen", color = textPrimary, fontWeight = FontWeight.Bold, fontSize = 22.sp)
+                Text(displayName, color = textPrimary, fontWeight = FontWeight.Bold, fontSize = 22.sp)
             }
         }
     }
@@ -226,8 +260,6 @@ fun MainTrainingCard(
                 Box(modifier = Modifier.background(accentRed, RoundedCornerShape(4.dp)).padding(horizontal = 8.dp, vertical = 4.dp)) {
                     Text("LATIHAN UTAMA HARI INI", color = Color.White, fontSize = 10.sp, fontWeight = FontWeight.Bold)
                 }
-                Spacer(modifier = Modifier.width(8.dp))
-                Text("[SYS.DRL-09]", color = textSecondary, fontSize = 10.sp)
                 Spacer(modifier = Modifier.weight(1f))
                 Icon(Icons.Default.Schedule, contentDescription = null, tint = textSecondary, modifier = Modifier.size(12.dp))
                 Spacer(modifier = Modifier.width(4.dp))
@@ -306,9 +338,7 @@ fun WeeklyTelemetrySummary(surfaceColor: Color, textPrimary: Color, textSecondar
         Row(verticalAlignment = Alignment.CenterVertically) {
             Box(modifier = Modifier.size(8.dp).background(Color(0xFFFFB3BA)))
             Spacer(modifier = Modifier.width(8.dp))
-            Text("RINGKASAN TELEMETRI MINGGUAN", color = textPrimary, fontSize = 14.sp, fontWeight = FontWeight.Bold, letterSpacing = 1.sp)
-            Spacer(modifier = Modifier.weight(1f))
-            Text("MINGGU 14", color = textSecondary, fontSize = 10.sp, fontWeight = FontWeight.Bold)
+            Text("RINGKASAN MINGGUAN", color = textPrimary, fontSize = 14.sp, fontWeight = FontWeight.Bold, letterSpacing = 1.sp)
         }
 
         Spacer(modifier = Modifier.height(12.dp))

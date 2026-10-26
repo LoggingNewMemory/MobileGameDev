@@ -85,6 +85,21 @@ class MainActivity : ComponentActivity() {
                                     },
                                     onNavigateToArenas = {
                                         navController.navigate("arenas")
+                                    },
+                                    onNavigateToProfile = {
+                                        navController.navigate("profile")
+                                    }
+                                )
+                            }
+                            composable("profile") {
+                                ProfileScreen(
+                                    onNavigateBack = {
+                                        navController.popBackStack()
+                                    },
+                                    onLogout = {
+                                        navController.navigate("login") {
+                                            popUpTo(0) { inclusive = true }
+                                        }
                                     }
                                 )
                             }

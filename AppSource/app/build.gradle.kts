@@ -68,6 +68,9 @@ dependencies {
     // ML Kit Pose Detection
     implementation("com.google.mlkit:pose-detection:18.0.0-beta5")
     implementation("com.google.guava:guava:33.0.0-android")
+
+    // TensorFlow Lite for trained model inference
+    implementation("org.tensorflow:tensorflow-lite:2.16.1")
     testImplementation(libs.junit)
     androidTestImplementation(platform(libs.androidx.compose.bom))
     androidTestImplementation(libs.androidx.compose.ui.test.junit4)
