@@ -1,0 +1,7 @@
+Left Hook
+Left Jab
+Left Uppercut
+Right Hook
+Right UpperCut
+Strike
+Guard / Idle
