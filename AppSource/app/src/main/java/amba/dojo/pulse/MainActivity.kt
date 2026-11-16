@@ -20,8 +20,9 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import amba.dojo.pulse.ui.theme.DojoPulseTheme
-import amba.dojo.pulse.ui.theme.ArenasScreen // Pastikan ini di-import
+import amba.dojo.pulse.ui.theme.ArenasScreen
 import com.google.firebase.auth.FirebaseAuth
+import amba.dojo.pulse.market.MarketScreen
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -101,6 +102,11 @@ class MainActivity : ComponentActivity() {
                                 ProgresScreen(
                                     onNavigate = navigateTab,
                                     onNextCourse = { navController.navigate("latihan") }
+                                )
+                            }
+                            composable("market") {
+                                MarketScreen(
+                                    onNavigate = navigateTab
                                 )
                             }
                             composable("aktivitas") {

@@ -14,7 +14,9 @@ import androidx.compose.material.icons.filled.DirectionsRun
 import androidx.compose.material.icons.filled.FitnessCenter
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.filled.ShoppingCart
 import androidx.compose.material3.Icon
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -101,48 +103,112 @@ fun DojoChip(
             .padding(horizontal = 14.dp, vertical = 6.dp)
     ) {
         Text(
-            text,
-            color = if (selected) Color.White else Dojo.Muted,
+            text = text,
+            color = if (selected) Color.White else Dojo.Text,
             fontFamily = Dojo.Mono,
-            fontSize = 11.sp,
-            fontWeight = FontWeight.Medium
+            fontSize = 12.sp,
+            fontWeight = if (selected) FontWeight.Bold else FontWeight.Normal
         )
     }
 }
 
 @Composable
-fun DojoTag(text: String, modifier: Modifier = Modifier, color: Color = Dojo.Red) {
+fun DojoTag(
+    text: String,
+    modifier: Modifier = Modifier,
+    color: Color = Dojo.Red
+) {
+    val shape = RoundedCornerShape(4.dp)
     Box(
         modifier = modifier
-            .clip(RoundedCornerShape(4.dp))
-            .background(color)
+            .clip(shape)
+            .background(color.copy(alpha = 0.15f))
+            .border(BorderStroke(1.dp, color.copy(alpha = 0.5f)), shape)
             .padding(horizontal = 6.dp, vertical = 2.dp)
     ) {
-        Text(text, color = Color.White, fontFamily = Dojo.Mono, fontSize = 8.sp, fontWeight = FontWeight.Bold)
+        Text(
+            text = text,
+            color = color,
+            fontFamily = Dojo.Mono,
+            fontSize = 9.sp,
+            fontWeight = FontWeight.Bold
+        )
     }
 }
 
 @Composable
-fun SectionHeader(title: String, action: String? = null, onAction: () -> Unit = {}) {
+fun StatTile(
+    label: String,
+    value: String,
+    modifier: Modifier = Modifier,
+    valueColor: Color = Dojo.Text
+) {
+    DojoCard(modifier = modifier, padding = 12.dp) {
+        MonoLabel(label, size = 9)
+        Spacer(Modifier.height(4.dp))
+        Text(
+            text = value,
+            color = valueColor,
+            fontFamily = Dojo.Mono,
+            fontSize = 16.sp,
+            fontWeight = FontWeight.Bold
+        )
+    }
+}
+
+@Composable
+fun IconBadge(
+    icon: ImageVector,
+    modifier: Modifier = Modifier,
+    size: Dp = 40.dp,
+    onClick: () -> Unit = {}
+) {
+    val shape = CircleShape
+    Box(
+        modifier = modifier
+            .size(size)
+            .clip(shape)
+            .background(Dojo.SurfaceAlt)
+            .border(BorderStroke(1.dp, Dojo.Border), shape)
+            .clickable(onClick = onClick),
+        contentAlignment = Alignment.Center
+    ) {
+        Icon(
+            imageVector = icon,
+            contentDescription = null,
+            tint = Dojo.Text,
+            modifier = Modifier.size(size * 0.5f)
+        )
+    }
+}
+
+@Composable
+fun SectionHeader(
+    title: String,
+    actionText: String? = null,
+    modifier: Modifier = Modifier,
+    action: String? = null,
+    onAction: () -> Unit = {}
+) {
+    val resolvedAction = action ?: actionText
     Row(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically
     ) {
         Text(
-            title.uppercase(),
+            text = title,
             color = Dojo.Text,
-            fontFamily = Dojo.Mono,
-            fontSize = 11.sp,
-            fontWeight = FontWeight.Bold,
-            letterSpacing = 1.sp
+            fontSize = 16.sp,
+            fontWeight = FontWeight.Bold
         )
-        if (action != null) {
+        if (resolvedAction != null) {
             Text(
-                action,
+                text = resolvedAction,
                 color = Dojo.Red,
                 fontFamily = Dojo.Mono,
-                fontSize = 10.sp,
+                fontSize = 12.sp,
+                fontWeight = FontWeight.Bold,
                 modifier = Modifier.clickable { onAction() }
             )
         }
@@ -150,19 +216,27 @@ fun SectionHeader(title: String, action: String? = null, onAction: () -> Unit = 
 }
 
 @Composable
-fun DojoProgressBar(progress: Float, modifier: Modifier = Modifier, height: Dp = 4.dp) {
+fun DojoProgressBar(
+    progress: Float,
+    modifier: Modifier = Modifier,
+    height: Dp = 8.dp,
+    color: Color = Dojo.Red,
+    trackColor: Color = Dojo.SurfaceAlt
+) {
+    val shape = RoundedCornerShape(50)
     Box(
         modifier = modifier
             .fillMaxWidth()
             .height(height)
-            .clip(RoundedCornerShape(50))
-            .background(Dojo.Border)
+            .clip(shape)
+            .background(trackColor)
     ) {
         Box(
             modifier = Modifier
-                .fillMaxWidth(progress.coerceIn(0f, 1f))
                 .fillMaxHeight()
-                .background(Dojo.Red)
+                .fillMaxWidth(progress.coerceIn(0f, 1f))
+                .clip(shape)
+                .background(color)
         )
     }
 }
@@ -171,104 +245,103 @@ fun DojoProgressBar(progress: Float, modifier: Modifier = Modifier, height: Dp =
 fun ProgressRing(
     progress: Float,
     modifier: Modifier = Modifier,
-    size: Dp = 84.dp,
-    stroke: Dp = 7.dp,
-    content: @Composable () -> Unit = {}
+    size: Dp = 92.dp,
+    stroke: Dp = 8.dp,
+    color: Color = Dojo.Red,
+    trackColor: Color = Dojo.SurfaceAlt,
+    content: @Composable BoxScope.() -> Unit = {}
 ) {
-    Box(modifier = modifier.size(size), contentAlignment = Alignment.Center) {
+    Box(
+        modifier = modifier.size(size),
+        contentAlignment = Alignment.Center
+    ) {
         Canvas(modifier = Modifier.fillMaxSize()) {
-            val s = stroke.toPx()
-            val inset = s / 2
-            val arcSize = Size(this.size.width - s, this.size.height - s)
+            val strokePx = stroke.toPx()
+            val arcSize = Size(size.toPx() - strokePx, size.toPx() - strokePx)
+            val topLeft = Offset(strokePx / 2, strokePx / 2)
+
             drawArc(
-                color = Dojo.Border,
-                startAngle = -90f,
+                color = trackColor,
+                startAngle = 0f,
                 sweepAngle = 360f,
                 useCenter = false,
-                topLeft = Offset(inset, inset),
+                topLeft = topLeft,
                 size = arcSize,
-                style = Stroke(width = s)
+                style = Stroke(width = strokePx, cap = StrokeCap.Round)
             )
             drawArc(
-                color = Dojo.Red,
+                color = color,
                 startAngle = -90f,
                 sweepAngle = 360f * progress.coerceIn(0f, 1f),
                 useCenter = false,
-                topLeft = Offset(inset, inset),
+                topLeft = topLeft,
                 size = arcSize,
-                style = Stroke(width = s, cap = StrokeCap.Round)
+                style = Stroke(width = strokePx, cap = StrokeCap.Round)
             )
         }
         content()
     }
 }
 
-@Composable
-fun StatTile(label: String, value: String, modifier: Modifier = Modifier, valueColor: Color = Dojo.Text) {
-    DojoCard(modifier = modifier, padding = 12.dp) {
-        MonoLabel(label, size = 8)
-        Spacer(Modifier.height(4.dp))
-        Text(value, color = valueColor, fontFamily = Dojo.Mono, fontSize = 14.sp, fontWeight = FontWeight.Bold)
-    }
-}
-
-@Composable
-fun IconBadge(icon: ImageVector, modifier: Modifier = Modifier, size: Dp = 36.dp) {
-    Box(
-        modifier = modifier
-            .size(size)
-            .clip(CircleShape)
-            .background(Dojo.Surface)
-            .border(BorderStroke(1.dp, Dojo.Border), CircleShape),
-        contentAlignment = Alignment.Center
-    ) {
-        Icon(icon, contentDescription = null, tint = Dojo.Text, modifier = Modifier.size(size * 0.5f))
-    }
-}
-
-private data class NavEntry(val route: String, val label: String, val icon: ImageVector)
-
-private val NavEntries = listOf(
-    NavEntry("dashboard", "Beranda", Icons.Default.Home),
-    NavEntry("latihan", "Latihan", Icons.Default.FitnessCenter),
-    NavEntry("progres", "Progres", Icons.Default.BarChart),
-    NavEntry("aktivitas", "Aktivitas", Icons.Default.DirectionsRun),
-    NavEntry("profil", "Profil", Icons.Default.Person)
+private data class DojoNavItem(
+    val route: String,
+    val label: String,
+    val icon: ImageVector
 )
 
 @Composable
-fun DojoBottomBar(selectedRoute: String, onNavigate: (String) -> Unit) {
-    Column(
-        modifier = Modifier
+fun DojoBottomBar(
+    currentRoute: String,
+    onNavigate: (String) -> Unit,
+    modifier: Modifier = Modifier
+) {
+    val items = listOf(
+        DojoNavItem("dashboard", "Beranda", Icons.Default.Home),
+        DojoNavItem("latihan", "Latihan", Icons.Default.FitnessCenter),
+        DojoNavItem("progres", "Progres", Icons.Default.BarChart),
+        DojoNavItem("market", "Market", Icons.Default.ShoppingCart),
+        DojoNavItem("profil", "Profil", Icons.Default.Person)
+    )
+
+    Surface(
+        color = Dojo.Surface,
+        modifier = modifier
             .fillMaxWidth()
-            .background(Dojo.Bg)
             .windowInsetsPadding(WindowInsets.navigationBars)
+            .border(BorderStroke(1.dp, Dojo.Border))
     ) {
-        Box(Modifier.fillMaxWidth().height(1.dp).background(Dojo.Border))
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .height(62.dp),
+                .height(64.dp)
+                .padding(horizontal = 4.dp),
             horizontalArrangement = Arrangement.SpaceAround,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            NavEntries.forEach { entry ->
-                val selected = entry.route == selectedRoute
-                val tint = if (selected) Dojo.Red else Dojo.Muted
+            items.forEach { item ->
+                val isSelected = currentRoute == item.route || (item.route == "progres" && currentRoute == "aktivitas")
+                val tint = if (isSelected) Dojo.Red else Dojo.Muted
                 Column(
                     horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.Center,
                     modifier = Modifier
-                        .clickable { if (!selected) onNavigate(entry.route) }
-                        .padding(horizontal = 10.dp, vertical = 6.dp)
+                        .weight(1f)
+                        .fillMaxHeight()
+                        .clickable { onNavigate(item.route) }
                 ) {
-                    Icon(entry.icon, contentDescription = entry.label, tint = tint, modifier = Modifier.size(20.dp))
-                    Spacer(Modifier.height(3.dp))
+                    Icon(
+                        imageVector = item.icon,
+                        contentDescription = item.label,
+                        tint = tint,
+                        modifier = Modifier.size(22.dp)
+                    )
+                    Spacer(Modifier.height(4.dp))
                     Text(
-                        entry.label,
+                        text = item.label,
                         color = tint,
                         fontFamily = Dojo.Mono,
-                        fontSize = 9.sp,
-                        fontWeight = if (selected) FontWeight.Bold else FontWeight.Normal
+                        fontSize = 10.sp,
+                        fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal
                     )
                 }
             }
