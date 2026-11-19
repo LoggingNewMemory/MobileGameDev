@@ -37,7 +37,8 @@ import amba.dojo.pulse.ui.theme.*
 @Composable
 fun MarketScreen(
     viewModel: MarketViewModel = viewModel(),
-    onNavigate: (String) -> Unit = {}
+    onNavigate: (String) -> Unit = {},
+    onOpenCart: () -> Unit = {}
 ) {
     val products by viewModel.products.collectAsState()
     var selectedCategory by remember { mutableStateOf("Semua") }
@@ -58,7 +59,7 @@ fun MarketScreen(
         ) {
             LazyColumn(
                 modifier = Modifier.fillMaxSize(),
-                contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 12.dp, bottom = 90.dp),
+                contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 12.dp, bottom = 80.dp),
                 verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
                 item { TopSection() }
@@ -92,9 +93,10 @@ fun MarketScreen(
             }
 
             CartPreview(
+                onCheckoutClick = onOpenCart,
                 modifier = Modifier
                     .align(Alignment.BottomCenter)
-                    .padding(bottom = 12.dp, start = 16.dp, end = 16.dp)
+                    .padding(bottom = 8.dp, start = 16.dp, end = 16.dp)
             )
         }
     }
@@ -299,7 +301,10 @@ private fun BenefitItem(
 }
 
 @Composable
-fun CartPreview(modifier: Modifier = Modifier) {
+fun CartPreview(
+    onCheckoutClick: () -> Unit = {},
+    modifier: Modifier = Modifier
+) {
     val shape = RoundedCornerShape(12.dp)
     Row(
         modifier = modifier
@@ -308,39 +313,32 @@ fun CartPreview(modifier: Modifier = Modifier) {
             .clip(shape)
             .background(Dojo.Surface)
             .border(1.dp, Dojo.Red, shape)
+            .clickable { onCheckoutClick() }
             .padding(horizontal = 14.dp),
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically
     ) {
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            Box(
-                modifier = Modifier
-                    .size(32.dp)
-                    .clip(CircleShape)
-                    .background(Dojo.RedDeep),
-                contentAlignment = Alignment.Center
-            ) {
-                Icon(
-                    Icons.Default.ShoppingCart,
-                    contentDescription = null,
-                    tint = Dojo.Red,
-                    modifier = Modifier.size(16.dp)
-                )
-            }
-            Spacer(Modifier.width(10.dp))
-            Column {
-                MonoLabel("2 ITEMS IN CART", size = 9, color = Dojo.Red, bold = true)
-                Text(
-                    text = "Rp 878.000",
-                    color = Dojo.Text,
-                    fontFamily = Dojo.Mono,
-                    fontSize = 12.sp,
-                    fontWeight = FontWeight.Bold
-                )
-            }
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            Icon(
+                Icons.Default.ShoppingCart,
+                contentDescription = null,
+                tint = Dojo.Red,
+                modifier = Modifier.size(20.dp)
+            )
+            Text(
+                "Keranjang Belanja",
+                color = Dojo.Text,
+                fontFamily = Dojo.Mono,
+                fontSize = 12.sp,
+                fontWeight = FontWeight.Bold
+            )
         }
+
         Button(
-            onClick = { },
+            onClick = onCheckoutClick,
             colors = ButtonDefaults.buttonColors(containerColor = Dojo.Red),
             shape = RoundedCornerShape(8.dp),
             contentPadding = PaddingValues(horizontal = 14.dp, vertical = 6.dp)
