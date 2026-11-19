@@ -23,6 +23,11 @@ import amba.dojo.pulse.ui.theme.DojoPulseTheme
 import amba.dojo.pulse.ui.theme.ArenasScreen
 import com.google.firebase.auth.FirebaseAuth
 import amba.dojo.pulse.market.MarketScreen
+import amba.dojo.pulse.market.CartScreen
+import amba.dojo.pulse.market.CheckoutScreen
+import amba.dojo.pulse.market.QrisPaymentScreen
+import androidx.navigation.NavType
+import androidx.navigation.navArgument
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -106,7 +111,8 @@ class MainActivity : ComponentActivity() {
                             }
                             composable("market") {
                                 MarketScreen(
-                                    onNavigate = navigateTab
+                                    onNavigate = navigateTab,
+                                    onOpenCart = { navController.navigate("cart")}
                                 )
                             }
                             composable("aktivitas") {
@@ -116,7 +122,7 @@ class MainActivity : ComponentActivity() {
                                 )
                             }
                             composable("profil") {
-                                ProfilScreen(
+                                ProfileScreen(
                                     onNavigate = navigateTab,
                                     onLogout = {
                                         navController.navigate("login") {
@@ -177,6 +183,37 @@ class MainActivity : ComponentActivity() {
                                     onStartDrill = {
                                         navController.navigate("training") {
                                             popUpTo("tutorial") { inclusive = true }
+                                        }
+                                    }
+                                )
+                            }
+                            composable("cart") {
+                                CartScreen(
+                                    onNavigateBack = { navController.popBackStack() },
+                                    onCheckout = { navController.navigate("checkout") }
+                                )
+                            }
+
+                            composable("checkout") {
+                                CheckoutScreen(
+                                    onNavigateBack = { navController.popBackStack() }, // Cancel -> balik ke CartScreen
+                                    onProceedToPayment = { totalAmount ->
+                                        navController.navigate("qris_payment/$totalAmount")
+                                    }
+                                )
+                            }
+                            composable(
+                                route = "qris_payment/{totalAmount}",
+                                arguments = listOf(navArgument("totalAmount") { type = NavType.IntType })
+                            ) { backStackEntry ->
+                                val totalAmount = backStackEntry.arguments?.getInt("totalAmount") ?: 780_000
+                                QrisPaymentScreen(
+                                    totalAmount = totalAmount,
+                                    onNavigateBack = { navController.popBackStack() }, // Cancel -> balik ke CheckoutScreen
+                                    onPaymentSuccess = {
+                                        navController.navigate("dashboard") {
+                                            popUpTo("dashboard") { inclusive = true }
+                                            launchSingleTop = true
                                         }
                                     }
                                 )
