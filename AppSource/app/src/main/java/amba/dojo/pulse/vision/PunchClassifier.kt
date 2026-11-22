@@ -121,27 +121,21 @@ class PunchClassifier(
             // Kinematic Disambiguation between Hook and Uppercut:
             // An uppercut physically moves vertically upward (upwardDy > 0).
             // A hook physically sweeps horizontally across the transverse plane (lateralDx >> dy).
-            // If the model predicted Hook but the wrist has an upward trajectory, it is an Uppercut!
             var predictedType = rawPredictedType
-            if (rawPredictedType == PunchType.LEFT_HOOK) {
-                val oldest = leftWristQueue.firstOrNull()
-                val latest = leftWristQueue.lastOrNull()
-                if (oldest != null && latest != null) {
-                    val upwardDy = oldest.y - latest.y // Positive = upward
-                    val lateralDx = abs(latest.x - oldest.x)
+            val activeQueue = if (leftDisplacement >= rightDisplacement) leftWristQueue else rightWristQueue
+            val oldest = activeQueue.firstOrNull()
+            val latest = activeQueue.lastOrNull()
+            if (oldest != null && latest != null) {
+                val upwardDy = oldest.y - latest.y // Positive = upward
+                val lateralDx = abs(latest.x - oldest.x)
+                if (rawPredictedType == PunchType.LEFT_HOOK) {
                     val upperProb = aiPrediction.allProbabilities["Left Uppercut"] ?: 0f
-                    if (upwardDy > 0.010f && (upwardDy >= lateralDx * 0.45f || upperProb >= 0.18f)) {
+                    if (upwardDy > 0.008f && (upwardDy >= lateralDx * 0.40f || upperProb >= 0.15f)) {
                         predictedType = PunchType.LEFT_UPPERCUT
                     }
-                }
-            } else if (rawPredictedType == PunchType.RIGHT_HOOK) {
-                val oldest = rightWristQueue.firstOrNull()
-                val latest = rightWristQueue.lastOrNull()
-                if (oldest != null && latest != null) {
-                    val upwardDy = oldest.y - latest.y // Positive = upward
-                    val lateralDx = abs(latest.x - oldest.x)
+                } else if (rawPredictedType == PunchType.RIGHT_HOOK) {
                     val upperProb = aiPrediction.allProbabilities["Right UpperCut"] ?: 0f
-                    if (upwardDy > 0.010f && (upwardDy >= lateralDx * 0.45f || upperProb >= 0.18f)) {
+                    if (upwardDy > 0.008f && (upwardDy >= lateralDx * 0.40f || upperProb >= 0.15f)) {
                         predictedType = PunchType.RIGHT_UPPERCUT
                     }
                 }
@@ -151,15 +145,8 @@ class PunchClassifier(
                     predictedType != PunchType.IDLE &&
                     aiPrediction.confidence >= minPunchConfidence
 
-            // Determine active hand motion
-            val activeHandDisplacement = when (predictedType) {
-                PunchType.LEFT_HOOK, PunchType.LEFT_JAB, PunchType.LEFT_UPPERCUT -> leftDisplacement
-                PunchType.RIGHT_HOOK, PunchType.RIGHT_UPPERCUT, PunchType.STRIKE -> rightDisplacement
-                else -> maxDisplacement
-            }
-
             // Real punch requires genuine physical movement (distinguishes punch from holding hand)
-            val isActivelyMoving = activeHandDisplacement >= minStrikeDisplacement
+            val isActivelyMoving = maxDisplacement >= minStrikeDisplacement
             val cooldownPassed = (currentTime - lastStrikeTimestamp) >= strikeCooldownMs
 
             if (isArmedForStrike && isPunch && isActivelyMoving && cooldownPassed) {
@@ -175,11 +162,12 @@ class PunchClassifier(
                 feedback = "${predictedType.displayName.uppercase()} ($confPercent% MATCH)"
                 formScore = (formScore + 1).coerceAtMost(99)
             } else if (!isArmedForStrike) {
-                // Re-arm when transitioning back to Guard or Idle
+                // Re-arm when transitioning back to Guard or Idle, or when movement slows
                 val backToNeutral = predictedType == PunchType.GUARD ||
                         predictedType == PunchType.IDLE ||
                         aiPrediction.confidence < 0.45f ||
-                        isCurrentlyInGuard
+                        isCurrentlyInGuard ||
+                        maxDisplacement < (minStrikeDisplacement * 0.8f)
 
                 if (backToNeutral && (currentTime - lastStrikeTimestamp >= 280L)) {
                     isArmedForStrike = true

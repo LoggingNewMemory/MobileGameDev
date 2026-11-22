@@ -24,7 +24,7 @@ class AIPoseMovementClassifier(
 ) {
     companion object {
         const val WINDOW_SIZE = 16
-        const val FEATURE_DIM = 62
+        const val FEATURE_DIM = 68
 
         private val KEY_LANDMARKS = intArrayOf(
             PoseLandmark.NOSE,            // 0
@@ -46,6 +46,9 @@ class AIPoseMovementClassifier(
     private var interpreter: Interpreter? = null
     private val labels = mutableListOf<String>()
     private val sequenceBuffer = ArrayDeque<FloatArray>(WINDOW_SIZE)
+    private var hasPrevLandmarks = false
+    private val prevWristL = FloatArray(3)
+    private val prevWristR = FloatArray(3)
 
     init {
         try {
@@ -219,6 +222,34 @@ class AIPoseMovementClassifier(
         features[cursor++] = (lW[1] - rW[1]) / scale
         features[cursor++] = (lW[2] - rW[2]) / scale
 
+        // 6. Instantaneous wrist velocities (normalized by scale)
+        if (hasPrevLandmarks) {
+            features[cursor++] = (lW[0] - prevWristL[0]) / scale
+            features[cursor++] = (lW[1] - prevWristL[1]) / scale
+            features[cursor++] = (lW[2] - prevWristL[2]) / scale
+
+            features[cursor++] = (rW[0] - prevWristR[0]) / scale
+            features[cursor++] = (rW[1] - prevWristR[1]) / scale
+            features[cursor++] = (rW[2] - prevWristR[2]) / scale
+        } else {
+            features[cursor++] = 0f
+            features[cursor++] = 0f
+            features[cursor++] = 0f
+
+            features[cursor++] = 0f
+            features[cursor++] = 0f
+            features[cursor++] = 0f
+        }
+
+        prevWristL[0] = lW[0]
+        prevWristL[1] = lW[1]
+        prevWristL[2] = lW[2]
+
+        prevWristR[0] = rW[0]
+        prevWristR[1] = rW[1]
+        prevWristR[2] = rW[2]
+        hasPrevLandmarks = true
+
         return features
     }
 
@@ -242,6 +273,7 @@ class AIPoseMovementClassifier(
 
     fun reset() {
         sequenceBuffer.clear()
+        hasPrevLandmarks = false
     }
 
     fun close() {

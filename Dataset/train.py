@@ -3,12 +3,31 @@
 DojoPulse AI Movement Training Pipeline (Boxing and Swimming)
 Extracts 3D pose landmarks from training videos using MediaPipe,
 normalizes biomechanical coordinates, builds temporal action sequences,
-trains neural network classifiers, and exports TensorFlow Lite (.tflite)
-models and metadata for Android Native integration.
+trains neural network classifiers with GPU acceleration (RTX 4060),
+and exports TensorFlow Lite (.tflite) models and metadata for Android Native integration.
 """
 
 import os
 import sys
+import glob
+
+# Ensure nvidia CUDA/cuDNN libraries installed via pip in .venv are linked for GPU acceleration
+venv_nvidia = os.path.join(os.path.dirname(os.path.abspath(__file__)), ".venv/lib/python3.11/site-packages/nvidia")
+cuda_nvcc = os.path.join(venv_nvidia, "cuda_nvcc")
+if "LD_CONFIGURED" not in os.environ and os.path.isdir(venv_nvidia):
+    libs = glob.glob(f"{venv_nvidia}/*/lib")
+    current_ld = os.environ.get("LD_LIBRARY_PATH", "")
+    new_ld = ":".join(libs) + (f":{current_ld}" if current_ld else "")
+    env = os.environ.copy()
+    env["LD_LIBRARY_PATH"] = new_ld
+    env["LD_CONFIGURED"] = "1"
+    if os.path.isdir(cuda_nvcc):
+        env["XLA_FLAGS"] = f"--xla_gpu_cuda_data_dir={cuda_nvcc}"
+    os.execve(sys.executable, [sys.executable] + sys.argv, env)
+
+if os.path.isdir(cuda_nvcc) and "--xla_gpu_cuda_data_dir" not in os.environ.get("XLA_FLAGS", ""):
+    os.environ["XLA_FLAGS"] = f"--xla_gpu_cuda_data_dir={cuda_nvcc} {os.environ.get('XLA_FLAGS', '')}".strip()
+
 import json
 import shutil
 import argparse
@@ -20,6 +39,18 @@ from tensorflow import keras
 from tensorflow.keras import layers
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import classification_report, confusion_matrix
+
+# Enable GPU Memory Growth for RTX 4060 Laptop GPU
+gpus = tf.config.list_physical_devices('GPU')
+if gpus:
+    try:
+        for gpu in gpus:
+            tf.config.experimental.set_memory_growth(gpu, True)
+        print(f"[GPU] CUDA Acceleration ACTIVE: Using {len(gpus)} GPU(s) -> {gpus[0].name}")
+    except RuntimeError as e:
+        print(f"[GPU] Warning setting memory growth: {e}")
+else:
+    print("[GPU] Note: No GPU detected, using CPU fallback.")
 
 DATASET_ROOT = os.path.dirname(os.path.abspath(__file__))
 MODELS_DIR = os.path.join(DATASET_ROOT, "models")
@@ -44,7 +75,7 @@ LANDMARK_INDICES = [
 ]
 
 WINDOW_SIZE = 16  # 16 frames window (~0.5s at 30 fps)
-FEATURE_DIM = 62  # 39 coords + 8 angles + 15 relative vectors
+FEATURE_DIM = 68  # 39 coords + 8 angles + 15 relative vectors + 6 wrist velocities
 
 def calculate_angle_3d(a, b, c):
     """Calculate angle in degrees between vector BA and BC."""
@@ -58,10 +89,14 @@ def calculate_angle_3d(a, b, c):
     cosine = np.clip(cosine, -1.0, 1.0)
     return float(np.degrees(np.arccos(cosine)))
 
-def extract_frame_features(landmarks_33):
+def extract_frame_features(landmarks_33, prev_landmarks_33=None):
     """
     Computes invariant normalized features from 33 raw (x,y,z) landmarks.
-    Output: 62-element 1D numpy array.
+    Output: 68-element 1D numpy array:
+      - 39 coords (13 keypoints * 3)
+      - 8 biomechanical joint angles (normalized to [0, 1])
+      - 15 relative vectors (wrist to shoulder, nose, opposite wrist)
+      - 6 wrist velocities: Left wrist (dx, dy, dz) + Right wrist (dx, dy, dz) normalized by body scale
     """
     pts = np.zeros((33, 3), dtype=np.float32)
     for idx in range(33):
@@ -105,7 +140,18 @@ def extract_frame_features(landmarks_33):
     rel_vectors.extend(((pts[16] - pts[0]) / scale).tolist())  # R wrist - Nose
     rel_vectors.extend(((pts[15] - pts[16]) / scale).tolist()) # L wrist - R wrist
 
-    features = np.array(norm_keypoints + angles + rel_vectors, dtype=np.float32)
+    # Instantaneous wrist velocities (normalized by scale)
+    wrist_vel = []
+    if prev_landmarks_33 is not None:
+        prev_pts = np.zeros((33, 3), dtype=np.float32)
+        for idx in range(33):
+            prev_pts[idx] = prev_landmarks_33[idx][:3]
+        wrist_vel.extend(((pts[15] - prev_pts[15]) / scale).tolist()) # L wrist dx, dy, dz
+        wrist_vel.extend(((pts[16] - prev_pts[16]) / scale).tolist()) # R wrist dx, dy, dz
+    else:
+        wrist_vel.extend([0.0, 0.0, 0.0, 0.0, 0.0, 0.0])
+
+    features = np.array(norm_keypoints + angles + rel_vectors + wrist_vel, dtype=np.float32)
     return features
 
 def extract_video_landmarks(video_path):
@@ -212,7 +258,11 @@ def process_dataset(sport_name, categories, force_refresh=False):
             if len(raw_frames) < WINDOW_SIZE:
                 continue
 
-            frame_features = np.array([extract_frame_features(f) for f in raw_frames])
+            frame_features = []
+            for f_idx in range(len(raw_frames)):
+                prev_f = raw_frames[f_idx - 1] if f_idx > 0 else None
+                frame_features.append(extract_frame_features(raw_frames[f_idx], prev_f))
+            frame_features = np.array(frame_features, dtype=np.float32)
 
             # Calculate wrist motion per frame
             lw = raw_frames[:, 15, :3]
@@ -254,7 +304,12 @@ def process_dataset(sport_name, categories, force_refresh=False):
             raw_frames = extract_video_landmarks(vpath)
             if len(raw_frames) < WINDOW_SIZE:
                 continue
-            frame_features = np.array([extract_frame_features(f) for f in raw_frames])
+            frame_features = []
+            for f_idx in range(len(raw_frames)):
+                prev_f = raw_frames[f_idx - 1] if f_idx > 0 else None
+                frame_features.append(extract_frame_features(raw_frames[f_idx], prev_f))
+            frame_features = np.array(frame_features, dtype=np.float32)
+
             stride = 4  # Stride of 4 for diverse idle samples
             num_windows = (len(frame_features) - WINDOW_SIZE) // stride + 1
             for w_idx in range(num_windows):
@@ -307,19 +362,29 @@ def process_dataset(sport_name, categories, force_refresh=False):
     return X, y, all_labels_list
 
 def build_model(input_shape, num_classes):
-    """Constructs a lightweight 1D-CNN temporal action classifier."""
+    """
+    Constructs a high-precision 1D-CNN temporal action classifier with preserved temporal dynamics.
+    Preserves temporal ordering [t0 .. t15] via Conv1D + MaxPooling + Flatten (eliminates GlobalAveragePooling).
+    """
     model = keras.Sequential([
         layers.Input(shape=input_shape, name="pose_sequence_input"),
-        layers.Conv1D(32, kernel_size=3, padding="same", activation="relu"),
-        layers.BatchNormalization(),
-        layers.MaxPooling1D(pool_size=2),
 
         layers.Conv1D(64, kernel_size=3, padding="same", activation="relu"),
         layers.BatchNormalization(),
-        layers.GlobalAveragePooling1D(),
+        layers.MaxPooling1D(pool_size=2),
 
-        layers.Dense(64, activation="relu"),
+        layers.Conv1D(128, kernel_size=3, padding="same", activation="relu"),
+        layers.BatchNormalization(),
+        layers.MaxPooling1D(pool_size=2),
+
+        layers.Conv1D(128, kernel_size=3, padding="same", activation="relu"),
+        layers.BatchNormalization(),
+
+        layers.Flatten(),
+        layers.Dense(128, activation="relu"),
         layers.Dropout(0.3),
+        layers.Dense(64, activation="relu"),
+        layers.Dropout(0.2),
         layers.Dense(num_classes, activation="softmax", name="action_probabilities")
     ])
 
