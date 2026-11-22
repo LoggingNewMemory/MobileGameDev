@@ -69,8 +69,8 @@ dependencies {
     implementation("com.google.mlkit:pose-detection:18.0.0-beta5")
     implementation("com.google.guava:guava:33.0.0-android")
 
-    // TensorFlow Lite for trained model inference
-    implementation("org.tensorflow:tensorflow-lite:2.16.1")
+    // LiteRT (formerly TensorFlow Lite) with 16 KB page-size support
+    implementation("com.google.ai.edge.litert:litert:1.4.0")
     testImplementation(libs.junit)
     androidTestImplementation(platform(libs.androidx.compose.bom))
     androidTestImplementation(libs.androidx.compose.ui.test.junit4)

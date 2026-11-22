@@ -23,6 +23,6 @@
     "Gaya Katak",
     "Gaya Kupu-Kupu"
   ],
-  "validation_accuracy": 1.0,
-  "validation_loss": 0.0036616921424865723
+  "validation_accuracy": 0.9986842274665833,
+  "validation_loss": 0.0051130629144608974
 }

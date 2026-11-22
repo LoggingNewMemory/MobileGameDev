@@ -26,6 +26,6 @@
     "Strike",
     "Guard / Idle"
   ],
-  "validation_accuracy": 0.9826086759567261,
-  "validation_loss": 0.06587991863489151
+  "validation_accuracy": 0.9707981944084167,
+  "validation_loss": 0.08682867139577866
 }
