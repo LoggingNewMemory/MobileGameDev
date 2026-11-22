@@ -1,5 +1,7 @@
 # Ignore exported design files
 EXPORTED/
 
-# Ignore Dataset Data
+# Ignore Dataset Data but include scripts
 Dataset/*
+!Dataset/*.py
+!Dataset/*.sh
