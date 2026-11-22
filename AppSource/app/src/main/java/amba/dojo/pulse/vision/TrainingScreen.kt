@@ -507,70 +507,21 @@ fun TrainingHudOverlay(
         }
 
 
-        // Bottom HUD Card: Progress, Form Score, and Finish Button
-        Card(
-            modifier = Modifier.fillMaxWidth(),
-            colors = CardDefaults.cardColors(containerColor = Color(0xDD1E1E1E)),
-            shape = RoundedCornerShape(12.dp)
+        // Bottom HUD: Finish Button
+        Button(
+            onClick = onFinish,
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(48.dp),
+            shape = RoundedCornerShape(10.dp),
+            colors = ButtonDefaults.buttonColors(containerColor = accentRed)
         ) {
-            Column(modifier = Modifier.padding(14.dp)) {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Column {
-                        Text("STRIKE TARGET", color = Color.LightGray, fontSize = 10.sp, fontWeight = FontWeight.Bold)
-                        Text(
-                            "${telemetry.totalStrikes} / ${telemetry.targetStrikes} Strikes",
-                            color = Color.White,
-                            fontSize = 16.sp,
-                            fontWeight = FontWeight.Bold
-                        )
-                    }
-                }
-
-                Spacer(modifier = Modifier.height(8.dp))
-
-                val progress = (telemetry.totalStrikes.toFloat() / telemetry.targetStrikes.toFloat()).coerceIn(0f, 1f)
-                LinearProgressIndicator(
-                    progress = { progress },
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(6.dp)
-                        .clip(RoundedCornerShape(3.dp)),
-                    color = accentPink,
-                    trackColor = Color(0xFF333333)
-                )
-
-                Spacer(modifier = Modifier.height(10.dp))
-
-                // Breakdown of punches matching Dataset categories
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween
-                ) {
-                    Text("JAB: ${telemetry.strikeCounts[PunchType.LEFT_JAB] ?: 0}", color = Color.LightGray, fontSize = 10.sp)
-                    Text("STRIKE: ${telemetry.strikeCounts[PunchType.STRIKE] ?: 0}", color = Color.LightGray, fontSize = 10.sp)
-                    Text("HOOK: ${(telemetry.strikeCounts[PunchType.LEFT_HOOK] ?: 0) + (telemetry.strikeCounts[PunchType.RIGHT_HOOK] ?: 0)}", color = Color.LightGray, fontSize = 10.sp)
-                    Text("UPPER: ${(telemetry.strikeCounts[PunchType.LEFT_UPPERCUT] ?: 0) + (telemetry.strikeCounts[PunchType.RIGHT_UPPERCUT] ?: 0)}", color = Color.LightGray, fontSize = 10.sp)
-                }
-
-                Spacer(modifier = Modifier.height(12.dp))
-
-                Button(
-                    onClick = onFinish,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(44.dp),
-                    shape = RoundedCornerShape(8.dp),
-                    colors = ButtonDefaults.buttonColors(containerColor = accentRed)
-                ) {
-                    Icon(Icons.Default.CheckCircle, contentDescription = null, tint = Color.White)
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Text("FINISH TRAINING", color = Color.White, fontWeight = FontWeight.Bold, fontSize = 14.sp)
-                }
-            }
+            Text(
+                "FINISH TRAINING",
+                color = Color.White,
+                fontWeight = FontWeight.Bold,
+                fontSize = 14.sp
+            )
         }
     }
 }

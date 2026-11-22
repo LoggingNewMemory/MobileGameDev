@@ -31,9 +31,9 @@ class PunchClassifier(
     private val minPunchConfidence = 0.55f
 
     // Scale-invariant displacement threshold (3 frames)
-    // Idle / standing jitter is 0.003 - 0.015.
-    // Active punches (Uppercut, Hook, Jab, Strike) are 0.035 - 0.20.
-    private val minStrikeDisplacement = 0.024f
+    // Idle / standing jitter is 0.003 - 0.020.
+    // Active punches (Uppercut, Hook, Jab, Strike) produce intentional displacement >= 0.040.
+    private val minStrikeDisplacement = 0.040f
 
     private var totalStrikes = 0
     private var formScore = 88
@@ -77,116 +77,214 @@ class PunchClassifier(
         val widthF = imageWidth.toFloat().coerceAtLeast(1f)
         val heightF = imageHeight.toFloat().coerceAtLeast(1f)
 
+        // Strict landmark visibility & active camera frame verification.
+        // Boxing punches strictly require shoulder, elbow, and wrist to all be visible
+        // and safely inside the active camera view (not down in lap / cropped at frame edges).
+        val minShoulderVisibility = 0.55f
+        val minElbowVisibility = 0.55f
+        val minWristVisibility = 0.65f
+
+        val isLeftShoulderValid = leftShoulder != null && leftShoulder.inFrameLikelihood >= minShoulderVisibility
+        val isRightShoulderValid = rightShoulder != null && rightShoulder.inFrameLikelihood >= minShoulderVisibility
+
+        val isLeftElbowValid = isLeftShoulderValid && leftElbow != null &&
+                leftElbow.inFrameLikelihood >= minElbowVisibility &&
+                leftElbow.position.y in (0.05f * heightF)..(0.98f * heightF)
+
+        val isRightElbowValid = isRightShoulderValid && rightElbow != null &&
+                rightElbow.inFrameLikelihood >= minElbowVisibility &&
+                rightElbow.position.y in (0.05f * heightF)..(0.98f * heightF)
+
+        val isLeftWristValid = isLeftElbowValid && leftWrist != null &&
+                leftWrist.inFrameLikelihood >= minWristVisibility &&
+                leftWrist.position.x in (0.04f * widthF)..(0.96f * widthF) &&
+                leftWrist.position.y in (0.04f * heightF)..(0.90f * heightF)
+
+        val isRightWristValid = isRightElbowValid && rightWrist != null &&
+                rightWrist.inFrameLikelihood >= minWristVisibility &&
+                rightWrist.position.x in (0.04f * widthF)..(0.96f * widthF) &&
+                rightWrist.position.y in (0.04f * heightF)..(0.90f * heightF)
+
         // Calculate elbow angles
-        val leftElbowAngle = if (leftShoulder != null && leftElbow != null && leftWrist != null) {
-            calculateAngle(leftShoulder, leftElbow, leftWrist)
+        val leftElbowAngle = if (isLeftElbowValid && isLeftWristValid) {
+            calculateAngle(leftShoulder!!, leftElbow!!, leftWrist!!)
         } else 0.0
 
-        val rightElbowAngle = if (rightShoulder != null && rightElbow != null && rightWrist != null) {
-            calculateAngle(rightShoulder, rightElbow, rightWrist)
+        val rightElbowAngle = if (isRightElbowValid && isRightWristValid) {
+            calculateAngle(rightShoulder!!, rightElbow!!, rightWrist!!)
         } else 0.0
 
         val activeAngle = maxOf(leftElbowAngle, rightElbowAngle)
 
-        // Guard detection
-        val isLeftGuard = isHandInGuard(leftWrist, leftShoulder, widthF, heightF)
-        val isRightGuard = isHandInGuard(rightWrist, rightShoulder, widthF, heightF)
+        // Guard detection (requires wrist visible near shoulder)
+        val isLeftGuard = isLeftWristValid && isHandInGuard(leftWrist, leftShoulder, widthF, heightF)
+        val isRightGuard = isRightWristValid && isHandInGuard(rightWrist, rightShoulder, widthF, heightF)
         val isCurrentlyInGuard = isLeftGuard && isRightGuard
 
-        // Track normalized wrist positions (sliding 4-frame window)
-        if (leftWrist != null) {
-            val nx = leftWrist.position.x / widthF
+        // Track normalized wrist positions (sliding 4-frame window) - only when genuinely visible!
+        if (isLeftWristValid) {
+            val nx = leftWrist!!.position.x / widthF
             val ny = leftWrist.position.y / heightF
             if (leftWristQueue.size >= 4) leftWristQueue.removeFirst()
             leftWristQueue.addLast(WristPoint(nx, ny))
+        } else {
+            leftWristQueue.clear()
         }
 
-        if (rightWrist != null) {
-            val nx = rightWrist.position.x / widthF
+        if (isRightWristValid) {
+            val nx = rightWrist!!.position.x / widthF
             val ny = rightWrist.position.y / heightF
             if (rightWristQueue.size >= 4) rightWristQueue.removeFirst()
             rightWristQueue.addLast(WristPoint(nx, ny))
+        } else {
+            rightWristQueue.clear()
         }
 
         val leftDisplacement = calculateQueueDisplacement(leftWristQueue)
         val rightDisplacement = calculateQueueDisplacement(rightWristQueue)
-        val maxDisplacement = maxOf(leftDisplacement, rightDisplacement)
 
         // --- AI Movement Classifier Execution ---
-        val aiPrediction = aiClassifier?.processPose(pose, imageWidth, imageHeight)
-        if (aiPrediction != null) {
-            val rawPredictedType = PunchType.fromLabel(aiPrediction.label)
-            currentConfidence = aiPrediction.confidence
+        if (aiClassifier != null) {
+            val aiPrediction = aiClassifier.processPose(pose, imageWidth, imageHeight)
+            if (aiPrediction == null) {
+                // Sequence buffer is still calibrating: do not trigger any false heuristic strikes!
+                currentPunch = PunchType.IDLE
+                feedback = if (!isLeftWristValid && !isRightWristValid) {
+                    "Show hands & guard to start"
+                } else {
+                    "Calibrating stance..."
+                }
+            } else {
+                val rawPredictedType = PunchType.fromLabel(aiPrediction.label)
+                currentConfidence = aiPrediction.confidence
 
-            // Kinematic Disambiguation between Hook and Uppercut:
-            // An uppercut physically moves vertically upward (upwardDy > 0).
-            // A hook physically sweeps horizontally across the transverse plane (lateralDx >> dy).
-            var predictedType = rawPredictedType
-            val activeQueue = if (leftDisplacement >= rightDisplacement) leftWristQueue else rightWristQueue
-            val oldest = activeQueue.firstOrNull()
-            val latest = activeQueue.lastOrNull()
-            if (oldest != null && latest != null) {
-                val upwardDy = oldest.y - latest.y // Positive = upward
-                val lateralDx = abs(latest.x - oldest.x)
-                if (rawPredictedType == PunchType.LEFT_HOOK) {
-                    val upperProb = aiPrediction.allProbabilities["Left Uppercut"] ?: 0f
-                    if (upwardDy > 0.008f && (upwardDy >= lateralDx * 0.40f || upperProb >= 0.15f)) {
-                        predictedType = PunchType.LEFT_UPPERCUT
+                var predictedType = rawPredictedType
+                val isLeftPunch = predictedType == PunchType.LEFT_JAB ||
+                        predictedType == PunchType.LEFT_HOOK ||
+                        predictedType == PunchType.LEFT_UPPERCUT
+                val isRightPunch = predictedType == PunchType.STRIKE ||
+                        predictedType == PunchType.RIGHT_HOOK ||
+                        predictedType == PunchType.RIGHT_UPPERCUT
+
+                // Validate that the striking arm is fully visible and in active frame
+                val isStrikingArmVisible = when {
+                    isLeftPunch -> isLeftWristValid
+                    isRightPunch -> isRightWristValid
+                    else -> false
+                }
+
+                val strikingDisplacement = when {
+                    isLeftPunch -> leftDisplacement
+                    isRightPunch -> rightDisplacement
+                    else -> 0f
+                }
+
+                // Strict Kinematic Validation
+                val activeQueue = if (isLeftPunch) leftWristQueue else rightWristQueue
+                val strikingShoulder = if (isLeftPunch) leftShoulder else rightShoulder
+                val strikingElbowAngle = if (isLeftPunch) leftElbowAngle else rightElbowAngle
+
+                var isKinematicallyValid = false
+                if (isStrikingArmVisible && activeQueue.size >= 3 && strikingShoulder != null) {
+                    val oldest = activeQueue.first()
+                    val latest = activeQueue.last()
+                    val upwardDy = oldest.y - latest.y // Positive = moved upward in frame
+                    val lateralDx = abs(latest.x - oldest.x)
+                    val shoulderNormY = strikingShoulder.position.y / heightF
+
+                    // Hook / Uppercut disambiguation
+                    if (rawPredictedType == PunchType.LEFT_HOOK) {
+                        val upperProb = aiPrediction.allProbabilities["Left Uppercut"] ?: 0f
+                        if (upwardDy > 0.025f && upwardDy >= lateralDx * 0.60f && upperProb >= 0.30f) {
+                            predictedType = PunchType.LEFT_UPPERCUT
+                        }
+                    } else if (rawPredictedType == PunchType.RIGHT_HOOK) {
+                        val upperProb = aiPrediction.allProbabilities["Right UpperCut"] ?: 0f
+                        if (upwardDy > 0.025f && upwardDy >= lateralDx * 0.60f && upperProb >= 0.30f) {
+                            predictedType = PunchType.RIGHT_UPPERCUT
+                        }
                     }
-                } else if (rawPredictedType == PunchType.RIGHT_HOOK) {
-                    val upperProb = aiPrediction.allProbabilities["Right UpperCut"] ?: 0f
-                    if (upwardDy > 0.008f && (upwardDy >= lateralDx * 0.40f || upperProb >= 0.15f)) {
-                        predictedType = PunchType.RIGHT_UPPERCUT
+
+                    when (predictedType) {
+                        PunchType.LEFT_UPPERCUT, PunchType.RIGHT_UPPERCUT -> {
+                            // Must have clear vertical elevation (at least 3.5% screen height)
+                            val hasUpwardMotion = upwardDy >= 0.035f && upwardDy >= lateralDx * 0.60f
+                            // Uppercut apex must reach near shoulder / chin level (not low down at waist)
+                            val reachedChestLevel = latest.y <= shoulderNormY + 0.12f
+                            isKinematicallyValid = hasUpwardMotion && reachedChestLevel
+                        }
+                        PunchType.LEFT_JAB, PunchType.STRIKE -> {
+                            // Arm extension: elbow angle expands and arm moves forward at chest level
+                            val isArmExtended = strikingElbowAngle >= 120.0
+                            val atChestLevel = latest.y <= shoulderNormY + 0.20f
+                            isKinematicallyValid = isArmExtended && atChestLevel
+                        }
+                        PunchType.LEFT_HOOK, PunchType.RIGHT_HOOK -> {
+                            // Lateral rotation: lateral movement dominates
+                            val isLateralMotion = lateralDx >= 0.035f && lateralDx >= upwardDy * 0.80f
+                            val atChestLevel = latest.y <= shoulderNormY + 0.20f
+                            val isCurvedElbow = strikingElbowAngle in 60.0..145.0
+                            isKinematicallyValid = isLateralMotion && atChestLevel && isCurvedElbow
+                        }
+                        else -> {
+                            isKinematicallyValid = false
+                        }
                     }
                 }
-            }
 
-            val isPunch = predictedType != PunchType.GUARD &&
-                    predictedType != PunchType.IDLE &&
-                    aiPrediction.confidence >= minPunchConfidence
+                val isPunch = isStrikingArmVisible &&
+                        isKinematicallyValid &&
+                        predictedType != PunchType.GUARD &&
+                        predictedType != PunchType.IDLE &&
+                        aiPrediction.confidence >= minPunchConfidence
 
-            // Real punch requires genuine physical movement (distinguishes punch from holding hand)
-            val isActivelyMoving = maxDisplacement >= minStrikeDisplacement
-            val cooldownPassed = (currentTime - lastStrikeTimestamp) >= strikeCooldownMs
+                val isActivelyMoving = strikingDisplacement >= minStrikeDisplacement
+                val cooldownPassed = (currentTime - lastStrikeTimestamp) >= strikeCooldownMs
 
-            if (isArmedForStrike && isPunch && isActivelyMoving && cooldownPassed) {
-                // SINGLE VALIDATED STRIKE EVENT
-                totalStrikes++
-                punchCounts[predictedType] = (punchCounts[predictedType] ?: 0) + 1
-                currentPunch = predictedType
-                lastDetectedPunch = predictedType
-                lastStrikeTimestamp = currentTime
-                isArmedForStrike = false // Lock until returning to guard / idle
+                if (isArmedForStrike && isPunch && isActivelyMoving && cooldownPassed) {
+                    totalStrikes++
+                    punchCounts[predictedType] = (punchCounts[predictedType] ?: 0) + 1
+                    currentPunch = predictedType
+                    lastDetectedPunch = predictedType
+                    lastStrikeTimestamp = currentTime
+                    isArmedForStrike = false
 
-                val confPercent = (aiPrediction.confidence * 100).toInt()
-                feedback = "${predictedType.displayName.uppercase()} ($confPercent% MATCH)"
-                formScore = (formScore + 1).coerceAtMost(99)
-            } else if (!isArmedForStrike) {
-                // Re-arm when transitioning back to Guard or Idle, or when movement slows
-                val backToNeutral = predictedType == PunchType.GUARD ||
-                        predictedType == PunchType.IDLE ||
-                        aiPrediction.confidence < 0.45f ||
-                        isCurrentlyInGuard ||
-                        maxDisplacement < (minStrikeDisplacement * 0.8f)
+                    val confPercent = (aiPrediction.confidence * 100).toInt()
+                    feedback = "${predictedType.displayName.uppercase()} ($confPercent% MATCH)"
+                    formScore = (formScore + 1).coerceAtMost(99)
+                } else if (!isArmedForStrike) {
+                    val backToNeutral = predictedType == PunchType.GUARD ||
+                            predictedType == PunchType.IDLE ||
+                            aiPrediction.confidence < 0.45f ||
+                            isCurrentlyInGuard ||
+                            strikingDisplacement < (minStrikeDisplacement * 0.7f)
 
-                if (backToNeutral && (currentTime - lastStrikeTimestamp >= 280L)) {
-                    isArmedForStrike = true
+                    if (backToNeutral && (currentTime - lastStrikeTimestamp >= 280L)) {
+                        isArmedForStrike = true
+                    }
                 }
             }
         } else {
-            // Heuristic fallback if AI classifier is not loaded
+            // Heuristic fallback ONLY if AI classifier is not loaded
             evaluateHeuristicStrike(
                 leftDisplacement = leftDisplacement,
                 rightDisplacement = rightDisplacement,
                 leftElbowAngle = leftElbowAngle,
                 rightElbowAngle = rightElbowAngle,
+                isLeftWristValid = isLeftWristValid,
+                isRightWristValid = isRightWristValid,
+                leftShoulderNormY = (leftShoulder?.position?.y ?: 0f) / heightF,
+                rightShoulderNormY = (rightShoulder?.position?.y ?: 0f) / heightF,
                 currentTime = currentTime
             )
         }
 
         // --- Visual HUD Display Banner Management ---
         if (currentTime - lastStrikeTimestamp >= strikeDisplayHoldMs) {
-            if (isCurrentlyInGuard) {
+            if (!isLeftWristValid && !isRightWristValid) {
+                currentPunch = PunchType.IDLE
+                feedback = "Show hands & guard to start"
+            } else if (isCurrentlyInGuard) {
                 currentPunch = PunchType.GUARD
                 feedback = "Guard active. Ready to strike!"
             } else {
@@ -232,13 +330,14 @@ class PunchClassifier(
         heightF: Float
     ): Boolean {
         if (wrist == null || shoulder == null) return false
+        if (wrist.inFrameLikelihood < 0.65f || shoulder.inFrameLikelihood < 0.55f) return false
         val wristX = wrist.position.x / widthF
         val wristY = wrist.position.y / heightF
         val shoulderX = shoulder.position.x / widthF
         val shoulderY = shoulder.position.y / heightF
 
-        // Guard zone: wrist near shoulder / chest height
-        val isNearShoulderY = wristY in (shoulderY - 0.25f)..(shoulderY + 0.25f)
+        // Guard zone: wrist elevated near shoulder / chin level
+        val isNearShoulderY = wristY in (shoulderY - 0.28f)..(shoulderY + 0.12f)
         val isCloseX = abs(wristX - shoulderX) < 0.28f
         return isNearShoulderY && isCloseX
     }
@@ -268,6 +367,10 @@ class PunchClassifier(
         rightDisplacement: Float,
         leftElbowAngle: Double,
         rightElbowAngle: Double,
+        isLeftWristValid: Boolean,
+        isRightWristValid: Boolean,
+        leftShoulderNormY: Float,
+        rightShoulderNormY: Float,
         currentTime: Long
     ) {
         if (!isArmedForStrike || (currentTime - lastStrikeTimestamp < strikeCooldownMs)) {
@@ -277,51 +380,53 @@ class PunchClassifier(
             return
         }
 
-        if (leftDisplacement >= minStrikeDisplacement) {
-            val oldest = leftWristQueue.firstOrNull()
-            val latest = leftWristQueue.lastOrNull()
-            val upwardDy = if (oldest != null && latest != null) oldest.y - latest.y else 0f
-            val lateralDx = if (oldest != null && latest != null) abs(latest.x - oldest.x) else 0f
+        if (isLeftWristValid && leftWristQueue.size >= 3 && leftDisplacement >= minStrikeDisplacement) {
+            val oldest = leftWristQueue.first()
+            val latest = leftWristQueue.last()
+            val upwardDy = oldest.y - latest.y
+            val lateralDx = abs(latest.x - oldest.x)
 
-            val punch = if (upwardDy > 0.010f && upwardDy >= lateralDx * 0.45f) {
-                PunchType.LEFT_UPPERCUT
-            } else if (leftElbowAngle >= 135.0) {
-                PunchType.LEFT_JAB
-            } else {
-                PunchType.LEFT_HOOK
+            val punch = when {
+                upwardDy >= 0.035f && upwardDy >= lateralDx * 0.60f && latest.y <= leftShoulderNormY + 0.12f -> PunchType.LEFT_UPPERCUT
+                leftElbowAngle >= 120.0 && latest.y <= leftShoulderNormY + 0.20f -> PunchType.LEFT_JAB
+                lateralDx >= 0.035f && latest.y <= leftShoulderNormY + 0.20f && leftElbowAngle in 60.0..145.0 -> PunchType.LEFT_HOOK
+                else -> null
             }
 
-            totalStrikes++
-            punchCounts[punch] = (punchCounts[punch] ?: 0) + 1
-            currentPunch = punch
-            lastDetectedPunch = punch
-            lastStrikeTimestamp = currentTime
-            isArmedForStrike = false
-            feedback = "${punch.displayName.uppercase()} (FORM DETECTED)"
-            return
+            if (punch != null) {
+                totalStrikes++
+                punchCounts[punch] = (punchCounts[punch] ?: 0) + 1
+                currentPunch = punch
+                lastDetectedPunch = punch
+                lastStrikeTimestamp = currentTime
+                isArmedForStrike = false
+                feedback = "${punch.displayName.uppercase()} (FORM DETECTED)"
+                return
+            }
         }
 
-        if (rightDisplacement >= minStrikeDisplacement) {
-            val oldest = rightWristQueue.firstOrNull()
-            val latest = rightWristQueue.lastOrNull()
-            val upwardDy = if (oldest != null && latest != null) oldest.y - latest.y else 0f
-            val lateralDx = if (oldest != null && latest != null) abs(latest.x - oldest.x) else 0f
+        if (isRightWristValid && rightWristQueue.size >= 3 && rightDisplacement >= minStrikeDisplacement) {
+            val oldest = rightWristQueue.first()
+            val latest = rightWristQueue.last()
+            val upwardDy = oldest.y - latest.y
+            val lateralDx = abs(latest.x - oldest.x)
 
-            val punch = if (upwardDy > 0.010f && upwardDy >= lateralDx * 0.45f) {
-                PunchType.RIGHT_UPPERCUT
-            } else if (rightElbowAngle >= 135.0) {
-                PunchType.STRIKE
-            } else {
-                PunchType.RIGHT_HOOK
+            val punch = when {
+                upwardDy >= 0.035f && upwardDy >= lateralDx * 0.60f && latest.y <= rightShoulderNormY + 0.12f -> PunchType.RIGHT_UPPERCUT
+                rightElbowAngle >= 120.0 && latest.y <= rightShoulderNormY + 0.20f -> PunchType.STRIKE
+                lateralDx >= 0.035f && latest.y <= rightShoulderNormY + 0.20f && rightElbowAngle in 60.0..145.0 -> PunchType.RIGHT_HOOK
+                else -> null
             }
 
-            totalStrikes++
-            punchCounts[punch] = (punchCounts[punch] ?: 0) + 1
-            currentPunch = punch
-            lastDetectedPunch = punch
-            lastStrikeTimestamp = currentTime
-            isArmedForStrike = false
-            feedback = "${punch.displayName.uppercase()} (FORM DETECTED)"
+            if (punch != null) {
+                totalStrikes++
+                punchCounts[punch] = (punchCounts[punch] ?: 0) + 1
+                currentPunch = punch
+                lastDetectedPunch = punch
+                lastStrikeTimestamp = currentTime
+                isArmedForStrike = false
+                feedback = "${punch.displayName.uppercase()} (FORM DETECTED)"
+            }
         }
     }
 

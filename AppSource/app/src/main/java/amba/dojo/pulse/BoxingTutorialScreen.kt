@@ -495,16 +495,6 @@ fun AiCoachHudSection(
                     textPrimary = textPrimary,
                     textSecondary = textSecondary
                 )
-
-                Spacer(modifier = Modifier.height(12.dp))
-
-                HudGuideItem(
-                    title = "STRIKE TARGET (180 Strikes)",
-                    desc = "3-minute pace drill calibrated for 180 structured strikes (average 1 strike per second).",
-                    accentPink = accentPink,
-                    textPrimary = textPrimary,
-                    textSecondary = textSecondary
-                )
             }
         }
     }

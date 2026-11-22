@@ -86,6 +86,43 @@ class AIPoseMovementClassifier(
     }
 
     fun processPose(pose: Pose, imageWidth: Int = 0, imageHeight: Int = 0): MovementPrediction? {
+        val lWrist = pose.getPoseLandmark(PoseLandmark.LEFT_WRIST)
+        val rWrist = pose.getPoseLandmark(PoseLandmark.RIGHT_WRIST)
+        val lElbow = pose.getPoseLandmark(PoseLandmark.LEFT_ELBOW)
+        val rElbow = pose.getPoseLandmark(PoseLandmark.RIGHT_ELBOW)
+        val lShoulder = pose.getPoseLandmark(PoseLandmark.LEFT_SHOULDER)
+        val rShoulder = pose.getPoseLandmark(PoseLandmark.RIGHT_SHOULDER)
+
+        val heightF = if (imageHeight > 0) imageHeight.toFloat() else 1f
+
+        // Check if at least one arm has visible, genuine landmarks within active frame
+        val isLeftArmInFrame = lWrist != null && lElbow != null && lShoulder != null &&
+                lWrist.inFrameLikelihood >= 0.60f &&
+                lElbow.inFrameLikelihood >= 0.50f &&
+                lShoulder.inFrameLikelihood >= 0.50f &&
+                lWrist.position.y < (heightF * 0.90f)
+
+        val isRightArmInFrame = rWrist != null && rElbow != null && rShoulder != null &&
+                rWrist.inFrameLikelihood >= 0.60f &&
+                rElbow.inFrameLikelihood >= 0.50f &&
+                rShoulder.inFrameLikelihood >= 0.50f &&
+                rWrist.position.y < (heightF * 0.90f)
+
+        // If neither arm is visible in frame (e.g. bust view, hands in lap, sitting too close),
+        // no boxing strike can possibly be occurring!
+        if (!isLeftArmInFrame && !isRightArmInFrame) {
+            sequenceBuffer.clear()
+            hasPrevLandmarks = false
+            val defaultProbMap = labels.associateWith { label ->
+                if (label.equals("Idle", ignoreCase = true)) 0.99f else 0.001f
+            }
+            return MovementPrediction(
+                label = "Idle",
+                confidence = 0.99f,
+                allProbabilities = defaultProbMap
+            )
+        }
+
         val features = extractFeatures(pose, imageWidth, imageHeight)
         if (sequenceBuffer.size >= WINDOW_SIZE) {
             sequenceBuffer.removeFirst()
