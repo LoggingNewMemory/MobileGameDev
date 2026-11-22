@@ -567,16 +567,6 @@ fun TrainingHudOverlay(
                             fontWeight = FontWeight.Bold
                         )
                     }
-
-                    Column(horizontalAlignment = Alignment.End) {
-                        Text("FORM SCORE", color = Color.LightGray, fontSize = 10.sp, fontWeight = FontWeight.Bold)
-                        Text(
-                            "${telemetry.formScore}% Akurat",
-                            color = accentPink,
-                            fontSize = 16.sp,
-                            fontWeight = FontWeight.Bold
-                        )
-                    }
                 }
 
                 Spacer(modifier = Modifier.height(8.dp))
