@@ -332,26 +332,14 @@ private fun PfTopBar() {
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically
     ) {
-        Column(modifier = Modifier.weight(1f)) {
-            Text(
-                "DOJOPULSE // SYS",
-                color = AccentCoral,
-                fontSize = 10.sp,
-                fontWeight = FontWeight.Bold,
-                letterSpacing = 1.4.sp,
-                maxLines = 1,
-                softWrap = false
-            )
-            Spacer(Modifier.height(2.dp))
-            Text(
-                "Fighter Profile",
-                color = TextPrimary,
-                fontSize = 20.sp,
-                fontWeight = FontWeight.ExtraBold,
-                maxLines = 1,
-                softWrap = false
-            )
-        }
+        Text(
+            "Profile",
+            color = TextPrimary,
+            fontSize = 22.sp,
+            fontWeight = FontWeight.ExtraBold,
+            maxLines = 1,
+            softWrap = false
+        )
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             PfNavIcon(Icons.Default.Notifications, "Notifications")
             PfNavIcon(Icons.Default.Settings, "Settings")
@@ -400,41 +388,6 @@ private fun PfIdentityCard(
         border = BorderStroke(1.dp, BgCardBorder)
     ) {
         Column(Modifier.padding(16.dp)) {
-            // Top ID & VIP Badge Row
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Text(
-                    "ID: $shortId",
-                    color = TextMuted,
-                    fontSize = 10.sp,
-                    fontFamily = GoogleSans,
-                    letterSpacing = 0.6.sp,
-                    maxLines = 1,
-                    softWrap = false
-                )
-                Box(
-                    Modifier
-                        .background(Color(0xFF2B1419), RoundedCornerShape(4.dp))
-                        .border(1.dp, Color(0xFF522129), RoundedCornerShape(4.dp))
-                        .padding(horizontal = 8.dp, vertical = 3.dp)
-                ) {
-                    Text(
-                        "ELITE STRIKER VIP",
-                        color = AccentCoral,
-                        fontSize = 9.sp,
-                        fontWeight = FontWeight.ExtraBold,
-                        letterSpacing = 0.5.sp,
-                        maxLines = 1,
-                        softWrap = false
-                    )
-                }
-            }
-
-            Spacer(Modifier.height(14.dp))
-
             // Avatar + Fighter Info Row
             Row(
                 verticalAlignment = Alignment.CenterVertically,
@@ -539,7 +492,7 @@ private fun PfIdentityCard(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                PfStatBox("WORKOUTS", "5/7", "sesi", TextPrimary, Modifier.weight(1f))
+                PfStatBox("WORKOUTS", "5/7", "sessions", TextPrimary, Modifier.weight(1f))
                 PfStatBox("FORM SCORE", "88%", "", AccentCoral, Modifier.weight(1f))
                 PfStatBox("MAT TIME", "4h 25m", "", TextPrimary, Modifier.weight(1f))
             }
@@ -615,40 +568,21 @@ private fun PfPointsCard(
     ) {
         Column(Modifier.padding(14.dp)) {
 
-            // Card Top Info: [POINTS RESERVE] + REWARD HUB  |  • TIER: ELITE (All single-line)
+            // Card Top Info: REWARD HUB  |  • TIER: ELITE
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(6.dp)
-                ) {
-                    Box(
-                        Modifier
-                            .background(AccentRed, RoundedCornerShape(4.dp))
-                            .padding(horizontal = 6.dp, vertical = 3.dp)
-                    ) {
-                        Text(
-                            "POINTS RESERVE",
-                            color = TextPrimary,
-                            fontSize = 9.sp,
-                            fontWeight = FontWeight.Black,
-                            letterSpacing = 0.4.sp,
-                            maxLines = 1,
-                            softWrap = false
-                        )
-                    }
-                    Text(
-                        "REWARD HUB",
-                        color = AccentCoral,
-                        fontSize = 10.sp,
-                        fontWeight = FontWeight.Bold,
-                        maxLines = 1,
-                        softWrap = false
-                    )
-                }
+                Text(
+                    "REWARD HUB",
+                    color = AccentCoral,
+                    fontSize = 11.sp,
+                    fontWeight = FontWeight.Bold,
+                    letterSpacing = 0.8.sp,
+                    maxLines = 1,
+                    softWrap = false
+                )
 
                 // Single-line capsule pill for TIER: ELITE
                 Row(
@@ -1004,14 +938,6 @@ private fun PfVoucherSection(isAktif: Boolean, onTab: (Boolean) -> Unit, onCopy:
                 maxLines = 1,
                 softWrap = false
             )
-            Text(
-                "[LOG_SYNC: ON]",
-                color = TextMuted,
-                fontSize = 10.sp,
-                fontFamily = GoogleSans,
-                maxLines = 1,
-                softWrap = false
-            )
         }
 
         // Segmented Pill Control
@@ -1190,7 +1116,6 @@ private fun PfVoucherUsed() {
         HorizontalDivider(color = Color(0xFF1E1E28))
         Row(Modifier.fillMaxWidth(), Arrangement.SpaceBetween) {
             Text("Redeemed Oct 02, 2026", color = TextDim, fontSize = 11.sp, maxLines = 1, softWrap = false)
-            Text("STATION #02", color = TextDim, fontSize = 10.sp, fontFamily = GoogleSans, maxLines = 1, softWrap = false)
         }
     }
 }
@@ -1224,7 +1149,7 @@ private fun PfSettingsSection() {
             Color(0xFF1F2D42),
             SkyBlue,
             "Change Password & Biometrics",
-            "Update fighter HUD credentials"
+            "Update password and account security"
         )
         PfSettingsRow(
             Icons.Default.HelpOutline,
@@ -1336,7 +1261,7 @@ private fun PfLogoutSection(onLogout: () -> Unit) {
             Icon(Icons.AutoMirrored.Filled.Logout, null, tint = AccentCoral, modifier = Modifier.size(16.dp))
             Spacer(Modifier.width(8.dp))
             Text(
-                "LOGOUT FIGHTER HUD",
+                "LOG OUT",
                 color = AccentCoral,
                 fontSize = 12.sp,
                 fontWeight = FontWeight.Bold,
@@ -1346,7 +1271,7 @@ private fun PfLogoutSection(onLogout: () -> Unit) {
             )
         }
         Text(
-            "DOJOPULSE FIRMWARE V4.1.2 // TEL-ENGINE ACTIVE",
+            "DojoPulse v4.1.2",
             color = TextDim,
             fontSize = 10.sp,
             fontFamily = GoogleSans,

@@ -293,15 +293,7 @@ fun ProfilScreen(onNavigate: (String) -> Unit = {}, onLogout: () -> Unit = {}) {
                     ) {
                         Column {
                             Text(
-                                "DOJOPULSE // SYS",
-                                color = AccentCoral,
-                                fontSize = 10.sp,
-                                fontWeight = FontWeight.Black,
-                                letterSpacing = 1.5.sp,
-                                fontFamily = GoogleSans
-                            )
-                            Text(
-                                "Fighter Profile",
+                                "Profile",
                                 color = TextPrim,
                                 fontSize = 20.sp,
                                 fontWeight = FontWeight.ExtraBold
@@ -339,31 +331,6 @@ fun ProfilScreen(onNavigate: (String) -> Unit = {}, onLogout: () -> Unit = {}) {
                         border = androidx.compose.foundation.BorderStroke(1.dp, BgCardBorder)
                     ) {
                         Column(modifier = Modifier.padding(16.dp)) {
-                            // ID + VIP badge
-                            Row(
-                                modifier = Modifier.fillMaxWidth(),
-                                horizontalArrangement = Arrangement.SpaceBetween,
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                Text(
-                                    "ID: $shortId",
-                                    color = TextMut,
-                                    fontSize = 10.sp,
-                                    fontFamily = GoogleSans,
-                                    letterSpacing = 1.sp
-                                )
-                                Box(
-                                    modifier = Modifier
-                                        .background(Color(0xFF2B1419), RoundedCornerShape(4.dp))
-                                        .border(1.dp, Color(0xFF522129), RoundedCornerShape(4.dp))
-                                        .padding(horizontal = 8.dp, vertical = 3.dp)
-                                ) {
-                                    Text("ELITE STRIKER VIP", color = AccentCoral, fontSize = 9.sp, fontWeight = FontWeight.ExtraBold, letterSpacing = 1.sp)
-                                }
-                            }
-
-                            Spacer(Modifier.height(14.dp))
-
                             // Avatar + info
                             Row(
                                 verticalAlignment = Alignment.CenterVertically,
@@ -575,7 +542,6 @@ fun ProfilScreen(onNavigate: (String) -> Unit = {}, onLogout: () -> Unit = {}) {
                     Column(modifier = Modifier.padding(horizontal = 20.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
                         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
                             Text("MY PROMOS & VOUCHERS", color = TextPrim, fontSize = 11.sp, fontWeight = FontWeight.Bold, letterSpacing = 1.sp)
-                            Text("[LOG_SYNC: ON]", color = TextMut, fontSize = 10.sp, fontFamily = GoogleSans)
                         }
                         // Tab pills
                         Row(
@@ -651,7 +617,6 @@ fun ProfilScreen(onNavigate: (String) -> Unit = {}, onLogout: () -> Unit = {}) {
                                 androidx.compose.material3.HorizontalDivider(color = Color(0xFF1E1E28), thickness = 1.dp)
                                 Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
                                     Text("Redeemed Oct 02, 2026", color = TextMut, fontSize = 11.sp)
-                                    Text("STATION #02", color = TextMut, fontSize = 10.sp, fontFamily = GoogleSans)
                                 }
                             }
                         }
@@ -716,10 +681,10 @@ fun ProfilScreen(onNavigate: (String) -> Unit = {}, onLogout: () -> Unit = {}) {
                         ) {
                             Icon(Icons.Default.Logout, contentDescription = null, tint = AccentCoral, modifier = Modifier.size(16.dp))
                             Spacer(Modifier.width(8.dp))
-                            Text("LOGOUT FIGHTER HUD", color = AccentCoral, fontSize = 12.sp, fontWeight = FontWeight.Bold, letterSpacing = 1.sp)
+                            Text("LOG OUT", color = AccentCoral, fontSize = 12.sp, fontWeight = FontWeight.Bold, letterSpacing = 1.sp)
                         }
                         Text(
-                            "DOJOPULSE FIRMWARE V4.1.2 // TEL-ENGINE ACTIVE",
+                            "DojoPulse v4.1.2",
                             color = TextMut,
                             fontSize = 10.sp,
                             fontFamily = GoogleSans
