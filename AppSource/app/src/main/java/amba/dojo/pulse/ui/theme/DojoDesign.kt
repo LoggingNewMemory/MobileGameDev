@@ -303,46 +303,65 @@ fun DojoBottomBar(
         DojoNavItem("profil", "Profile", Icons.Default.Person)
     )
 
-    Surface(
-        color = Dojo.Surface,
+    Box(
         modifier = modifier
             .fillMaxWidth()
             .windowInsetsPadding(WindowInsets.navigationBars)
-            .border(BorderStroke(1.dp, Dojo.Border))
+            .padding(horizontal = 16.dp, vertical = 10.dp),
+        contentAlignment = Alignment.Center
     ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(64.dp)
-                .padding(horizontal = 4.dp),
-            horizontalArrangement = Arrangement.SpaceAround,
-            verticalAlignment = Alignment.CenterVertically
+        Surface(
+            color = Color(0xF216161E),
+            shape = RoundedCornerShape(28.dp),
+            border = BorderStroke(1.dp, Color(0xFF2C2C38)),
+            shadowElevation = 12.dp,
+            modifier = Modifier.fillMaxWidth()
         ) {
-            items.forEach { item ->
-                val isSelected = currentRoute == item.route || (item.route == "progres" && currentRoute == "aktivitas")
-                val tint = if (isSelected) Dojo.Red else Dojo.Muted
-                Column(
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.Center,
-                    modifier = Modifier
-                        .weight(1f)
-                        .fillMaxHeight()
-                        .clickable { onNavigate(item.route) }
-                ) {
-                    Icon(
-                        imageVector = item.icon,
-                        contentDescription = item.label,
-                        tint = tint,
-                        modifier = Modifier.size(22.dp)
-                    )
-                    Spacer(Modifier.height(4.dp))
-                    Text(
-                        text = item.label,
-                        color = tint,
-                        fontFamily = Dojo.Mono,
-                        fontSize = 10.sp,
-                        fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal
-                    )
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 8.dp, vertical = 6.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                items.forEach { item ->
+                    val isSelected = currentRoute == item.route || (item.route == "progres" && currentRoute == "aktivitas")
+                    val activeBg = if (isSelected) Color(0xFF2E151A) else Color.Transparent
+                    val activeBorder = if (isSelected) BorderStroke(1.dp, Dojo.Red.copy(alpha = 0.35f)) else null
+                    val contentColor = if (isSelected) Dojo.RedSoft else Color(0xFF8A8A96)
+
+                    Box(
+                        modifier = Modifier
+                            .weight(1f)
+                            .clip(RoundedCornerShape(20.dp))
+                            .then(if (activeBorder != null) Modifier.border(activeBorder, RoundedCornerShape(20.dp)) else Modifier)
+                            .background(activeBg)
+                            .clickable { onNavigate(item.route) }
+                            .padding(vertical = 8.dp, horizontal = 2.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Column(
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            verticalArrangement = Arrangement.Center
+                        ) {
+                            Icon(
+                                imageVector = item.icon,
+                                contentDescription = item.label,
+                                tint = contentColor,
+                                modifier = Modifier.size(20.dp)
+                            )
+                            Spacer(Modifier.height(3.dp))
+                            Text(
+                                text = item.label,
+                                color = if (isSelected) Dojo.Text else contentColor,
+                                fontFamily = Dojo.Sans,
+                                fontSize = 10.5.sp,
+                                fontWeight = if (isSelected) FontWeight.SemiBold else FontWeight.Normal,
+                                maxLines = 1,
+                                letterSpacing = 0.2.sp
+                            )
+                        }
+                    }
                 }
             }
         }
