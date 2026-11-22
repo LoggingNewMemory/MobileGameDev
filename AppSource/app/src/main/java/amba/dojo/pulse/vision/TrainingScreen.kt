@@ -78,12 +78,29 @@ fun TrainingScreen(
     }
     val classifier = remember { PunchClassifier(FighterStance.ORTHODOX, aiClassifier) }
 
+    // Guided Dummy Training Routine State
+    var selectedRoutineIndex by remember { mutableIntStateOf(0) }
+    val currentRoutine = PresetExercises.ALL_ROUTINES[selectedRoutineIndex]
+    var currentStepIndex by remember { mutableIntStateOf(0) }
+    var currentStepCount by remember { mutableIntStateOf(0) }
+    var lastRecordedStrikes by remember { mutableIntStateOf(0) }
+    var isRoutineFinished by remember { mutableStateOf(false) }
+    var stepNoticeMessage by remember { mutableStateOf<String?>(null) }
+
     // 3-minute Drill Timer countdown (180 seconds)
     var timeLeftSeconds by remember { mutableIntStateOf(180) }
     LaunchedEffect(Unit) {
         while (timeLeftSeconds > 0) {
             delay(1000L)
             timeLeftSeconds--
+        }
+    }
+
+    // Auto-clear step completion notice after 3 seconds
+    LaunchedEffect(stepNoticeMessage) {
+        if (stepNoticeMessage != null) {
+            delay(3000L)
+            stepNoticeMessage = null
         }
     }
 
@@ -143,6 +160,30 @@ fun TrainingScreen(
 
                                         val updated = classifier.processPose(pose, width, height)
                                         telemetry = updated
+
+                                        // Progress tracking for guided training exercise
+                                        if (updated.totalStrikes > lastRecordedStrikes) {
+                                            lastRecordedStrikes = updated.totalStrikes
+                                            if (!isRoutineFinished && currentStepIndex < currentRoutine.steps.size) {
+                                                val step = currentRoutine.steps[currentStepIndex]
+                                                if (step.matches(updated.lastDetectedPunch)) {
+                                                    val newCount = currentStepCount + 1
+                                                    if (newCount >= step.targetCount) {
+                                                        if (currentStepIndex + 1 < currentRoutine.steps.size) {
+                                                            currentStepIndex++
+                                                            currentStepCount = 0
+                                                            stepNoticeMessage = "DRILL STEP SELESAI! LANJUT KE: ${currentRoutine.steps[currentStepIndex].title.uppercase()}"
+                                                        } else {
+                                                            currentStepCount = step.targetCount
+                                                            isRoutineFinished = true
+                                                            stepNoticeMessage = "LUAR BIASA! SELURUH TARGET LATIHAN TUNTAS!"
+                                                        }
+                                                    } else {
+                                                        currentStepCount = newCount
+                                                    }
+                                                }
+                                            }
+                                        }
                                     }
                                     .addOnCompleteListener {
                                         imageProxy.close()
@@ -217,6 +258,24 @@ fun TrainingScreen(
             telemetry = telemetry,
             timeLeftSeconds = timeLeftSeconds,
             isFrontCamera = isFrontCamera,
+            currentRoutine = currentRoutine,
+            currentStepIndex = currentStepIndex,
+            currentStepCount = currentStepCount,
+            isRoutineFinished = isRoutineFinished,
+            stepNoticeMessage = stepNoticeMessage,
+            onCycleRoutine = {
+                selectedRoutineIndex = (selectedRoutineIndex + 1) % PresetExercises.ALL_ROUTINES.size
+                currentStepIndex = 0
+                currentStepCount = 0
+                isRoutineFinished = false
+                stepNoticeMessage = "DRILL DIGANTI KE: ${PresetExercises.ALL_ROUTINES[(selectedRoutineIndex)].name.uppercase()}"
+            },
+            onResetRoutine = {
+                currentStepIndex = 0
+                currentStepCount = 0
+                isRoutineFinished = false
+                stepNoticeMessage = "DRILL DIMULAI ULANG DARI STEP 1"
+            },
             onToggleCamera = { isFrontCamera = !isFrontCamera },
             onFinish = { onFinishTraining(telemetry) },
             onBack = onNavigateBack,
@@ -230,6 +289,13 @@ fun TrainingHudOverlay(
     telemetry: TrainingTelemetry,
     timeLeftSeconds: Int,
     isFrontCamera: Boolean,
+    currentRoutine: TrainingExerciseRoutine,
+    currentStepIndex: Int,
+    currentStepCount: Int,
+    isRoutineFinished: Boolean,
+    stepNoticeMessage: String?,
+    onCycleRoutine: () -> Unit,
+    onResetRoutine: () -> Unit,
     onToggleCamera: () -> Unit,
     onFinish: () -> Unit,
     onBack: () -> Unit,
@@ -240,6 +306,7 @@ fun TrainingHudOverlay(
     val minutes = timeLeftSeconds / 60
     val seconds = timeLeftSeconds % 60
     val timerString = String.format("%02d:%02d", minutes, seconds)
+    val currentStep = if (currentStepIndex < currentRoutine.steps.size) currentRoutine.steps[currentStepIndex] else null
 
     Column(
         modifier = Modifier
@@ -303,9 +370,9 @@ fun TrainingHudOverlay(
                 }
             }
 
-            Spacer(modifier = Modifier.height(12.dp))
+            Spacer(modifier = Modifier.height(10.dp))
 
-            // Subtitle & Session Timer
+            // Subtitle & Session Timer Row
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
@@ -317,7 +384,7 @@ fun TrainingHudOverlay(
                         .padding(horizontal = 8.dp, vertical = 4.dp)
                 ) {
                     Text(
-                        "LATIHAN UTAMA [SYS.DRL-09]",
+                        "${currentRoutine.name.uppercase()} [${currentRoutine.code}]",
                         color = Color.White,
                         fontSize = 11.sp,
                         fontWeight = FontWeight.Bold
@@ -339,6 +406,154 @@ fun TrainingHudOverlay(
                             fontWeight = FontWeight.Bold,
                             fontFamily = FontFamily.Monospace
                         )
+                    }
+                }
+            }
+
+            // Guided Exercise Target Card (Interactive Routine HUD)
+            Card(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(top = 10.dp),
+                shape = RoundedCornerShape(10.dp),
+                colors = CardDefaults.cardColors(containerColor = Color(0xDD161622)),
+                border = androidx.compose.foundation.BorderStroke(
+                    1.dp,
+                    if (isRoutineFinished) Color(0xFF81C784) else accentPink.copy(alpha = 0.6f)
+                )
+            ) {
+                Column(modifier = Modifier.padding(12.dp)) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Box(
+                                modifier = Modifier
+                                    .background(
+                                        if (isRoutineFinished) Color(0xFF2E7D32) else accentRed,
+                                        RoundedCornerShape(4.dp)
+                                    )
+                                    .padding(horizontal = 6.dp, vertical = 2.dp)
+                            ) {
+                                Text(
+                                    if (isRoutineFinished) "FINISHED" else "STEP ${currentStepIndex + 1}/${currentRoutine.steps.size}",
+                                    color = Color.White,
+                                    fontSize = 10.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    fontFamily = FontFamily.Monospace
+                                )
+                            }
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text(
+                                if (isRoutineFinished) "ALL DRILLS COMPLETE" else currentRoutine.subtitle,
+                                color = if (isRoutineFinished) Color(0xFF81C784) else accentPink,
+                                fontSize = 11.sp,
+                                fontWeight = FontWeight.Bold
+                            )
+                        }
+
+                        // Cycle routine button
+                        IconButton(
+                            onClick = onCycleRoutine,
+                            modifier = Modifier.size(24.dp)
+                        ) {
+                            Icon(
+                                Icons.Default.Refresh,
+                                contentDescription = "Ganti Drill",
+                                tint = Color.LightGray,
+                                modifier = Modifier.size(16.dp)
+                            )
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(6.dp))
+
+                    if (isRoutineFinished) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Icon(
+                                Icons.Default.EmojiEvents,
+                                contentDescription = null,
+                                tint = Color(0xFFFFD54F),
+                                modifier = Modifier.size(28.dp)
+                            )
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Column {
+                                Text(
+                                    "SELURUH TARGET LATIHAN TUNTAS!",
+                                    color = Color.White,
+                                    fontSize = 15.sp,
+                                    fontWeight = FontWeight.Black
+                                )
+                                Text(
+                                    "Semua step latihan berhasil diselesaikan dengan baik.",
+                                    color = Color(0xFFB0BEC5),
+                                    fontSize = 11.sp
+                                )
+                            }
+                        }
+                    } else if (currentStep != null) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Text(
+                                text = currentStep.title.uppercase(),
+                                color = Color.White,
+                                fontSize = 16.sp,
+                                fontWeight = FontWeight.Black,
+                                letterSpacing = 1.sp
+                            )
+                            Text(
+                                text = "$currentStepCount / ${currentStep.targetCount}",
+                                color = currentStep.badgeColor,
+                                fontSize = 17.sp,
+                                fontWeight = FontWeight.Bold,
+                                fontFamily = FontFamily.Monospace
+                            )
+                        }
+
+                        Spacer(modifier = Modifier.height(6.dp))
+
+                        val stepProgress = (currentStepCount.toFloat() / currentStep.targetCount.toFloat()).coerceIn(0f, 1f)
+                        LinearProgressIndicator(
+                            progress = { stepProgress },
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(6.dp)
+                                .clip(RoundedCornerShape(3.dp)),
+                            color = currentStep.badgeColor,
+                            trackColor = Color(0xFF2A2A38)
+                        )
+
+                        Spacer(modifier = Modifier.height(6.dp))
+
+                        Text(
+                            text = "💡 ${currentStep.instruction}",
+                            color = Color(0xFFCCCCCC),
+                            fontSize = 11.sp,
+                            lineHeight = 14.sp
+                        )
+                    }
+
+                    // Temporary step transition notice
+                    stepNoticeMessage?.let { notice ->
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .background(Color(0xFF1B5E20), RoundedCornerShape(4.dp))
+                                .padding(vertical = 4.dp, horizontal = 8.dp)
+                        ) {
+                            Text(
+                                text = "⚡ $notice",
+                                color = Color.White,
+                                fontSize = 10.sp,
+                                fontWeight = FontWeight.Bold
+                            )
+                        }
                     }
                 }
             }
