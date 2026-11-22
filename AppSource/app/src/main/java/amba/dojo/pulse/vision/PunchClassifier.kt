@@ -44,10 +44,14 @@ class PunchClassifier(
     private var lastAiStrikeTimestamp = 0L
 
     // History of wrist positions for velocity / trajectory analysis
-    private var prevLeftWristY = 0f
-    private var prevLeftWristX = 0f
-    private var prevRightWristY = 0f
-    private var prevRightWristX = 0f
+    private var prevLeftWristPixelX = 0f
+    private var prevLeftWristPixelY = 0f
+    private var prevRightWristPixelX = 0f
+    private var prevRightWristPixelY = 0f
+    private var prevLeftWristNormX = 0f
+    private var prevLeftWristNormY = 0f
+    private var prevRightWristNormX = 0f
+    private var prevRightWristNormY = 0f
     private var hasPrevWrist = false
     private val strikeDisplayHoldMs = 420L
     private val minStrikeVelocity = 0.022f
@@ -84,8 +88,8 @@ class PunchClassifier(
             val leftAngle = calculateAngle(leftShoulder, leftElbow, leftWrist)
             val isLeftGuard = isHandInGuard(leftWrist, leftShoulder, nose)
 
-            val dy = leftWrist.position.y - prevLeftWristY
-            val dx = leftWrist.position.x - prevLeftWristX
+            val dy = if (hasPrevWrist) leftWrist.position.y - prevLeftWristPixelY else 0f
+            val dx = if (hasPrevWrist) leftWrist.position.x - prevLeftWristPixelX else 0f
 
             analyzeArm(
                 isLead = stance == FighterStance.ORTHODOX,
@@ -99,8 +103,8 @@ class PunchClassifier(
 
             if (!isLeftGuard) isCurrentlyInGuard = false
             activeAngle = leftAngle
-            prevLeftWristX = leftWrist.position.x
-            prevLeftWristY = leftWrist.position.y
+            prevLeftWristPixelX = leftWrist.position.x
+            prevLeftWristPixelY = leftWrist.position.y
         }
 
         // Right arm analysis
@@ -108,8 +112,8 @@ class PunchClassifier(
             val rightAngle = calculateAngle(rightShoulder, rightElbow, rightWrist)
             val isRightGuard = isHandInGuard(rightWrist, rightShoulder, nose)
 
-            val dy = rightWrist.position.y - prevRightWristY
-            val dx = rightWrist.position.x - prevRightWristX
+            val dy = if (hasPrevWrist) rightWrist.position.y - prevRightWristPixelY else 0f
+            val dx = if (hasPrevWrist) rightWrist.position.x - prevRightWristPixelX else 0f
 
             analyzeArm(
                 isLead = stance == FighterStance.SOUTHPAW,
@@ -123,8 +127,8 @@ class PunchClassifier(
 
             if (!isRightGuard) isCurrentlyInGuard = false
             if (rightAngle > activeAngle) activeAngle = rightAngle
-            prevRightWristX = rightWrist.position.x
-            prevRightWristY = rightWrist.position.y
+            prevRightWristPixelX = rightWrist.position.x
+            prevRightWristPixelY = rightWrist.position.y
         }
 
         val widthF = imageWidth.toFloat().coerceAtLeast(1f)
@@ -138,18 +142,18 @@ class PunchClassifier(
         var leftWristVelocity = 0f
         var rightWristVelocity = 0f
         if (hasPrevWrist) {
-            val dLwX = leftWristNormX - prevLeftWristX
-            val dLwY = leftWristNormY - prevLeftWristY
+            val dLwX = leftWristNormX - prevLeftWristNormX
+            val dLwY = leftWristNormY - prevLeftWristNormY
             leftWristVelocity = sqrt(dLwX * dLwX + dLwY * dLwY)
 
-            val dRwX = rightWristNormX - prevRightWristX
-            val dRwY = rightWristNormY - prevRightWristY
+            val dRwX = rightWristNormX - prevRightWristNormX
+            val dRwY = rightWristNormY - prevRightWristNormY
             rightWristVelocity = sqrt(dRwX * dRwX + dRwY * dRwY)
         }
-        prevLeftWristX = leftWristNormX
-        prevLeftWristY = leftWristNormY
-        prevRightWristX = rightWristNormX
-        prevRightWristY = rightWristNormY
+        prevLeftWristNormX = leftWristNormX
+        prevLeftWristNormY = leftWristNormY
+        prevRightWristNormX = rightWristNormX
+        prevRightWristNormY = rightWristNormY
         hasPrevWrist = true
 
         val maxWristVelocity = maxOf(leftWristVelocity, rightWristVelocity)

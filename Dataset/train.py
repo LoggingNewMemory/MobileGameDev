@@ -270,7 +270,7 @@ def process_dataset(sport_name, categories, force_refresh=False):
     all_labels = []
 
     target_samples_per_strike = 950
-    target_samples_guard = 1200
+    target_samples_guard = max(1500, len(class_windows.get("Guard / Idle", [])))
 
     for lbl in all_labels_list:
         windows = class_windows[lbl]
