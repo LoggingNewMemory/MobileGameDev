@@ -115,8 +115,37 @@ class PunchClassifier(
         // --- AI Movement Classifier Execution ---
         val aiPrediction = aiClassifier?.processPose(pose, imageWidth, imageHeight)
         if (aiPrediction != null) {
-            val predictedType = PunchType.fromLabel(aiPrediction.label)
+            val rawPredictedType = PunchType.fromLabel(aiPrediction.label)
             currentConfidence = aiPrediction.confidence
+
+            // Kinematic Disambiguation between Hook and Uppercut:
+            // An uppercut physically moves vertically upward (upwardDy > 0).
+            // A hook physically sweeps horizontally across the transverse plane (lateralDx >> dy).
+            // If the model predicted Hook but the wrist has an upward trajectory, it is an Uppercut!
+            var predictedType = rawPredictedType
+            if (rawPredictedType == PunchType.LEFT_HOOK) {
+                val oldest = leftWristQueue.firstOrNull()
+                val latest = leftWristQueue.lastOrNull()
+                if (oldest != null && latest != null) {
+                    val upwardDy = oldest.y - latest.y // Positive = upward
+                    val lateralDx = abs(latest.x - oldest.x)
+                    val upperProb = aiPrediction.allProbabilities["Left Uppercut"] ?: 0f
+                    if (upwardDy > 0.010f && (upwardDy >= lateralDx * 0.45f || upperProb >= 0.18f)) {
+                        predictedType = PunchType.LEFT_UPPERCUT
+                    }
+                }
+            } else if (rawPredictedType == PunchType.RIGHT_HOOK) {
+                val oldest = rightWristQueue.firstOrNull()
+                val latest = rightWristQueue.lastOrNull()
+                if (oldest != null && latest != null) {
+                    val upwardDy = oldest.y - latest.y // Positive = upward
+                    val lateralDx = abs(latest.x - oldest.x)
+                    val upperProb = aiPrediction.allProbabilities["Right UpperCut"] ?: 0f
+                    if (upwardDy > 0.010f && (upwardDy >= lateralDx * 0.45f || upperProb >= 0.18f)) {
+                        predictedType = PunchType.RIGHT_UPPERCUT
+                    }
+                }
+            }
 
             val isPunch = predictedType != PunchType.GUARD &&
                     predictedType != PunchType.IDLE &&
@@ -261,9 +290,18 @@ class PunchClassifier(
         }
 
         if (leftDisplacement >= minStrikeDisplacement) {
-            val punch = if (leftElbowAngle >= 135.0) PunchType.LEFT_JAB
-            else if (leftElbowAngle in 60.0..130.0) PunchType.LEFT_UPPERCUT
-            else PunchType.LEFT_HOOK
+            val oldest = leftWristQueue.firstOrNull()
+            val latest = leftWristQueue.lastOrNull()
+            val upwardDy = if (oldest != null && latest != null) oldest.y - latest.y else 0f
+            val lateralDx = if (oldest != null && latest != null) abs(latest.x - oldest.x) else 0f
+
+            val punch = if (upwardDy > 0.010f && upwardDy >= lateralDx * 0.45f) {
+                PunchType.LEFT_UPPERCUT
+            } else if (leftElbowAngle >= 135.0) {
+                PunchType.LEFT_JAB
+            } else {
+                PunchType.LEFT_HOOK
+            }
 
             totalStrikes++
             punchCounts[punch] = (punchCounts[punch] ?: 0) + 1
@@ -276,9 +314,18 @@ class PunchClassifier(
         }
 
         if (rightDisplacement >= minStrikeDisplacement) {
-            val punch = if (rightElbowAngle >= 135.0) PunchType.STRIKE
-            else if (rightElbowAngle in 60.0..130.0) PunchType.RIGHT_UPPERCUT
-            else PunchType.RIGHT_HOOK
+            val oldest = rightWristQueue.firstOrNull()
+            val latest = rightWristQueue.lastOrNull()
+            val upwardDy = if (oldest != null && latest != null) oldest.y - latest.y else 0f
+            val lateralDx = if (oldest != null && latest != null) abs(latest.x - oldest.x) else 0f
+
+            val punch = if (upwardDy > 0.010f && upwardDy >= lateralDx * 0.45f) {
+                PunchType.RIGHT_UPPERCUT
+            } else if (rightElbowAngle >= 135.0) {
+                PunchType.STRIKE
+            } else {
+                PunchType.RIGHT_HOOK
+            }
 
             totalStrikes++
             punchCounts[punch] = (punchCounts[punch] ?: 0) + 1
