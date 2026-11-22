@@ -335,66 +335,11 @@ fun TrainingHudOverlay(
                     )
                 }
 
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Box(modifier = Modifier.size(8.dp).background(accentPink))
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Text(
-                        "SENSOR LINK: 60FPS HUD",
-                        color = Color.White,
-                        fontSize = 11.sp,
-                        fontWeight = FontWeight.Bold,
-                        letterSpacing = 1.sp
-                    )
-                }
-
-                Row {
-                    IconButton(
-                        onClick = onOpenTutorial,
-                        modifier = Modifier
-                            .size(40.dp)
-                            .background(Color(0x88121212), CircleShape)
-                    ) {
-                        Icon(Icons.Default.HelpOutline, contentDescription = "Tutorial", tint = Color.White)
-                    }
-
-                    Spacer(modifier = Modifier.width(8.dp))
-
-                    IconButton(
-                        onClick = onToggleCamera,
-                        modifier = Modifier
-                            .size(40.dp)
-                            .background(Color(0x88121212), CircleShape)
-                    ) {
-                        Icon(Icons.Default.FlipCameraAndroid, contentDescription = "Switch Camera", tint = Color.White)
-                    }
-                }
-            }
-
-            Spacer(modifier = Modifier.height(10.dp))
-
-            // Subtitle & Session Timer Row
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
+                // Session Timer
                 Box(
                     modifier = Modifier
-                        .background(accentRed, RoundedCornerShape(4.dp))
-                        .padding(horizontal = 8.dp, vertical = 4.dp)
-                ) {
-                    Text(
-                        "${currentRoutine.name.uppercase()} [${currentRoutine.code}]",
-                        color = Color.White,
-                        fontSize = 11.sp,
-                        fontWeight = FontWeight.Bold
-                    )
-                }
-
-                Box(
-                    modifier = Modifier
-                        .background(Color(0xAA121212), RoundedCornerShape(4.dp))
-                        .padding(horizontal = 10.dp, vertical = 4.dp)
+                        .background(Color(0xAA121212), RoundedCornerShape(6.dp))
+                        .padding(horizontal = 12.dp, vertical = 6.dp)
                 ) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Icon(Icons.Default.Timer, contentDescription = null, tint = accentPink, modifier = Modifier.size(14.dp))
@@ -410,7 +355,9 @@ fun TrainingHudOverlay(
                 }
             }
 
-            // Guided Exercise Target Card (Interactive Routine HUD)
+            Spacer(modifier = Modifier.height(10.dp))
+
+            // Guided Exercise Target Card (Precision Striking Drill)
             Card(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -593,54 +540,6 @@ fun TrainingHudOverlay(
                                     fontFamily = FontFamily.Monospace
                                 )
                             }
-                        }
-                    }
-                }
-
-                Spacer(modifier = Modifier.height(8.dp))
-
-                // Telemetry cards overlay (Left & Right stats like in the mockup image)
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween
-                ) {
-                    // Left: Punch Angle Card
-                    Box(
-                        modifier = Modifier
-                            .background(Color(0xBB121212), RoundedCornerShape(8.dp))
-                            .padding(10.dp)
-                    ) {
-                        Column {
-                            Text("PUNCH ANGLE", color = Color.LightGray, fontSize = 9.sp, fontWeight = FontWeight.Bold)
-                            Text(
-                                "${telemetry.punchAngle.toInt()}° PRECISION",
-                                color = Color.White,
-                                fontSize = 13.sp,
-                                fontWeight = FontWeight.Bold
-                            )
-                            Text("VALIDASI SUDUT AKTIF", color = accentPink, fontSize = 9.sp)
-                        }
-                    }
-
-                    // Right: Return Guard Card
-                    Box(
-                        modifier = Modifier
-                            .background(Color(0xBB121212), RoundedCornerShape(8.dp))
-                            .padding(10.dp)
-                    ) {
-                        Column(horizontalAlignment = Alignment.End) {
-                            Text("RETURN GUARD", color = Color.LightGray, fontSize = 9.sp, fontWeight = FontWeight.Bold)
-                            Text(
-                                String.format("%.2f DETIK", telemetry.returnGuardTimeSeconds),
-                                color = accentPink,
-                                fontSize = 13.sp,
-                                fontWeight = FontWeight.Bold
-                            )
-                            Text(
-                                if (telemetry.isGuardActive) "ORTHODOX GUARD [OK]" else "STRIKE EXTENDED",
-                                color = if (telemetry.isGuardActive) Color(0xFF81C784) else accentPink,
-                                fontSize = 9.sp
-                            )
                         }
                     }
                 }
