@@ -506,45 +506,6 @@ fun TrainingHudOverlay(
             }
         }
 
-        // Center HUD: Active Punch Feedback Callout
-        Box(
-            modifier = Modifier.fillMaxWidth(),
-            contentAlignment = Alignment.Center
-        ) {
-            Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                AnimatedVisibility(
-                    visible = telemetry.detectedPunch != PunchType.IDLE && telemetry.detectedPunch != PunchType.GUARD,
-                    enter = fadeIn(animationSpec = androidx.compose.animation.core.tween(150)),
-                    exit = fadeOut(animationSpec = androidx.compose.animation.core.tween(150))
-                ) {
-                    Box(
-                        modifier = Modifier
-                            .background(Color(0xDD3B0918), RoundedCornerShape(8.dp))
-                            .border(1.dp, accentPink, RoundedCornerShape(8.dp))
-                            .padding(horizontal = 20.dp, vertical = 10.dp)
-                    ) {
-                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                            Text(
-                                text = telemetry.detectedPunch.displayName.uppercase(),
-                                color = Color.White,
-                                fontSize = 22.sp,
-                                fontWeight = FontWeight.Black,
-                                letterSpacing = 2.sp
-                            )
-                            if (telemetry.aiConfidence > 0f) {
-                                Text(
-                                    text = "AI ACCURACY: ${(telemetry.aiConfidence * 100).toInt()}%",
-                                    color = accentPink,
-                                    fontSize = 11.sp,
-                                    fontWeight = FontWeight.Bold,
-                                    fontFamily = FontFamily.Monospace
-                                )
-                            }
-                        }
-                    }
-                }
-            }
-        }
 
         // Bottom HUD Card: Progress, Form Score, and Finish Button
         Card(
