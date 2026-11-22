@@ -215,7 +215,7 @@ fun StanceAndGuardSection(
                         .padding(12.dp)
                 ) {
                     Text(
-                        "⚡ GOLDEN RULE: After every strike, hands MUST instantly snap back to Guard in < 0.23 seconds! The AI measures this recovery time.",
+                        "GOLDEN RULE: After every strike, hands MUST instantly snap back to Guard in < 0.23 seconds! The AI measures this recovery time.",
                         color = accentPink,
                         fontSize = 11.sp,
                         fontWeight = FontWeight.SemiBold

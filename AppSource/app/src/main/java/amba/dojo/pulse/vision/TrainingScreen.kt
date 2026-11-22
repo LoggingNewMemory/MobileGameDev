@@ -478,7 +478,7 @@ fun TrainingHudOverlay(
                         Spacer(modifier = Modifier.height(6.dp))
 
                         Text(
-                            text = "💡 ${currentStep.instruction}",
+                            text = currentStep.instruction,
                             color = Color(0xFFCCCCCC),
                             fontSize = 11.sp,
                             lineHeight = 14.sp
@@ -495,7 +495,7 @@ fun TrainingHudOverlay(
                                 .padding(vertical = 4.dp, horizontal = 8.dp)
                         ) {
                             Text(
-                                text = "⚡ $notice",
+                                text = notice,
                                 color = Color.White,
                                 fontSize = 10.sp,
                                 fontWeight = FontWeight.Bold

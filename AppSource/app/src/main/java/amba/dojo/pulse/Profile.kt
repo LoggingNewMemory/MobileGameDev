@@ -615,7 +615,7 @@ private fun PfPointsCard(
     ) {
         Column(Modifier.padding(14.dp)) {
 
-            // Card Top Info: [POINTS RESERVE] + ⚡ REWARD HUB  |  • TIER: ELITE (All single-line)
+            // Card Top Info: [POINTS RESERVE] + REWARD HUB  |  • TIER: ELITE (All single-line)
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
@@ -641,7 +641,7 @@ private fun PfPointsCard(
                         )
                     }
                     Text(
-                        "⚡ REWARD HUB",
+                        "REWARD HUB",
                         color = AccentCoral,
                         fontSize = 10.sp,
                         fontWeight = FontWeight.Bold,

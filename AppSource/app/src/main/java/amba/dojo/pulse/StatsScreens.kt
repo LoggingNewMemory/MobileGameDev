@@ -444,7 +444,7 @@ fun ProfilScreen(onNavigate: (String) -> Unit = {}, onLogout: () -> Unit = {}) {
                                     Box(modifier = Modifier.background(AccentRed, RoundedCornerShape(4.dp)).padding(horizontal = 8.dp, vertical = 3.dp)) {
                                         Text("POINTS RESERVE", color = TextPrim, fontSize = 9.sp, fontWeight = FontWeight.Black, letterSpacing = 1.sp)
                                     }
-                                    Text("⚡ REWARD HUB", color = AccentCoral, fontSize = 11.sp, fontWeight = FontWeight.Bold)
+                                    Text("REWARD HUB", color = AccentCoral, fontSize = 11.sp, fontWeight = FontWeight.Bold)
                                 }
                                 Row(
                                     modifier = Modifier
