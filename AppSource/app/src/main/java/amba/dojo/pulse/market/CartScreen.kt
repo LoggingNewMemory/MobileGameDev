@@ -16,7 +16,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.text.font.FontFamily
+import amba.dojo.pulse.ui.theme.GoogleSans
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -102,7 +102,7 @@ fun CartScreen(
                                 "Total Payment",
                                 color = CkTextMuted,
                                 fontSize = 11.sp,
-                                fontFamily = FontFamily.Monospace
+                                fontFamily = GoogleSans
                             )
                             Spacer(Modifier.height(2.dp))
                             val formattedTotal = "Rp %,d".format(totalAmount).replace(',', '.')
@@ -111,7 +111,7 @@ fun CartScreen(
                                 color = CkTextPrimary,
                                 fontSize = 16.sp,
                                 fontWeight = FontWeight.Bold,
-                                fontFamily = FontFamily.Monospace
+                                fontFamily = GoogleSans
                             )
                         }
                         Button(
@@ -125,7 +125,7 @@ fun CartScreen(
                                 color = Color.White,
                                 fontSize = 13.sp,
                                 fontWeight = FontWeight.Bold,
-                                fontFamily = FontFamily.Monospace
+                                fontFamily = GoogleSans
                             )
                             Spacer(Modifier.width(6.dp))
                             Icon(
@@ -180,7 +180,7 @@ fun CartScreen(
                         colors = ButtonDefaults.buttonColors(containerColor = CkRed),
                         shape = RoundedCornerShape(8.dp)
                     ) {
-                        Text("Back to Market", fontFamily = FontFamily.Monospace, fontWeight = FontWeight.Bold)
+                        Text("Back to Market", fontFamily = GoogleSans, fontWeight = FontWeight.Bold)
                     }
                 }
             } else {
@@ -200,7 +200,7 @@ fun CartScreen(
                             "Product List (${cartItems.sumOf { it.quantity }} items)",
                             color = CkTextSec,
                             fontSize = 12.sp,
-                            fontFamily = FontFamily.Monospace,
+                            fontFamily = GoogleSans,
                             fontWeight = FontWeight.Bold
                         )
                         TextButton(onClick = { cartItems = emptyList() }) {
@@ -246,7 +246,7 @@ fun CartScreen(
                             ) {
                                 Text("Subtotal (${cartItems.sumOf { it.quantity }} items)", color = CkTextMuted, fontSize = 13.sp)
                                 val formattedSub = "Rp %,d".format(subtotal).replace(',', '.')
-                                Text(formattedSub, color = CkTextPrimary, fontSize = 13.sp, fontFamily = FontFamily.Monospace, fontWeight = FontWeight.Bold)
+                                Text(formattedSub, color = CkTextPrimary, fontSize = 13.sp, fontFamily = GoogleSans, fontWeight = FontWeight.Bold)
                             }
                             Row(
                                 modifier = Modifier.fillMaxWidth(),
@@ -254,7 +254,7 @@ fun CartScreen(
                             ) {
                                 Text("Estimated Shipping", color = CkTextMuted, fontSize = 13.sp)
                                 val formattedShip = if (shipping == 0) "FREE" else "Rp %,d".format(shipping).replace(',', '.')
-                                Text(formattedShip, color = if (shipping == 0) Color(0xFF34D399) else CkTextPrimary, fontSize = 13.sp, fontFamily = FontFamily.Monospace, fontWeight = FontWeight.Bold)
+                                Text(formattedShip, color = if (shipping == 0) Color(0xFF34D399) else CkTextPrimary, fontSize = 13.sp, fontFamily = GoogleSans, fontWeight = FontWeight.Bold)
                             }
                             HorizontalDivider(color = CkBorder)
                             Row(
@@ -263,7 +263,7 @@ fun CartScreen(
                             ) {
                                 Text("Total", color = CkTextPrimary, fontSize = 14.sp, fontWeight = FontWeight.Bold)
                                 val formattedTotal = "Rp %,d".format(totalAmount).replace(',', '.')
-                                Text(formattedTotal, color = CkRed, fontSize = 15.sp, fontFamily = FontFamily.Monospace, fontWeight = FontWeight.Bold)
+                                Text(formattedTotal, color = CkRed, fontSize = 15.sp, fontFamily = GoogleSans, fontWeight = FontWeight.Bold)
                             }
                         }
                     }
@@ -301,7 +301,7 @@ fun CartItemCard(
                             text = item.category.uppercase(),
                             color = CkTextMuted,
                             fontSize = 9.sp,
-                            fontFamily = FontFamily.Monospace
+                            fontFamily = GoogleSans
                         )
                         if (item.badge != null) {
                             Spacer(Modifier.width(8.dp))
@@ -310,7 +310,7 @@ fun CartItemCard(
                                     .background(CkAmber.copy(alpha = 0.15f), RoundedCornerShape(4.dp))
                                     .padding(horizontal = 6.dp, vertical = 2.dp)
                             ) {
-                                Text(item.badge, color = CkAmber, fontSize = 8.sp, fontWeight = FontWeight.Bold, fontFamily = FontFamily.Monospace)
+                                Text(item.badge, color = CkAmber, fontSize = 8.sp, fontWeight = FontWeight.Bold, fontFamily = GoogleSans)
                             }
                         }
                     }
@@ -345,7 +345,7 @@ fun CartItemCard(
                     text = formattedPrice,
                     color = CkRed,
                     fontSize = 14.sp,
-                    fontFamily = FontFamily.Monospace,
+                    fontFamily = GoogleSans,
                     fontWeight = FontWeight.Bold
                 )
 
@@ -366,7 +366,7 @@ fun CartItemCard(
                         color = CkTextPrimary,
                         fontSize = 13.sp,
                         fontWeight = FontWeight.Bold,
-                        fontFamily = FontFamily.Monospace,
+                        fontFamily = GoogleSans,
                         modifier = Modifier.padding(horizontal = 8.dp)
                     )
                     IconButton(

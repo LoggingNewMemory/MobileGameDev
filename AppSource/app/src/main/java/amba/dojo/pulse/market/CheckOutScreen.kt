@@ -20,7 +20,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.text.font.FontFamily
+import amba.dojo.pulse.ui.theme.GoogleSans
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.style.TextOverflow
@@ -418,7 +418,7 @@ private fun CkOrderedItemsSection() {
                 "OFFICIAL GEAR",
                 color = CkTextDim,
                 fontSize = 10.sp,
-                fontFamily = FontFamily.Monospace,
+                fontFamily = GoogleSans,
                 maxLines = 1,
                 softWrap = false
             )
@@ -632,7 +632,7 @@ private fun CkVoucherSection(
                                 color = CkTextPrimary,
                                 fontSize = 12.sp,
                                 fontWeight = FontWeight.Bold,
-                                fontFamily = FontFamily.Monospace,
+                                fontFamily = GoogleSans,
                                 softWrap = false
                             )
                             Box(
@@ -810,7 +810,7 @@ private fun CkPaymentMethodSection(
                 Icon(Icons.Default.AccountBalanceWallet, null, tint = CkCoral, modifier = Modifier.size(17.dp))
                 Text("Payment Method", color = CkTextPrimary, fontSize = 12.sp, fontWeight = FontWeight.Bold)
             }
-            Text("ENKRIPSI 256-BIT", color = CkTextDim, fontSize = 10.sp, fontFamily = FontFamily.Monospace, softWrap = false)
+            Text("256-BIT ENCRYPTION", color = CkTextDim, fontSize = 10.sp, fontFamily = GoogleSans, softWrap = false)
         }
 
         CkPaymentOptionRow(
@@ -826,7 +826,7 @@ private fun CkPaymentMethodSection(
 
         CkPaymentOptionRow(
             selected = selectedMethod == "va",
-            title = "Virtual Account Otomatis",
+            title = "Automated Virtual Account",
             subtitle = "BCA, BRI, Mandiri, BNI Virtual Account",
             badgeText = "01:00 EXP",
             badgeBg = Color.Transparent,
@@ -838,8 +838,8 @@ private fun CkPaymentMethodSection(
         CkPaymentOptionRow(
             selected = selectedMethod == "wallet",
             title = "DojoPulse Vault Wallet",
-            subtitle = "Saldo Aktif: Rp 1.450.000",
-            badgeText = "SALDO CUKUP",
+            subtitle = "Active Balance: Rp 1,450,000",
+            badgeText = "SUFFICIENT BALANCE",
             badgeBg = CkEmerald.copy(alpha = 0.14f),
             badgeBorder = Color(0xFF166534),
             badgeColor = CkEmerald,
@@ -946,7 +946,7 @@ private fun CkBillBreakdownCard(
                 Icon(Icons.Default.ReceiptLong, null, tint = CkCoral, modifier = Modifier.size(17.dp))
                 Text("PAYMENT DETAILS", color = CkTextPrimary, fontSize = 12.sp, fontWeight = FontWeight.Bold, softWrap = false)
             }
-            Text("AUDIT // 2 ITEMS", color = CkTextDim, fontSize = 10.sp, fontFamily = FontFamily.Monospace, softWrap = false)
+            Text("AUDIT // 2 ITEMS", color = CkTextDim, fontSize = 10.sp, fontFamily = GoogleSans, softWrap = false)
         }
 
         Row(Modifier.fillMaxWidth(), Arrangement.SpaceBetween) {
@@ -964,7 +964,7 @@ private fun CkBillBreakdownCard(
                             .border(1.dp, CkRed.copy(alpha = 0.4f), RoundedCornerShape(4.dp))
                             .padding(horizontal = 5.dp, vertical = 1.dp)
                     ) {
-                        Text("DOJOCHAMP", color = CkCoral, fontSize = 9.sp, fontWeight = FontWeight.Bold, fontFamily = FontFamily.Monospace)
+                        Text("DOJOCHAMP", color = CkCoral, fontSize = 9.sp, fontWeight = FontWeight.Bold, fontFamily = GoogleSans)
                     }
                 }
                 Text("-${formatRupiah(voucherDiscount)}", color = CkCoral, fontSize = 12.sp, fontWeight = FontWeight.Bold)

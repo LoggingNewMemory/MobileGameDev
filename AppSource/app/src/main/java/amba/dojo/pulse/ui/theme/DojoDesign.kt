@@ -28,7 +28,6 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
@@ -47,7 +46,8 @@ object Dojo {
     val Muted = Color(0xFF8A8A94)
     val Dim = Color(0xFF5C5C66)
     val Amber = Color(0xFFFFB74D)
-    val Mono = FontFamily.Monospace
+    val Mono = GoogleSans
+    val Sans = GoogleSans
 }
 
 /** Small uppercase monospaced caption used across the telemetry UI. */

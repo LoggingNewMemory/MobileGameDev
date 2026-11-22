@@ -27,6 +27,7 @@ import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.StrokeJoin
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.text.font.FontWeight
+import amba.dojo.pulse.ui.theme.GoogleSans
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -297,7 +298,7 @@ fun ProfilScreen(onNavigate: (String) -> Unit = {}, onLogout: () -> Unit = {}) {
                                 fontSize = 10.sp,
                                 fontWeight = FontWeight.Black,
                                 letterSpacing = 1.5.sp,
-                                fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace
+                                fontFamily = GoogleSans
                             )
                             Text(
                                 "Fighter Profile",
@@ -348,7 +349,7 @@ fun ProfilScreen(onNavigate: (String) -> Unit = {}, onLogout: () -> Unit = {}) {
                                     "ID: $shortId",
                                     color = TextMut,
                                     fontSize = 10.sp,
-                                    fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace,
+                                    fontFamily = GoogleSans,
                                     letterSpacing = 1.sp
                                 )
                                 Box(
@@ -454,7 +455,7 @@ fun ProfilScreen(onNavigate: (String) -> Unit = {}, onLogout: () -> Unit = {}) {
                                     horizontalArrangement = Arrangement.spacedBy(5.dp)
                                 ) {
                                     Box(modifier = Modifier.size(6.dp).clip(CircleShape).background(AccentCoral))
-                                    Text("TIER: ELITE", color = TextPrim, fontSize = 10.sp, fontWeight = FontWeight.Bold, fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace)
+                                    Text("TIER: ELITE", color = TextPrim, fontSize = 10.sp, fontWeight = FontWeight.Bold, fontFamily = GoogleSans)
                                 }
                             }
                             Spacer(Modifier.height(12.dp))
@@ -574,7 +575,7 @@ fun ProfilScreen(onNavigate: (String) -> Unit = {}, onLogout: () -> Unit = {}) {
                     Column(modifier = Modifier.padding(horizontal = 20.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
                         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
                             Text("MY PROMOS & VOUCHERS", color = TextPrim, fontSize = 11.sp, fontWeight = FontWeight.Bold, letterSpacing = 1.sp)
-                            Text("[LOG_SYNC: ON]", color = TextMut, fontSize = 10.sp, fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace)
+                            Text("[LOG_SYNC: ON]", color = TextMut, fontSize = 10.sp, fontFamily = GoogleSans)
                         }
                         // Tab pills
                         Row(
@@ -599,7 +600,7 @@ fun ProfilScreen(onNavigate: (String) -> Unit = {}, onLogout: () -> Unit = {}) {
                             Column(modifier = Modifier.fillMaxWidth().background(BgCard, RoundedCornerShape(12.dp)).border(1.dp, BgCardBorder, RoundedCornerShape(12.dp)).padding(12.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                                 Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
                                     Box(modifier = Modifier.background(Color(0xFF291419), RoundedCornerShape(4.dp)).border(1.dp, Color(0xFF4B2029), RoundedCornerShape(4.dp)).padding(horizontal = 8.dp, vertical = 3.dp)) {
-                                        Text("DOJOCHAMP", color = AccentCoral, fontSize = 11.sp, fontWeight = FontWeight.Bold, fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace)
+                                        Text("DOJOCHAMP", color = AccentCoral, fontSize = 11.sp, fontWeight = FontWeight.Bold, fontFamily = GoogleSans)
                                     }
                                     Box(modifier = Modifier.background(Color(0x1A34D399), RoundedCornerShape(4.dp)).border(1.dp, Color(0xFF166534), RoundedCornerShape(4.dp)).padding(horizontal = 8.dp, vertical = 3.dp)) {
                                         Text("Active", color = Emerald, fontSize = 10.sp, fontWeight = FontWeight.Bold)
@@ -619,7 +620,7 @@ fun ProfilScreen(onNavigate: (String) -> Unit = {}, onLogout: () -> Unit = {}) {
                             Column(modifier = Modifier.fillMaxWidth().background(BgCard, RoundedCornerShape(12.dp)).border(1.dp, BgCardBorder, RoundedCornerShape(12.dp)).padding(12.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                                 Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
                                     Box(modifier = Modifier.background(Color(0xFF291419), RoundedCornerShape(4.dp)).border(1.dp, Color(0xFF4B2029), RoundedCornerShape(4.dp)).padding(horizontal = 8.dp, vertical = 3.dp)) {
-                                        Text("GEARCASH20", color = AccentCoral, fontSize = 11.sp, fontWeight = FontWeight.Bold, fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace)
+                                        Text("GEARCASH20", color = AccentCoral, fontSize = 11.sp, fontWeight = FontWeight.Bold, fontFamily = GoogleSans)
                                     }
                                     Box(modifier = Modifier.background(Color(0x1A34D399), RoundedCornerShape(4.dp)).border(1.dp, Color(0xFF166534), RoundedCornerShape(4.dp)).padding(horizontal = 8.dp, vertical = 3.dp)) {
                                         Text("Active", color = Emerald, fontSize = 10.sp, fontWeight = FontWeight.Bold)
@@ -640,7 +641,7 @@ fun ProfilScreen(onNavigate: (String) -> Unit = {}, onLogout: () -> Unit = {}) {
                             Column(modifier = Modifier.fillMaxWidth().background(BgCard.copy(alpha = 0.6f), RoundedCornerShape(12.dp)).border(1.dp, BgCardBorder, RoundedCornerShape(12.dp)).padding(12.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                                 Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
                                     Box(modifier = Modifier.background(Color(0xFF1C1C24), RoundedCornerShape(4.dp)).padding(horizontal = 8.dp, vertical = 3.dp)) {
-                                        Text("HBAG-OCT-FREE", color = TextMut, fontSize = 11.sp, fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace)
+                                        Text("HBAG-OCT-FREE", color = TextMut, fontSize = 11.sp, fontFamily = GoogleSans)
                                     }
                                     Box(modifier = Modifier.background(Color(0xFF27272A), RoundedCornerShape(4.dp)).padding(horizontal = 8.dp, vertical = 3.dp)) {
                                         Text("Already Used", color = TextMut, fontSize = 10.sp)
@@ -650,7 +651,7 @@ fun ProfilScreen(onNavigate: (String) -> Unit = {}, onLogout: () -> Unit = {}) {
                                 androidx.compose.material3.HorizontalDivider(color = Color(0xFF1E1E28), thickness = 1.dp)
                                 Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
                                     Text("Redeemed Oct 02, 2026", color = TextMut, fontSize = 11.sp)
-                                    Text("STATION #02", color = TextMut, fontSize = 10.sp, fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace)
+                                    Text("STATION #02", color = TextMut, fontSize = 10.sp, fontFamily = GoogleSans)
                                 }
                             }
                         }
@@ -721,7 +722,7 @@ fun ProfilScreen(onNavigate: (String) -> Unit = {}, onLogout: () -> Unit = {}) {
                             "DOJOPULSE FIRMWARE V4.1.2 // TEL-ENGINE ACTIVE",
                             color = TextMut,
                             fontSize = 10.sp,
-                            fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace
+                            fontFamily = GoogleSans
                         )
                     }
                     Spacer(Modifier.height(8.dp))

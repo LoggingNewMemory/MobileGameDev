@@ -44,7 +44,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
-import androidx.compose.ui.text.font.FontFamily
+import amba.dojo.pulse.ui.theme.GoogleSans
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.text.withStyle
@@ -410,7 +410,7 @@ private fun PfIdentityCard(
                     "ID: $shortId",
                     color = TextMuted,
                     fontSize = 10.sp,
-                    fontFamily = FontFamily.Monospace,
+                    fontFamily = GoogleSans,
                     letterSpacing = 0.6.sp,
                     maxLines = 1,
                     softWrap = false
@@ -670,7 +670,7 @@ private fun PfPointsCard(
                         color = TextPrimary,
                         fontSize = 9.5.sp,
                         fontWeight = FontWeight.Bold,
-                        fontFamily = FontFamily.Monospace,
+                        fontFamily = GoogleSans,
                         letterSpacing = 0.3.sp,
                         maxLines = 1,
                         softWrap = false
@@ -1008,7 +1008,7 @@ private fun PfVoucherSection(isAktif: Boolean, onTab: (Boolean) -> Unit, onCopy:
                 "[LOG_SYNC: ON]",
                 color = TextMuted,
                 fontSize = 10.sp,
-                fontFamily = FontFamily.Monospace,
+                fontFamily = GoogleSans,
                 maxLines = 1,
                 softWrap = false
             )
@@ -1080,7 +1080,7 @@ private fun PfVoucherActive(code: String, title: String, expiry: String, onCopy:
                     color = AccentCoral,
                     fontSize = 11.sp,
                     fontWeight = FontWeight.Bold,
-                    fontFamily = FontFamily.Monospace,
+                    fontFamily = GoogleSans,
                     maxLines = 1,
                     softWrap = false
                 )
@@ -1159,7 +1159,7 @@ private fun PfVoucherUsed() {
                     "HBAG-OCT-FREE",
                     color = TextMuted,
                     fontSize = 11.sp,
-                    fontFamily = FontFamily.Monospace,
+                    fontFamily = GoogleSans,
                     maxLines = 1,
                     softWrap = false
                 )
@@ -1190,7 +1190,7 @@ private fun PfVoucherUsed() {
         HorizontalDivider(color = Color(0xFF1E1E28))
         Row(Modifier.fillMaxWidth(), Arrangement.SpaceBetween) {
             Text("Redeemed Oct 02, 2026", color = TextDim, fontSize = 11.sp, maxLines = 1, softWrap = false)
-            Text("STATION #02", color = TextDim, fontSize = 10.sp, fontFamily = FontFamily.Monospace, maxLines = 1, softWrap = false)
+            Text("STATION #02", color = TextDim, fontSize = 10.sp, fontFamily = GoogleSans, maxLines = 1, softWrap = false)
         }
     }
 }
@@ -1349,7 +1349,7 @@ private fun PfLogoutSection(onLogout: () -> Unit) {
             "DOJOPULSE FIRMWARE V4.1.2 // TEL-ENGINE ACTIVE",
             color = TextDim,
             fontSize = 10.sp,
-            fontFamily = FontFamily.Monospace,
+            fontFamily = GoogleSans,
             maxLines = 1,
             softWrap = false
         )

@@ -24,7 +24,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLifecycleOwner
-import androidx.compose.ui.text.font.FontFamily
+import amba.dojo.pulse.ui.theme.GoogleSans
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -349,7 +349,7 @@ fun TrainingHudOverlay(
                             color = Color.White,
                             fontSize = 14.sp,
                             fontWeight = FontWeight.Bold,
-                            fontFamily = FontFamily.Monospace
+                            fontFamily = GoogleSans
                         )
                     }
                 }
@@ -389,7 +389,7 @@ fun TrainingHudOverlay(
                                     color = Color.White,
                                     fontSize = 10.sp,
                                     fontWeight = FontWeight.Bold,
-                                    fontFamily = FontFamily.Monospace
+                                    fontFamily = GoogleSans
                                 )
                             }
                             Spacer(modifier = Modifier.width(8.dp))
@@ -458,7 +458,7 @@ fun TrainingHudOverlay(
                                 color = currentStep.badgeColor,
                                 fontSize = 17.sp,
                                 fontWeight = FontWeight.Bold,
-                                fontFamily = FontFamily.Monospace
+                                fontFamily = GoogleSans
                             )
                         }
 

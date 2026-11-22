@@ -25,7 +25,7 @@ import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.text.AnnotatedString
-import androidx.compose.ui.text.font.FontFamily
+import amba.dojo.pulse.ui.theme.GoogleSans
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -188,7 +188,7 @@ fun QrisPaymentScreen(
                                     color = QrPrimary,
                                     fontSize = 26.sp,
                                     fontWeight = FontWeight.Bold,
-                                    fontFamily = FontFamily.Monospace,
+                                    fontFamily = GoogleSans,
                                     softWrap = false
                                 )
                                 Text(
@@ -331,7 +331,7 @@ fun QrisPaymentScreen(
                                 )
                             }
                             Text(
-                                "STANDAR NASIONAL",
+                                "NATIONAL STANDARD",
                                 color = QrOnSurfaceVar,
                                 fontSize = 10.sp,
                                 fontWeight = FontWeight.SemiBold,
@@ -383,7 +383,7 @@ fun QrisPaymentScreen(
                         "NMID: ID1020268894120",
                         color = QrOnSurfaceVar,
                         fontSize = 10.sp,
-                        fontFamily = FontFamily.Monospace,
+                        fontFamily = GoogleSans,
                         softWrap = false
                     )
 
