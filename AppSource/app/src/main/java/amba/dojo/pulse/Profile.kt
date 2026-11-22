@@ -103,10 +103,10 @@ private data class RedeemItem(
 )
 
 private val redeemCatalog = listOf(
-    RedeemItem("VOUCHER BELANJA GEAR", "Potongan Rp 50.000 Store",             "Semua item gear di Dojo Store",       1_000, "voucher"),
-    RedeemItem("AKSES KHUSUS",         "Gratis 1 Sesi Sparring VR / AI Arena", "Analisis MediaPipe Biomekanik",       1_500, "vr"),
-    RedeemItem("HARDWARE REWARD",      "Smart Biometric Handwraps Marker",     "Reticle optik kompatibel sensor HUD", 2_000, "hardware"),
-    RedeemItem("OFFICIAL MERCH",       "Tactical Velcro Patch DojoPulse",      "Patch bordir taktikal edisi terbatas",  800, "patch")
+    RedeemItem("GEAR SHOPPING VOUCHER", "Rp 50,000 Store Discount",            "All gear items in Dojo Store",          1_000, "voucher"),
+    RedeemItem("SPECIAL ACCESS",        "Free 1 Session VR Sparring / AI Arena","MediaPipe Biomechanics Analysis",      1_500, "vr"),
+    RedeemItem("HARDWARE REWARD",       "Smart Biometric Handwraps Marker",     "Optical reticle compatible with sensor HUD", 2_000, "hardware"),
+    RedeemItem("OFFICIAL MERCH",        "Tactical Velcro Patch DojoPulse",      "Limited edition tactical embroidered patch",  800, "patch")
 )
 
 // ─── Root composable ─────────────────────────────────────────────────────────
@@ -147,7 +147,7 @@ fun ProfileScreen(
                     BitmapFactory.decodeStream(s)?.let { bmp -> rawBitmap = bmp; showCrop = true }
                 }
             } catch (_: Exception) {
-                toast = "Gagal memuat gambar"
+                toast = "Failed to load image"
             }
         }
     }
@@ -212,9 +212,9 @@ fun ProfileScreen(
                             onRedeem = { item ->
                                 if (points >= item.cost) {
                                     points -= item.cost
-                                    toast = "Berhasil menukar ${"%,d".format(item.cost)} DP untuk: ${item.title}"
+                                    toast = "Successfully redeemed ${"%,d".format(item.cost)} DP for: ${item.title}"
                                 } else {
-                                    toast = "Poin tidak mencukupi (Perlu ${"%,d".format(item.cost)} DP)"
+                                    toast = "Insufficient points (Need ${"%,d".format(item.cost)} DP)"
                                 }
                             }
                         )
@@ -222,7 +222,7 @@ fun ProfileScreen(
 
                     PfVoucherSection(tabAktif, { tabAktif = it }) { code ->
                         clipboardManager.setText(AnnotatedString(code))
-                        toast = "Kode $code disalin ke clipboard!"
+                        toast = "Code $code copied to clipboard!"
                     }
 
                     PfSettingsSection()
@@ -266,7 +266,7 @@ fun ProfileScreen(
                             contentPadding = PaddingValues(horizontal = 8.dp, vertical = 0.dp)
                         ) {
                             Text(
-                                "TUTUP",
+                                "CLOSE",
                                 color = AccentCoral,
                                 fontSize = 11.sp,
                                 fontWeight = FontWeight.Bold,
@@ -298,10 +298,10 @@ fun ProfileScreen(
                     ).addOnCompleteListener { task ->
                         isSaving = false
                         if (task.isSuccessful) {
-                            statusMessage = "Profil berhasil diperbarui!"
+                            statusMessage = "Profile updated successfully!"
                             isSuccessMsg = true
                         } else {
-                            statusMessage = "Gagal: ${task.exception?.localizedMessage}"
+                            statusMessage = "Failed: ${task.exception?.localizedMessage}"
                             isSuccessMsg = false
                         }
                     }
@@ -316,7 +316,7 @@ fun ProfileScreen(
             avatarBitmap = cropped
             saveAvatarBitmap(context, cropped, userId)
             showCrop = false
-            toast = "Foto profil berhasil disimpan!"
+            toast = "Profile photo saved successfully!"
         }
     }
 }
@@ -344,7 +344,7 @@ private fun PfTopBar() {
             )
             Spacer(Modifier.height(2.dp))
             Text(
-                "Profil Fighter",
+                "Fighter Profile",
                 color = TextPrimary,
                 fontSize = 20.sp,
                 fontWeight = FontWeight.ExtraBold,
@@ -353,8 +353,8 @@ private fun PfTopBar() {
             )
         }
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            PfNavIcon(Icons.Default.Notifications, "Notifikasi")
-            PfNavIcon(Icons.Default.Settings, "Pengaturan")
+            PfNavIcon(Icons.Default.Notifications, "Notifications")
+            PfNavIcon(Icons.Default.Settings, "Settings")
         }
     }
 }
@@ -692,7 +692,7 @@ private fun PfPointsCard(
                         .padding(end = 8.dp)
                 ) {
                     Text(
-                        "SALDO POIN FIGHTER",
+                        "FIGHTER POINTS BALANCE",
                         color = TextMuted,
                         fontSize = 10.sp,
                         fontWeight = FontWeight.SemiBold,
@@ -727,13 +727,13 @@ private fun PfPointsCard(
                     Spacer(Modifier.height(4.dp))
                     Text(
                         buildAnnotatedString {
-                            append("Estimasi: ")
+                            append("Est: ")
                             withStyle(SpanStyle(color = TextPrimary, fontWeight = FontWeight.Bold)) {
                                 append("Rp $estimasi")
                             }
                             append(" · ")
                             withStyle(SpanStyle(color = AccentCoral, fontWeight = FontWeight.Medium)) {
-                                append("Diskon 15% All Gear")
+                                append("15% Off All Gear")
                             }
                         },
                         fontSize = 11.sp,
@@ -754,7 +754,7 @@ private fun PfPointsCard(
                     horizontalArrangement = Arrangement.spacedBy(4.dp)
                 ) {
                     Text(
-                        "Tukar Poin",
+                        "Redeem Points",
                         color = AccentCoral,
                         fontSize = 11.sp,
                         fontWeight = FontWeight.Bold,
@@ -846,7 +846,7 @@ private fun PfRedeemSection(
                 horizontalArrangement = Arrangement.spacedBy(6.dp)
             ) {
                 Text(
-                    "KATALOG REDEEM HADIAH",
+                    "REWARDS REDEEM CATALOG",
                     color = TextMuted,
                     fontSize = 10.5.sp,
                     fontWeight = FontWeight.Bold,
@@ -861,7 +861,7 @@ private fun PfRedeemSection(
                         .padding(horizontal = 7.dp, vertical = 2.dp)
                 ) {
                     Text(
-                        "${items.size} Tersedia",
+                        "${items.size} Available",
                         color = TextSecondary,
                         fontSize = 9.5.sp,
                         fontWeight = FontWeight.Bold,
@@ -872,7 +872,7 @@ private fun PfRedeemSection(
             }
 
             Text(
-                "Update Mingguan",
+                "Weekly Update",
                 color = AccentCoral,
                 fontSize = 10.5.sp,
                 fontWeight = FontWeight.SemiBold,
@@ -974,7 +974,7 @@ private fun PfRedeemCard(item: RedeemItem, canAfford: Boolean, onRedeem: () -> U
                 )
             ) {
                 Text(
-                    "Tukar",
+                    "Redeem",
                     fontSize = 11.sp,
                     fontWeight = FontWeight.Bold,
                     maxLines = 1,
@@ -996,7 +996,7 @@ private fun PfVoucherSection(isAktif: Boolean, onTab: (Boolean) -> Unit, onCopy:
             verticalAlignment = Alignment.CenterVertically
         ) {
             Text(
-                "PROMO & VOUCHER SAYA",
+                "MY PROMOS & VOUCHERS",
                 color = TextMuted,
                 fontSize = 11.sp,
                 fontWeight = FontWeight.Bold,
@@ -1023,7 +1023,7 @@ private fun PfVoucherSection(isAktif: Boolean, onTab: (Boolean) -> Unit, onCopy:
                 .padding(4.dp),
             horizontalArrangement = Arrangement.spacedBy(4.dp)
         ) {
-            listOf(true to "Voucher Aktif (2)", false to "Riwayat Terpakai (1)").forEach { (aktif, label) ->
+            listOf(true to "Active Vouchers (2)", false to "Used History (1)").forEach { (aktif, label) ->
                 Box(
                     modifier = Modifier
                         .weight(1f)
@@ -1046,8 +1046,8 @@ private fun PfVoucherSection(isAktif: Boolean, onTab: (Boolean) -> Unit, onCopy:
         }
 
         if (isAktif) {
-            PfVoucherActive("DOJOCHAMP", "Diskon 30% Matras & Wraps", "Berlaku s.d. 30 Nov 2026", onCopy)
-            PfVoucherActive("GEARCASH20", "Cashback 20% Apparel & Fightwear", "Min. belanja Rp 250.000", onCopy)
+            PfVoucherActive("DOJOCHAMP", "30% Off Mats & Wraps", "Valid until Nov 30, 2026", onCopy)
+            PfVoucherActive("GEARCASH20", "20% Cashback Apparel & Fightwear", "Min. spend Rp 250,000", onCopy)
         } else {
             PfVoucherUsed()
         }
@@ -1092,7 +1092,7 @@ private fun PfVoucherActive(code: String, title: String, expiry: String, onCopy:
                     .padding(horizontal = 8.dp, vertical = 3.dp)
             ) {
                 Text(
-                    "Aktif",
+                    "Active",
                     color = EmeraldGreen,
                     fontSize = 10.sp,
                     fontWeight = FontWeight.Bold,
@@ -1123,7 +1123,7 @@ private fun PfVoucherActive(code: String, title: String, expiry: String, onCopy:
             ) {
                 Icon(Icons.Default.ContentCopy, null, tint = AccentCoral, modifier = Modifier.size(13.dp))
                 Text(
-                    "Salin Kode",
+                    "Copy Code",
                     color = AccentCoral,
                     fontSize = 11.sp,
                     fontWeight = FontWeight.SemiBold,
@@ -1170,7 +1170,7 @@ private fun PfVoucherUsed() {
                     .padding(horizontal = 8.dp, vertical = 3.dp)
             ) {
                 Text(
-                    "Sudah Digunakan",
+                    "Already Used",
                     color = TextMuted,
                     fontSize = 10.sp,
                     fontWeight = FontWeight.Medium,
@@ -1180,7 +1180,7 @@ private fun PfVoucherUsed() {
             }
         }
         Text(
-            "Gratis 1 Jam Sesi Heavy Bag Zona B",
+            "Free 1 Hour Heavy Bag Session Zone B",
             color = TextSecondary,
             fontSize = 12.5.sp,
             fontWeight = FontWeight.Bold,
@@ -1189,7 +1189,7 @@ private fun PfVoucherUsed() {
         )
         HorizontalDivider(color = Color(0xFF1E1E28))
         Row(Modifier.fillMaxWidth(), Arrangement.SpaceBetween) {
-            Text("Ditukar 02 Okt 2026", color = TextDim, fontSize = 11.sp, maxLines = 1, softWrap = false)
+            Text("Redeemed Oct 02, 2026", color = TextDim, fontSize = 11.sp, maxLines = 1, softWrap = false)
             Text("STATION #02", color = TextDim, fontSize = 10.sp, fontFamily = FontFamily.Monospace, maxLines = 1, softWrap = false)
         }
     }
@@ -1201,7 +1201,7 @@ private fun PfVoucherUsed() {
 private fun PfSettingsSection() {
     Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
         Text(
-            "PENGATURAN AKUN & SENSOR",
+            "ACCOUNT & SENSOR SETTINGS",
             color = TextMuted,
             fontSize = 11.sp,
             fontWeight = FontWeight.Bold,
@@ -1214,25 +1214,25 @@ private fun PfSettingsSection() {
             Color(0xFF21151B),
             Color(0xFF3E1D27),
             AccentCoral,
-            "Hubungkan Sensor Wearable",
-            "MediaPipe Ring Sensor v2 aktif",
-            badge = "Terhubung 94%"
+            "Connect Wearable Sensor",
+            "MediaPipe Ring Sensor v2 active",
+            badge = "Connected 94%"
         )
         PfSettingsRow(
             Icons.Default.Lock,
             Color(0xFF171B26),
             Color(0xFF1F2D42),
             SkyBlue,
-            "Ganti Kata Sandi & Biometrik",
-            "Update kredensial fighter HUD"
+            "Change Password & Biometrics",
+            "Update fighter HUD credentials"
         )
         PfSettingsRow(
             Icons.Default.HelpOutline,
             Color(0xFF241D14),
             Color(0xFF3E2E18),
             AmberYellow,
-            "FAQ & Bantuan Dojo",
-            "Panduan poin, klaim garansi & instruksi"
+            "FAQ & Dojo Support",
+            "Points guide, warranty claims & manuals"
         )
     }
 }
@@ -1387,7 +1387,7 @@ private fun PfEditDialog(
             ) {
                 Row(Modifier.fillMaxWidth(), Arrangement.SpaceBetween, Alignment.CenterVertically) {
                     IconButton(onClick = onDismiss) { Icon(Icons.Default.Close, null, tint = TextPrimary) }
-                    Text("EDIT PROFIL", color = TextPrimary, fontSize = 16.sp, fontWeight = FontWeight.Bold, letterSpacing = 1.sp)
+                    Text("EDIT PROFILE", color = TextPrimary, fontSize = 16.sp, fontWeight = FontWeight.Bold, letterSpacing = 1.sp)
                     Spacer(Modifier.size(48.dp))
                 }
                 Spacer(Modifier.height(24.dp))
@@ -1435,7 +1435,7 @@ private fun PfEditDialog(
                 }
 
                 Spacer(Modifier.height(8.dp))
-                Text("Ketuk untuk ganti foto", color = TextMuted, fontSize = 12.sp)
+                Text("Tap to change photo", color = TextMuted, fontSize = 12.sp)
                 Spacer(Modifier.height(28.dp))
 
                 Card(
@@ -1444,7 +1444,7 @@ private fun PfEditDialog(
                     colors = CardDefaults.cardColors(containerColor = Color(0xFF1E1E1E))
                 ) {
                     Column(Modifier.padding(16.dp)) {
-                        Text("NAMA LENGKAP", color = TextMuted, fontSize = 11.sp, fontWeight = FontWeight.Bold, letterSpacing = 1.sp)
+                        Text("FULL NAME", color = TextMuted, fontSize = 11.sp, fontWeight = FontWeight.Bold, letterSpacing = 1.sp)
                         Spacer(Modifier.height(4.dp))
                         OutlinedTextField(
                             value = displayName,
@@ -1489,7 +1489,7 @@ private fun PfEditDialog(
                     if (isSaving) {
                         CircularProgressIndicator(Modifier.size(20.dp), color = Color(0xFF4A1525), strokeWidth = 2.dp)
                     } else {
-                        Text("SIMPAN PERUBAHAN", color = Color(0xFF4A1525), fontWeight = FontWeight.Bold, letterSpacing = 1.sp)
+                        Text("SAVE CHANGES", color = Color(0xFF4A1525), fontWeight = FontWeight.Bold, letterSpacing = 1.sp)
                     }
                 }
             }
@@ -1518,15 +1518,15 @@ fun CropImageDialog(bitmap: Bitmap, onDismiss: () -> Unit, onCropConfirmed: (Bit
                     Arrangement.SpaceBetween,
                     Alignment.CenterVertically
                 ) {
-                    TextButton(onClick = onDismiss) { Text("Batal", color = Color.White, fontSize = 16.sp) }
-                    Text("SESUAIKAN (1:1)", color = Color.White, fontWeight = FontWeight.Bold, fontSize = 16.sp)
+                    TextButton(onClick = onDismiss) { Text("Cancel", color = Color.White, fontSize = 16.sp) }
+                    Text("ADJUST (1:1)", color = Color.White, fontWeight = FontWeight.Bold, fontSize = 16.sp)
                     TextButton(onClick = { onCropConfirmed(cropSquareBitmap(bitmap, scale, offsetX, offsetY)) }) {
-                        Text("Pilih", color = Color(0xFFfab4b8), fontWeight = FontWeight.Bold, fontSize = 16.sp)
+                        Text("Choose", color = Color(0xFFfab4b8), fontWeight = FontWeight.Bold, fontSize = 16.sp)
                     }
                 }
                 Spacer(Modifier.weight(1f))
                 Text(
-                    "Geser & cubit untuk menyesuaikan 1:1",
+                    "Pan & pinch to adjust 1:1",
                     color = Color.LightGray,
                     fontSize = 12.sp,
                     modifier = Modifier.padding(bottom = 16.dp)

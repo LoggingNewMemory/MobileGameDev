@@ -87,7 +87,7 @@ fun BoxingTutorialScreen(
                         Icon(Icons.Default.Videocam, contentDescription = null, tint = Color.White)
                         Spacer(modifier = Modifier.width(8.dp))
                         Text(
-                            "MULAI LATIHAN DENGAN KAMERA",
+                            "START TRAINING WITH CAMERA",
                             color = Color.White,
                             fontWeight = FontWeight.Bold,
                             fontSize = 14.sp,
@@ -163,18 +163,18 @@ fun StanceAndGuardSection(
             Column(modifier = Modifier.padding(16.dp)) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Box(modifier = Modifier.background(accentRed, RoundedCornerShape(4.dp)).padding(horizontal = 6.dp, vertical = 2.dp)) {
-                        Text("DASAR 01", color = Color.White, fontSize = 9.sp, fontWeight = FontWeight.Bold)
+                        Text("FOUNDATION 01", color = Color.White, fontSize = 9.sp, fontWeight = FontWeight.Bold)
                     }
                     Spacer(modifier = Modifier.width(8.dp))
-                    Text("POSISI KUDA-KUDA (ORTHODOX STANCE)", color = textPrimary, fontSize = 14.sp, fontWeight = FontWeight.Bold)
+                    Text("FIGHTING STANCE (ORTHODOX STANCE)", color = textPrimary, fontSize = 14.sp, fontWeight = FontWeight.Bold)
                 }
 
                 Spacer(modifier = Modifier.height(10.dp))
                 Text(
-                    "Bagi orang yang dominan tangan kanan (Orthodox):\n" +
-                    "• Kaki kiri di depan, kaki kanan di belakang (jarak selebar bahu).\n" +
-                    "• Tekuk kedua lutut sedikit untuk menjaga kelenturan dan keseimbangan.\n" +
-                    "• Tumpukan berat badan di tengah-tengah kedua kaki.",
+                    "For right-hand dominant fighters (Orthodox):\n" +
+                    "• Lead with left foot forward, right foot back (shoulder-width apart).\n" +
+                    "• Keep both knees slightly bent for agility and balance.\n" +
+                    "• Center your body weight evenly between both feet.",
                     color = textSecondary,
                     fontSize = 12.sp,
                     lineHeight = 18.sp
@@ -190,19 +190,19 @@ fun StanceAndGuardSection(
             Column(modifier = Modifier.padding(16.dp)) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Box(modifier = Modifier.background(accentRed, RoundedCornerShape(4.dp)).padding(horizontal = 6.dp, vertical = 2.dp)) {
-                        Text("DASAR 02", color = Color.White, fontSize = 9.sp, fontWeight = FontWeight.Bold)
+                        Text("FOUNDATION 02", color = Color.White, fontSize = 9.sp, fontWeight = FontWeight.Bold)
                     }
                     Spacer(modifier = Modifier.width(8.dp))
-                    Text("TUTUP GUARD (PERTAHANAN)", color = textPrimary, fontSize = 14.sp, fontWeight = FontWeight.Bold)
+                    Text("TIGHT GUARD (DEFENSE)", color = textPrimary, fontSize = 14.sp, fontWeight = FontWeight.Bold)
                 }
 
                 Spacer(modifier = Modifier.height(10.dp))
                 Text(
-                    "Guard adalah benteng Anda. Jangan pernah menjatuhkan tangan!\n" +
-                    "• Tangan kiri (Lead) menempel di pipi kiri.\n" +
-                    "• Tangan kanan (Rear) menempel erat melindungi dagu kanan.\n" +
-                    "• Kedua siku merapat ke tubuh untuk melindungi rusuk dan ulu hati.\n" +
-                    "• Tundukkan dagu sedikit ke arah dada.",
+                    "Your guard is your fortress. Never drop your hands!\n" +
+                    "• Lead left hand resting against your left cheek.\n" +
+                    "• Rear right hand tucked tight protecting right chin.\n" +
+                    "• Both elbows tucked tight to protect ribs and solar plexus.\n" +
+                    "• Tuck your chin slightly down toward your chest.",
                     color = textSecondary,
                     fontSize = 12.sp,
                     lineHeight = 18.sp
@@ -216,7 +216,7 @@ fun StanceAndGuardSection(
                         .padding(12.dp)
                 ) {
                     Text(
-                        "⚡ ATURAN EMAS: Setiap selesai memukul, tangan HARUS langsung ditarik kembali ke posisi Guard dalam waktu < 0.23 detik! AI akan mengukur waktu ini.",
+                        "⚡ GOLDEN RULE: After every strike, hands MUST instantly snap back to Guard in < 0.23 seconds! The AI measures this recovery time.",
                         color = accentPink,
                         fontSize = 11.sp,
                         fontWeight = FontWeight.SemiBold
@@ -234,15 +234,15 @@ fun StanceAndGuardSection(
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Icon(Icons.Default.CameraAlt, contentDescription = null, tint = accentPink, modifier = Modifier.size(18.dp))
                     Spacer(modifier = Modifier.width(8.dp))
-                    Text("SETUP KAMERA HP ANDA", color = textPrimary, fontSize = 14.sp, fontWeight = FontWeight.Bold)
+                    Text("PHONE CAMERA SETUP", color = textPrimary, fontSize = 14.sp, fontWeight = FontWeight.Bold)
                 }
 
                 Spacer(modifier = Modifier.height(8.dp))
                 Text(
-                    "1. Sandarkan HP di meja setinggi dada atau pinggang.\n" +
-                    "2. Berdirilah sekitar 1.5 hingga 2 meter dari kamera.\n" +
-                    "3. Pastikan kepala, kedua tangan, dan dada terlihat jelas di dalam layar.\n" +
-                    "4. AI Skeleton akan langsung mengunci sendi bahu, siku, dan pergelangan tangan Anda.",
+                    "1. Prop your phone at chest or waist height on a stable surface.\n" +
+                    "2. Stand about 1.5 to 2 meters away from the camera.\n" +
+                    "3. Ensure head, both hands, and chest are clearly visible in frame.\n" +
+                    "4. AI Skeleton will immediately lock onto shoulders, elbows, and wrists.",
                     color = textSecondary,
                     fontSize = 12.sp,
                     lineHeight = 18.sp
@@ -264,11 +264,11 @@ fun SixPunchesSection(
         PunchTutorialCard(
             number = "1",
             title = "LEFT JAB",
-            subtitle = "Pukulan lurus cepat tangan kiri",
+            subtitle = "Rapid straight lead-hand punch",
             targetAngle = "140° - 165°",
             targetRecovery = "< 0.20s",
-            howTo = "Luncurkan tangan kiri lurus ke depan target. Putar kepalan tangan mendatar tepat saat mengenai sasaran. Segera tarik kembali ke pipi kiri secepat kilat.",
-            commonMistake = "Jangan menjatuhkan tangan kanan saat melempar jab!",
+            howTo = "Snap lead left hand straight toward target. Rotate fist flat on impact. Instantly whip back to cheek like a rubber band.",
+            commonMistake = "Don't drop your right hand while throwing the jab!",
             surfaceColor = surfaceColor,
             accentRed = accentRed,
             accentPink = accentPink,
@@ -279,11 +279,11 @@ fun SixPunchesSection(
         PunchTutorialCard(
             number = "2",
             title = "STRIKE",
-            subtitle = "Pukulan lurus bertenaga tangan kanan",
+            subtitle = "Powerful straight rear-hand cross",
             targetAngle = "140° - 165°",
             targetRecovery = "< 0.23s",
-            howTo = "Dorong kaki kanan belakang dan putar pinggul kanan ke depan. Luncurkan tangan kanan lurus ke sasaran dengan kekuatan rotasi badan penuh.",
-            commonMistake = "Tangan kiri harus tetap rapat di pipi untuk melindungi wajah.",
+            howTo = "Drive off rear right foot and rotate hips forward. Launch right cross straight to target with full kinetic body rotation.",
+            commonMistake = "Keep lead left hand glued to your cheek to protect your face.",
             surfaceColor = surfaceColor,
             accentRed = accentRed,
             accentPink = accentPink,
@@ -294,11 +294,11 @@ fun SixPunchesSection(
         PunchTutorialCard(
             number = "3",
             title = "LEFT HOOK",
-            subtitle = "Pukulan melingkar tangan kiri",
-            targetAngle = "85° - 110° (Siku Bengkok)",
+            subtitle = "Lead-hand horizontal circular strike",
+            targetAngle = "85° - 110° (Bent Elbow)",
             targetRecovery = "< 0.30s",
-            howTo = "Tekuk siku kiri membentuk sudut 90°. Putar tumit kiri dan pinggul melingkar ke arah kanan, seolah menampar dengan buku jari secara horizontal.",
-            commonMistake = "Jangan membuka siku terlalu lebar. Jaga siku sejajar dengan tanah.",
+            howTo = "Bend left elbow to 90°. Pivot lead heel and rotate hips to the right, driving horizontal knuckles through the target.",
+            commonMistake = "Don't flare elbow too wide. Keep forearm parallel to the ground.",
             surfaceColor = surfaceColor,
             accentRed = accentRed,
             accentPink = accentPink,
@@ -309,11 +309,11 @@ fun SixPunchesSection(
         PunchTutorialCard(
             number = "4",
             title = "RIGHT HOOK",
-            subtitle = "Pukulan melingkar tangan kanan",
-            targetAngle = "85° - 110° (Siku Bengkok)",
+            subtitle = "Rear-hand horizontal circular strike",
+            targetAngle = "85° - 110° (Bent Elbow)",
             targetRecovery = "< 0.15s",
-            howTo = "Putar kaki dan pinggul kanan penuh. Ayunkan tangan kanan melingkar horizontal ke sisi kiri sasaran dengan siku membentuk sudut 90°.",
-            commonMistake = "Segera tarik tangan kanan kembali ke dagu setelah memutar.",
+            howTo = "Full pivot on rear foot and hips. Whip right hand horizontally across target with elbow locked at 90°.",
+            commonMistake = "Instantly snap right hand back to chin after rotating.",
             surfaceColor = surfaceColor,
             accentRed = accentRed,
             accentPink = accentPink,
@@ -324,11 +324,11 @@ fun SixPunchesSection(
         PunchTutorialCard(
             number = "5",
             title = "LEFT UPPERCUT",
-            subtitle = "Pukulan sodok ke atas tangan kiri",
+            subtitle = "Lead-hand vertical upward strike",
             targetAngle = "75° - 105°",
             targetRecovery = "< 0.21s",
-            howTo = "Turunkan tangan kiri sedikit saja, tekuk lutut kiri, lalu dorong badan ke atas meluncurkan kepalan tangan ke arah dagu lawan dari bawah ke atas.",
-            commonMistake = "Jangan menurunkan tangan terlalu jauh ke bawah pinggang!",
+            howTo = "Dip lead shoulder slightly, bend knees, and explode upward driving fist toward opponent's chin from below.",
+            commonMistake = "Don't drop your hand below your waist before punching!",
             surfaceColor = surfaceColor,
             accentRed = accentRed,
             accentPink = accentPink,
@@ -339,11 +339,11 @@ fun SixPunchesSection(
         PunchTutorialCard(
             number = "6",
             title = "RIGHT UPPERCUT",
-            subtitle = "Pukulan sodok ke atas tangan kanan",
+            subtitle = "Rear-hand vertical upward strike",
             targetAngle = "75° - 105°",
             targetRecovery = "< 0.31s",
-            howTo = "Dorong kaki kanan belakang dan putar pinggul ke atas. Luncurkan kepalan tangan kanan vertikal ke arah dagu lawan.",
-            commonMistake = "Gunakan dorongan kaki dan pinggul, bukan hanya tenaga lengan.",
+            howTo = "Drive off rear foot and thrust hips upward. Launch right fist vertically toward opponent's chin.",
+            commonMistake = "Use leg drive and hip thrust, not just arm strength.",
             surfaceColor = surfaceColor,
             accentRed = accentRed,
             accentPink = accentPink,
@@ -414,18 +414,18 @@ fun PunchTutorialCard(
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
                 Column {
-                    Text("SUDUT SIKU TARGET", color = Color.Gray, fontSize = 9.sp, fontWeight = FontWeight.Bold)
+                    Text("TARGET ELBOW ANGLE", color = Color.Gray, fontSize = 9.sp, fontWeight = FontWeight.Bold)
                     Text(targetAngle, color = textPrimary, fontSize = 12.sp, fontWeight = FontWeight.Bold)
                 }
                 Column(horizontalAlignment = Alignment.End) {
-                    Text("RECOVERY GUARD TARGET", color = Color.Gray, fontSize = 9.sp, fontWeight = FontWeight.Bold)
+                    Text("TARGET GUARD RECOVERY", color = Color.Gray, fontSize = 9.sp, fontWeight = FontWeight.Bold)
                     Text(targetRecovery, color = accentPink, fontSize = 12.sp, fontWeight = FontWeight.Bold)
                 }
             }
 
             Spacer(modifier = Modifier.height(10.dp))
             Text(
-                "Cara Melakukan:\n$howTo",
+                "How To Perform:\n$howTo",
                 color = textSecondary,
                 fontSize = 11.sp,
                 lineHeight = 16.sp
@@ -436,7 +436,7 @@ fun PunchTutorialCard(
                 Icon(Icons.Default.Warning, contentDescription = null, tint = Color(0xFFFFB74D), modifier = Modifier.size(14.dp))
                 Spacer(modifier = Modifier.width(6.dp))
                 Text(
-                    "Kesalahan Umum: $commonMistake",
+                    "Common Mistake: $commonMistake",
                     color = Color(0xFFFFB74D),
                     fontSize = 10.sp
                 )
@@ -459,10 +459,10 @@ fun AiCoachHudSection(
             shape = RoundedCornerShape(12.dp)
         ) {
             Column(modifier = Modifier.padding(16.dp)) {
-                Text("CARA MEMBACA HUD SAAT LATIHAN", color = textPrimary, fontSize = 15.sp, fontWeight = FontWeight.Bold)
+                Text("HOW TO READ HUD DURING TRAINING", color = textPrimary, fontSize = 15.sp, fontWeight = FontWeight.Bold)
                 Spacer(modifier = Modifier.height(6.dp))
                 Text(
-                    "Kamera AI kami memindai 33 titik sendi tubuh Anda secara real-time (60 FPS) untuk menilai teknik Anda.",
+                    "Our AI camera tracks 33 body skeletal landmarks in real-time (60 FPS) to evaluate your form and technique.",
                     color = textSecondary,
                     fontSize = 12.sp
                 )
@@ -470,8 +470,8 @@ fun AiCoachHudSection(
                 Spacer(modifier = Modifier.height(14.dp))
 
                 HudGuideItem(
-                    title = "PUNCH ANGLE (Sudut Siku)",
-                    desc = "Mengukur seberapa lurus Anda meluruskan lengan saat Left Jab / Strike. Target: 140° - 165°. Jika lengan tidak lurus, skor form akan berkurang.",
+                    title = "PUNCH ANGLE (Elbow Extension)",
+                    desc = "Measures arm extension on Left Jab / Strike. Target: 140° - 165°. Incomplete extension reduces form score.",
                     accentPink = accentPink,
                     textPrimary = textPrimary,
                     textSecondary = textSecondary
@@ -480,8 +480,8 @@ fun AiCoachHudSection(
                 Spacer(modifier = Modifier.height(12.dp))
 
                 HudGuideItem(
-                    title = "RETURN GUARD (Kecepatan Pemulihan)",
-                    desc = "Waktu dari saat pukulan mencapai titik terjauh sampai tangan Anda kembali melindungi dagu. Standar emas: <= 0.23 detik.",
+                    title = "RETURN GUARD (Recovery Speed)",
+                    desc = "Time from peak punch extension back to chin protection. Gold standard: <= 0.23 seconds.",
                     accentPink = accentPink,
                     textPrimary = textPrimary,
                     textSecondary = textSecondary
@@ -490,8 +490,8 @@ fun AiCoachHudSection(
                 Spacer(modifier = Modifier.height(12.dp))
 
                 HudGuideItem(
-                    title = "FORM SCORE (Skor Akurasi %)",
-                    desc = "Nilai ketepatan teknik Anda (mulai dari 88%). Skor naik saat pukulan lurus dan guard cepat, serta turun jika guard lambat atau tangan terjatuh.",
+                    title = "FORM SCORE (Accuracy Score %)",
+                    desc = "Overall technique precision score. Increases with clean extension and fast recovery; decreases with lazy guard or dropped hands.",
                     accentPink = accentPink,
                     textPrimary = textPrimary,
                     textSecondary = textSecondary
@@ -500,8 +500,8 @@ fun AiCoachHudSection(
                 Spacer(modifier = Modifier.height(12.dp))
 
                 HudGuideItem(
-                    title = "TARGET PUKULAN (180 Strikes)",
-                    desc = "Pace test 3 menit dirancang untuk melatih 180 pukulan terstruktur (rata-rata 1 pukulan per detik).",
+                    title = "STRIKE TARGET (180 Strikes)",
+                    desc = "3-minute pace drill calibrated for 180 structured strikes (average 1 strike per second).",
                     accentPink = accentPink,
                     textPrimary = textPrimary,
                     textSecondary = textSecondary

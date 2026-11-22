@@ -204,14 +204,14 @@ private fun CkTopBar(onBack: () -> Unit) {
                 ) {
                     Icon(
                         Icons.AutoMirrored.Filled.ArrowBack,
-                        contentDescription = "Batal Checkout",
+                        contentDescription = "Cancel Checkout",
                         tint = CkTextSec,
                         modifier = Modifier.size(18.dp)
                     )
                 }
                 Column {
                     Text(
-                        "RINGKASAN PESANAN",
+                        "ORDER SUMMARY",
                         color = CkCoral,
                         fontSize = 10.sp,
                         fontWeight = FontWeight.Bold,
@@ -290,7 +290,7 @@ private fun CkDojoHubCard() {
                 }
                 Column {
                     Text(
-                        "Titik Pengambilan / Dojo Hub",
+                        "Pickup Point / Dojo Hub",
                         color = CkTextPrimary,
                         fontSize = 12.sp,
                         fontWeight = FontWeight.Bold,
@@ -298,7 +298,7 @@ private fun CkDojoHubCard() {
                         overflow = TextOverflow.Ellipsis
                     )
                     Text(
-                        "Pengambilan Mandiri di Mitra Dojo",
+                        "Self-Pickup at Dojo Partner",
                         color = CkTextMuted,
                         fontSize = 10.sp,
                         maxLines = 1,
@@ -314,7 +314,7 @@ private fun CkDojoHubCard() {
                     .padding(horizontal = 8.dp, vertical = 3.dp)
             ) {
                 Text(
-                    "GRATIS ONGKIR",
+                    "FREE SHIPPING",
                     color = CkCoral,
                     fontSize = 9.sp,
                     fontWeight = FontWeight.Black,
@@ -364,7 +364,7 @@ private fun CkDojoHubCard() {
                 }
                 Spacer(Modifier.height(2.dp))
                 Text(
-                    "Gedung Olahraga Sektor B • Lantai 1",
+                    "Sports Hall Sector B • 1st Floor",
                     color = CkTextMuted,
                     fontSize = 11.sp,
                     maxLines = 1,
@@ -382,7 +382,7 @@ private fun CkDojoHubCard() {
                     .padding(horizontal = 10.dp, vertical = 5.dp)
             ) {
                 Text(
-                    "Ubah",
+                    "Change",
                     color = CkCoral,
                     fontSize = 11.sp,
                     fontWeight = FontWeight.Bold,
@@ -661,7 +661,7 @@ private fun CkVoucherSection(
                         .clickable { onRemoveVoucher() },
                     contentAlignment = Alignment.Center
                 ) {
-                    Icon(Icons.Default.Close, contentDescription = "Hapus Voucher", tint = CkTextMuted, modifier = Modifier.size(14.dp))
+                    Icon(Icons.Default.Close, contentDescription = "Remove Voucher", tint = CkTextMuted, modifier = Modifier.size(14.dp))
                 }
             }
         }
@@ -675,7 +675,7 @@ private fun CkVoucherSection(
                 value = voucherInput,
                 onValueChange = onVoucherInputChange,
                 placeholder = {
-                    Text("Masukkan kode promo...", color = CkTextDim, fontSize = 11.sp, maxLines = 1, softWrap = false)
+                    Text("Enter promo code...", color = CkTextDim, fontSize = 11.sp, maxLines = 1, softWrap = false)
                 },
                 singleLine = true,
                 modifier = Modifier
@@ -701,7 +701,7 @@ private fun CkVoucherSection(
                 ),
                 border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFF2D2E3D))
             ) {
-                Text("Terapkan", fontSize = 12.sp, fontWeight = FontWeight.Bold, softWrap = false)
+                Text("Apply", fontSize = 12.sp, fontWeight = FontWeight.Bold, softWrap = false)
             }
         }
     }
@@ -808,7 +808,7 @@ private fun CkPaymentMethodSection(
                 horizontalArrangement = Arrangement.spacedBy(6.dp)
             ) {
                 Icon(Icons.Default.AccountBalanceWallet, null, tint = CkCoral, modifier = Modifier.size(17.dp))
-                Text("Metode Pembayaran", color = CkTextPrimary, fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                Text("Payment Method", color = CkTextPrimary, fontSize = 12.sp, fontWeight = FontWeight.Bold)
             }
             Text("ENKRIPSI 256-BIT", color = CkTextDim, fontSize = 10.sp, fontFamily = FontFamily.Monospace, softWrap = false)
         }
@@ -944,20 +944,20 @@ private fun CkBillBreakdownCard(
                 horizontalArrangement = Arrangement.spacedBy(6.dp)
             ) {
                 Icon(Icons.Default.ReceiptLong, null, tint = CkCoral, modifier = Modifier.size(17.dp))
-                Text("RINCIAN PEMBAYARAN", color = CkTextPrimary, fontSize = 12.sp, fontWeight = FontWeight.Bold, softWrap = false)
+                Text("PAYMENT DETAILS", color = CkTextPrimary, fontSize = 12.sp, fontWeight = FontWeight.Bold, softWrap = false)
             }
             Text("AUDIT // 2 ITEMS", color = CkTextDim, fontSize = 10.sp, fontFamily = FontFamily.Monospace, softWrap = false)
         }
 
         Row(Modifier.fillMaxWidth(), Arrangement.SpaceBetween) {
-            Text("Subtotal Produk", color = CkTextSec, fontSize = 12.sp)
+            Text("Product Subtotal", color = CkTextSec, fontSize = 12.sp)
             Text(formatRupiah(subtotal), color = CkTextPrimary, fontSize = 12.sp, fontWeight = FontWeight.Bold)
         }
 
         if (voucherApplied) {
             Row(Modifier.fillMaxWidth(), Arrangement.SpaceBetween, Alignment.CenterVertically) {
                 Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                    Text("Diskon Voucher", color = CkCoral, fontSize = 12.sp)
+                    Text("Voucher Discount", color = CkCoral, fontSize = 12.sp)
                     Box(
                         Modifier
                             .background(CkRed.copy(alpha = 0.2f), RoundedCornerShape(4.dp))
@@ -973,13 +973,13 @@ private fun CkBillBreakdownCard(
 
         if (pointsApplied) {
             Row(Modifier.fillMaxWidth(), Arrangement.SpaceBetween) {
-                Text("Potongan DP Points (500 DP)", color = CkCoral, fontSize = 12.sp)
+                Text("DP Points Discount (500 DP)", color = CkCoral, fontSize = 12.sp)
                 Text("-${formatRupiah(pointsDiscount)}", color = CkCoral, fontSize = 12.sp, fontWeight = FontWeight.Bold)
             }
         }
 
         Row(Modifier.fillMaxWidth(), Arrangement.SpaceBetween, Alignment.CenterVertically) {
-            Text("Biaya Pengiriman (Dojo Hub)", color = CkTextSec, fontSize = 12.sp)
+            Text("Shipping Fee (Dojo Hub)", color = CkTextSec, fontSize = 12.sp)
             Row(horizontalArrangement = Arrangement.spacedBy(6.dp), verticalAlignment = Alignment.CenterVertically) {
                 Text(
                     "Rp 18.000",
@@ -987,12 +987,12 @@ private fun CkBillBreakdownCard(
                     fontSize = 11.sp,
                     textDecoration = TextDecoration.LineThrough
                 )
-                Text("Gratis (Rp 0)", color = CkEmerald, fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                Text("Free (Rp 0)", color = CkEmerald, fontSize = 12.sp, fontWeight = FontWeight.Bold)
             }
         }
 
         Row(Modifier.fillMaxWidth(), Arrangement.SpaceBetween) {
-            Text("Biaya Layanan & Proteksi Gear", color = CkTextSec, fontSize = 12.sp)
+            Text("Service & Gear Protection Fee", color = CkTextSec, fontSize = 12.sp)
             Text(formatRupiah(serviceFee), color = CkTextPrimary, fontSize = 12.sp, fontWeight = FontWeight.Bold)
         }
 
@@ -1004,8 +1004,8 @@ private fun CkBillBreakdownCard(
             verticalAlignment = Alignment.CenterVertically
         ) {
             Column {
-                Text("Total Tagihan", color = CkTextPrimary, fontSize = 14.sp, fontWeight = FontWeight.Bold)
-                Text("Termasuk pajak & proteksi dojo", color = CkTextDim, fontSize = 10.sp)
+                Text("Total Bill", color = CkTextPrimary, fontSize = 14.sp, fontWeight = FontWeight.Bold)
+                Text("Includes tax & dojo protection", color = CkTextDim, fontSize = 10.sp)
             }
             Text(
                 formatRupiah(finalTotal),
@@ -1034,7 +1034,7 @@ private fun CkBillBreakdownCard(
             ) {
                 Icon(Icons.Default.CheckCircle, null, tint = CkCoral, modifier = Modifier.size(15.dp))
                 Text(
-                    "+156 DP Points didapatkan dari transaksi ini",
+                    "+156 DP Points earned from this transaction",
                     color = CkTextPrimary,
                     fontSize = 10.5.sp,
                     fontWeight = FontWeight.Bold,
@@ -1106,7 +1106,7 @@ private fun CkStickyBottomBar(
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.spacedBy(5.dp)
                     ) {
-                        Text("Total Tagihan", color = CkTextMuted, fontSize = 10.sp, softWrap = false)
+                        Text("Total Bill", color = CkTextMuted, fontSize = 10.sp, softWrap = false)
                         if (savingsAmount > 0) {
                             Box(
                                 Modifier
@@ -1114,7 +1114,7 @@ private fun CkStickyBottomBar(
                                     .padding(horizontal = 5.dp, vertical = 1.dp)
                             ) {
                                 Text(
-                                    "Hemat ${savingsAmount / 1000}rb",
+                                    "Save ${savingsAmount / 1000}k",
                                     color = CkCoral,
                                     fontSize = 9.sp,
                                     fontWeight = FontWeight.Bold,
@@ -1139,7 +1139,7 @@ private fun CkStickyBottomBar(
                 contentPadding = PaddingValues(horizontal = 14.dp, vertical = 10.dp),
                 colors = ButtonDefaults.buttonColors(containerColor = CkRed, contentColor = Color.White)
             ) {
-                Text("Bayar Sekarang", fontSize = 12.sp, fontWeight = FontWeight.Bold, softWrap = false)
+                Text("Pay Now", fontSize = 12.sp, fontWeight = FontWeight.Bold, softWrap = false)
                 Spacer(Modifier.width(4.dp))
                 Icon(Icons.AutoMirrored.Filled.ArrowForward, null, modifier = Modifier.size(15.dp))
             }

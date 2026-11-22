@@ -126,7 +126,7 @@ fun QrisPaymentScreen(
                                 .background(QrPrimary, RoundedCornerShape(2.dp))
                         )
                         Text(
-                            "MENUNGGU PEMBAYARAN",
+                            "AWAITING PAYMENT",
                             color = QrPrimary,
                             fontSize = 10.sp,
                             fontWeight = FontWeight.Bold,
@@ -163,7 +163,7 @@ fun QrisPaymentScreen(
                     ) {
                         Column {
                             Text(
-                                "BATAS WAKTU TRANSAKSI",
+                                "TRANSACTION TIME LIMIT",
                                 color = QrOnSurfaceVar,
                                 fontSize = 10.sp,
                                 fontWeight = FontWeight.SemiBold,
@@ -192,7 +192,7 @@ fun QrisPaymentScreen(
                                     softWrap = false
                                 )
                                 Text(
-                                    "MENIT",
+                                    "MINUTES",
                                     color = QrOnSurfaceVar,
                                     fontSize = 10.sp,
                                     fontWeight = FontWeight.SemiBold,
@@ -204,7 +204,7 @@ fun QrisPaymentScreen(
 
                         Column(horizontalAlignment = Alignment.End) {
                             Text(
-                                "ID TRANSAKSI",
+                                "TRANSACTION ID",
                                 color = QrOnSurfaceVar,
                                 fontSize = 10.sp,
                                 fontWeight = FontWeight.SemiBold,
@@ -217,7 +217,7 @@ fun QrisPaymentScreen(
                                 horizontalArrangement = Arrangement.spacedBy(4.dp),
                                 modifier = Modifier.clickable {
                                     clipboardManager.setText(AnnotatedString(orderId))
-                                    statusBanner = "ID Transaksi #$orderId berhasil disalin!"
+                                    statusBanner = "Transaction ID #$orderId copied to clipboard!"
                                 }
                             ) {
                                 Text(
@@ -256,7 +256,7 @@ fun QrisPaymentScreen(
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
                     Text(
-                        "TOTAL TAGIHAN PEMBAYARAN",
+                        "TOTAL PAYMENT BILL",
                         color = QrOnPrimaryCont,
                         fontSize = 10.sp,
                         fontWeight = FontWeight.Bold,
@@ -291,7 +291,7 @@ fun QrisPaymentScreen(
                     ) {
                         Icon(Icons.Default.LockReset, null, tint = QrOnPrimaryCont, modifier = Modifier.size(14.dp))
                         Text(
-                            "Nominal otomatis diverifikasi tanpa biaya tambahan",
+                            "Amount automatically verified with no extra fees",
                             color = QrOnPrimaryCont,
                             fontSize = 11.sp,
                             softWrap = false
@@ -397,27 +397,27 @@ fun QrisPaymentScreen(
                             modifier = Modifier
                                 .weight(1f)
                                 .background(QrContainer, RoundedCornerShape(4.dp))
-                                .clickable { statusBanner = "Kode QR berhasil disimpan ke Galeri!" }
+                                .clickable { statusBanner = "QR Code saved to Gallery!" }
                                 .padding(vertical = 10.dp),
                             horizontalArrangement = Arrangement.Center,
                             verticalAlignment = Alignment.CenterVertically
                         ) {
                             Icon(Icons.Default.Download, null, tint = QrOnSurface, modifier = Modifier.size(17.dp))
                             Spacer(Modifier.width(6.dp))
-                            Text("UNDUH QR", color = QrOnSurface, fontSize = 11.sp, fontWeight = FontWeight.SemiBold, softWrap = false)
+                            Text("DOWNLOAD QR", color = QrOnSurface, fontSize = 11.sp, fontWeight = FontWeight.SemiBold, softWrap = false)
                         }
                         Row(
                             modifier = Modifier
                                 .weight(1f)
                                 .background(QrContainer, RoundedCornerShape(4.dp))
-                                .clickable { statusBanner = "Tautan pembayaran QRIS disalin!" }
+                                .clickable { statusBanner = "QRIS payment link copied!" }
                                 .padding(vertical = 10.dp),
                             horizontalArrangement = Arrangement.Center,
                             verticalAlignment = Alignment.CenterVertically
                         ) {
                             Icon(Icons.Default.Share, null, tint = QrOnSurface, modifier = Modifier.size(17.dp))
                             Spacer(Modifier.width(6.dp))
-                            Text("BAGIKAN", color = QrOnSurface, fontSize = 11.sp, fontWeight = FontWeight.SemiBold, softWrap = false)
+                            Text("SHARE", color = QrOnSurface, fontSize = 11.sp, fontWeight = FontWeight.SemiBold, softWrap = false)
                         }
                     }
                 }
@@ -430,7 +430,7 @@ fun QrisPaymentScreen(
                     verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
                     Text(
-                        "DIDUKUNG SELURUH APLIKASI PEMBAYARAN:",
+                        "SUPPORTED PAYMENT APPS:",
                         color = QrOnSurfaceVar,
                         fontSize = 10.sp,
                         fontWeight = FontWeight.SemiBold,
@@ -479,15 +479,15 @@ fun QrisPaymentScreen(
                         horizontalArrangement = Arrangement.SpaceBetween,
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Text("INSTRUKSI PEMBAYARAN", color = QrOnSurface, fontSize = 14.sp, fontWeight = FontWeight.Bold)
-                        Text("4 LANGKAH MUDAH", color = QrPrimary, fontSize = 10.sp, fontWeight = FontWeight.Bold, softWrap = false)
+                        Text("PAYMENT INSTRUCTIONS", color = QrOnSurface, fontSize = 14.sp, fontWeight = FontWeight.Bold)
+                        Text("4 EASY STEPS", color = QrPrimary, fontSize = 10.sp, fontWeight = FontWeight.Bold, softWrap = false)
                     }
 
                     val steps = listOf(
-                        "Buka aplikasi mobile banking (BCA, Livin, BRImo) atau dompet digital (GoPay, OVO, DANA).",
-                        "Pilih menu Bayar / QRIS pada halaman beranda aplikasi Anda.",
-                        "Pindai kode QR di layar ini, atau unggah tangkapan layar melalui galeri ponsel.",
-                        "Pastikan nama penerima adalah DojoPulse Store dengan nominal tepat ${formatRupiah(totalAmount)}, lalu masukkan PIN."
+                        "Open your mobile banking (BCA, Livin, BRImo) or e-wallet (GoPay, OVO, DANA).",
+                        "Select the Pay / QRIS menu on your app's home screen.",
+                        "Scan the QR code on this screen or upload a screenshot from your gallery.",
+                        "Verify recipient is DojoPulse Store with exact amount ${formatRupiah(totalAmount)}, then enter PIN."
                     )
 
                     steps.forEachIndexed { index, text ->
@@ -538,17 +538,17 @@ fun QrisPaymentScreen(
                     ) {
                         Icon(Icons.Default.HelpOutline, null, tint = QrOnSurfaceVar, modifier = Modifier.size(20.dp))
                         Column {
-                            Text("Butuh bantuan verifikasi?", color = QrOnSurface, fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
-                            Text("Layanan CS Siaga 24/7 DojoPulse", color = QrOnSurfaceVar, fontSize = 11.sp)
+                            Text("Need verification help?", color = QrOnSurface, fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
+                            Text("DojoPulse 24/7 Support Hotline", color = QrOnSurfaceVar, fontSize = 11.sp)
                         }
                     }
                     Box(
                         modifier = Modifier
                             .background(QrContainerHigh, RoundedCornerShape(4.dp))
-                            .clickable { statusBanner = "Menghubungkan ke Tim Support DojoPulse..." }
+                            .clickable { statusBanner = "Connecting to DojoPulse Support..." }
                             .padding(horizontal = 12.dp, vertical = 6.dp)
                     ) {
-                        Text("BANTUAN", color = QrPrimary, fontSize = 10.sp, fontWeight = FontWeight.Bold, softWrap = false)
+                        Text("HELP", color = QrPrimary, fontSize = 10.sp, fontWeight = FontWeight.Bold, softWrap = false)
                     }
                 }
 
@@ -593,7 +593,7 @@ fun QrisPaymentScreen(
                 }
 
                 Text(
-                    "PEMBAYARAN TERVERIFIKASI",
+                    "PAYMENT VERIFIED",
                     color = QrPrimary,
                     fontSize = 14.sp,
                     fontWeight = FontWeight.ExtraBold,
@@ -601,7 +601,7 @@ fun QrisPaymentScreen(
                 )
 
                 Text(
-                    "Dana sebesar ${formatRupiah(totalAmount)} telah diterima. Pesanan #DP-ORD-892401 siap diambil di Locker #08.",
+                    "Payment of ${formatRupiah(totalAmount)} received. Order #DP-ORD-892401 is ready for pickup at Locker #08.",
                     color = QrOnSurfaceVar,
                     fontSize = 12.sp,
                     textAlign = TextAlign.Center,
@@ -622,7 +622,7 @@ fun QrisPaymentScreen(
                         contentColor = Color.White
                     )
                 ) {
-                    Text("KEMBALI KE DASHBOARD", fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                    Text("RETURN TO DASHBOARD", fontSize = 12.sp, fontWeight = FontWeight.Bold)
                 }
             }
         }
@@ -646,7 +646,7 @@ private fun QrTopBar(onBack: () -> Unit) {
             IconButton(onClick = onBack) {
                 Icon(
                     Icons.AutoMirrored.Filled.ArrowBack,
-                    contentDescription = "Kembali ke Checkout",
+                    contentDescription = "Back to Checkout",
                     tint = QrOnSurface
                 )
             }
@@ -659,7 +659,7 @@ private fun QrTopBar(onBack: () -> Unit) {
                 Icon(Icons.Default.Bolt, null, tint = QrPrimary, modifier = Modifier.size(18.dp))
             }
             Text(
-                "PEMBAYARAN QRIS",
+                "QRIS PAYMENT",
                 color = QrOnSurface,
                 fontSize = 15.sp,
                 fontWeight = FontWeight.Bold,
@@ -701,7 +701,7 @@ private fun QrStickyBottomBar(
             Icon(Icons.Default.Security, null, tint = QrPrimary, modifier = Modifier.size(14.dp))
             Spacer(Modifier.width(6.dp))
             Text(
-                "ENKRIPSI 256-BIT TERPROTEKSI BANK INDONESIA & ASPI",
+                "256-BIT ENCRYPTION PROTECTED BY BANK INDONESIA & ASPI",
                 color = QrOnSurfaceVar,
                 fontSize = 9.5.sp,
                 fontWeight = FontWeight.SemiBold,
@@ -724,7 +724,7 @@ private fun QrStickyBottomBar(
             Icon(Icons.Default.CheckCircle, null, modifier = Modifier.size(20.dp))
             Spacer(Modifier.width(8.dp))
             Text(
-                "SAYA SUDAH BAYAR",
+                "I HAVE PAID",
                 fontSize = 14.sp,
                 fontWeight = FontWeight.Bold,
                 letterSpacing = 0.8.sp,
@@ -744,7 +744,7 @@ private fun QrStickyBottomBar(
             )
         ) {
             Text(
-                "GANTI METODE PEMBAYARAN",
+                "CHANGE PAYMENT METHOD",
                 fontSize = 11.sp,
                 fontWeight = FontWeight.SemiBold,
                 letterSpacing = 0.6.sp,

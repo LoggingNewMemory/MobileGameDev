@@ -41,10 +41,10 @@ fun MarketScreen(
     onOpenCart: () -> Unit = {}
 ) {
     val products by viewModel.products.collectAsState()
-    var selectedCategory by remember { mutableStateOf("Semua") }
+    var selectedCategory by remember { mutableStateOf("All") }
 
     val filteredProducts = remember(products, selectedCategory) {
-        if (selectedCategory == "Semua") products
+        if (selectedCategory == "All") products
         else products.filter { it.category.equals(selectedCategory, ignoreCase = true) }
     }
 
@@ -123,10 +123,10 @@ fun TopSection() {
 
 @Composable
 fun CategoryPills(
-    selectedCategory: String = "Semua",
+    selectedCategory: String = "All",
     onCategorySelected: (String) -> Unit = {}
 ) {
-    val categories = listOf("Semua", "Gloves", "Wraps", "Apparel", "Protection")
+    val categories = listOf("All", "Gloves", "Wraps", "Apparel", "Protection")
     LazyRow(
         horizontalArrangement = Arrangement.spacedBy(8.dp)
     ) {
@@ -329,7 +329,7 @@ fun CartPreview(
                 modifier = Modifier.size(20.dp)
             )
             Text(
-                "Keranjang Belanja",
+                "Shopping Cart",
                 color = Dojo.Text,
                 fontFamily = Dojo.Mono,
                 fontSize = 12.sp,

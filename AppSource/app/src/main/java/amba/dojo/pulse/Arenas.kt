@@ -103,7 +103,7 @@ fun ARWayfindingStage(onNext: () -> Unit) {
         Row(modifier = Modifier.fillMaxWidth().background(SurfaceLow).padding(horizontal = 16.dp, vertical = 8.dp), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                 Box(modifier = Modifier.size(6.dp).background(Primary))
-                Text("PANDUAN LOKASI MATRAS", fontSize = 10.sp, color = Secondary, fontWeight = FontWeight.Bold)
+                Text("MAT LOCATION GUIDE", fontSize = 10.sp, color = Secondary, fontWeight = FontWeight.Bold)
             }
             Text("VPS SYNC: 99.4%", fontSize = 10.sp, color = Primary, fontWeight = FontWeight.Bold, modifier = Modifier.background(PrimaryContainer).padding(4.dp))
         }
@@ -116,13 +116,13 @@ fun ARWayfindingStage(onNext: () -> Unit) {
                     }
                     Spacer(modifier = Modifier.width(12.dp))
                     Column(modifier = Modifier.weight(1f)) {
-                        Text("NAVIGASI LANGKAH 02/03", fontSize = 10.sp, color = Secondary)
-                        Text("Belok kiri melewati Ring Boxing", fontSize = 16.sp, fontWeight = FontWeight.Bold, color = OnSurface)
-                        Text("Menuju Matras Zona B // Station 02", fontSize = 12.sp, color = OnSurfaceVar)
+                        Text("NAVIGATION STEP 02/03", fontSize = 10.sp, color = Secondary)
+                        Text("Turn left past the Boxing Ring", fontSize = 16.sp, fontWeight = FontWeight.Bold, color = OnSurface)
+                        Text("Towards Mat Zone B // Station 02", fontSize = 12.sp, color = OnSurfaceVar)
                     }
                     Column(horizontalAlignment = Alignment.End) {
                         Text("4.2 M", fontSize = 20.sp, fontWeight = FontWeight.Bold, color = Primary)
-                        Text("JARAK", fontSize = 10.sp, color = OnSurfaceVar)
+                        Text("DISTANCE", fontSize = 10.sp, color = OnSurfaceVar)
                     }
                 }
             }
@@ -136,19 +136,19 @@ fun ARWayfindingStage(onNext: () -> Unit) {
         Column(modifier = Modifier.fillMaxWidth().padding(16.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
             Column(modifier = Modifier.fillMaxWidth().background(SurfaceLow).padding(16.dp)) {
                 Text("HEAVY BAG & AGILITY GRID", fontSize = 20.sp, fontWeight = FontWeight.Bold, color = OnSurface)
-                Text("Campus Martial Arts Hall • Lantai 2 Combat Lab", fontSize = 12.sp, color = OnSurfaceVar)
+                Text("Campus Martial Arts Hall • 2nd Floor Combat Lab", fontSize = 12.sp, color = OnSurfaceVar)
                 Spacer(modifier = Modifier.height(12.dp))
                 Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                        Text("SISA JARAK", fontSize = 10.sp, color = OnSurfaceVar)
+                        Text("REMAINING DISTANCE", fontSize = 10.sp, color = OnSurfaceVar)
                         Text("12 M", fontSize = 20.sp, fontWeight = FontWeight.Bold, color = Primary)
                     }
                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                        Text("ESTIMASI TIBA", fontSize = 10.sp, color = OnSurfaceVar)
-                        Text("15 DETIK", fontSize = 20.sp, fontWeight = FontWeight.Bold, color = Secondary)
+                        Text("ESTIMATED ARRIVAL", fontSize = 10.sp, color = OnSurfaceVar)
+                        Text("15 SECONDS", fontSize = 20.sp, fontWeight = FontWeight.Bold, color = Secondary)
                     }
                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                        Text("SENSOR CAHAYA", fontSize = 10.sp, color = OnSurfaceVar)
+                        Text("LIGHT SENSOR", fontSize = 10.sp, color = OnSurfaceVar)
                         Text("OPTIMAL", fontSize = 12.sp, fontWeight = FontWeight.Bold, color = OnSurface, modifier = Modifier.padding(top=4.dp))
                     }
                 }
@@ -160,10 +160,10 @@ fun ARWayfindingStage(onNext: () -> Unit) {
                 colors = ButtonDefaults.buttonColors(containerColor = Primary),
                 shape = RoundedCornerShape(4.dp)
             ) {
-                Text("SAYA SUDAH DI MATRAS (KALIBRASI) ->", color = Color(0xFF4f2227), fontWeight = FontWeight.Bold)
+                Text("I AM ON THE MAT (CALIBRATE) ->", color = Color(0xFF4f2227), fontWeight = FontWeight.Bold)
             }
 
-            Text("LEWATI PANDUAN AR (LANGSUNG DOCKING)", fontSize = 12.sp, color = OnSurfaceVar, modifier = Modifier.fillMaxWidth().clickable(onClick = onNext), textAlign = TextAlign.Center, fontWeight = FontWeight.Bold)
+            Text("SKIP AR GUIDE (DIRECT DOCKING)", fontSize = 12.sp, color = OnSurfaceVar, modifier = Modifier.fillMaxWidth().clickable(onClick = onNext), textAlign = TextAlign.Center, fontWeight = FontWeight.Bold)
             Spacer(modifier = Modifier.height(8.dp))
         }
     }
@@ -173,16 +173,16 @@ fun ARWayfindingStage(onNext: () -> Unit) {
 fun CalibrationStage(onNext: () -> Unit) {
     Column(modifier = Modifier.fillMaxSize().background(BgSurface).verticalScroll(rememberScrollState())) {
         Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-            Text("KALIBRASI & DOCKING", fontSize = 24.sp, fontWeight = FontWeight.Bold, color = OnSurface)
-            Text("Letakkan HP di permukaan stabil setinggi 1-1.2m, hadapkan ke area latihan.", fontSize = 12.sp, color = OnSurfaceVar)
+            Text("CALIBRATION & DOCKING", fontSize = 24.sp, fontWeight = FontWeight.Bold, color = OnSurface)
+            Text("Place phone on a stable surface at 1-1.2m height, facing the training area.", fontSize = 12.sp, color = OnSurfaceVar)
 
             Box(modifier = Modifier.fillMaxWidth().height(300.dp).background(Color(0xFF101010)).border(1.dp, OutlineVar), contentAlignment = Alignment.Center) {
                 Icon(Icons.Default.AccessibilityNew, contentDescription = null, tint = Primary, modifier = Modifier.size(120.dp))
                 Text("POSE CALIBRATED", fontSize = 10.sp, color = Primary, fontWeight = FontWeight.Bold, modifier = Modifier.align(Alignment.BottomCenter).padding(bottom = 16.dp).background(PrimaryContainer).padding(4.dp))
             }
 
-            ChecklistItem("Ketinggian Dok 1.0 - 1.2 Meter", "Sudut kemiringan 0° sejajar dada")
-            ChecklistItem("Pencahayaan Area Tatami", "Kontras siluet tubuh optimal")
+            ChecklistItem("Dock Height 1.0 - 1.2 Meters", "0° tilt angle, chest level")
+            ChecklistItem("Tatami Area Lighting", "Optimal body silhouette contrast")
 
             Spacer(modifier = Modifier.height(16.dp))
 
@@ -194,7 +194,7 @@ fun CalibrationStage(onNext: () -> Unit) {
             ) {
                 Icon(Icons.Default.SportsMartialArts, contentDescription = null, tint = Color(0xFF4f2227))
                 Spacer(modifier = Modifier.width(8.dp))
-                Text("MULAI DRILL (HITUNG MUNDUR 5 DETIK)", color = Color(0xFF4f2227), fontWeight = FontWeight.Bold)
+                Text("START DRILL (5-SECOND COUNTDOWN)", color = Color(0xFF4f2227), fontWeight = FontWeight.Bold)
             }
             Spacer(modifier = Modifier.height(16.dp))
         }
@@ -218,17 +218,17 @@ fun ActiveTelemetryStage(onNext: () -> Unit) {
     Column(modifier = Modifier.fillMaxSize().background(BgSurface).padding(16.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
         Row(modifier = Modifier.fillMaxWidth().background(SurfaceLow).padding(16.dp).border(1.dp, OutlineVar, RoundedCornerShape(8.dp)), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                Text("TOTAL PUKULAN", fontSize = 10.sp, color = OnSurfaceVar, fontWeight = FontWeight.Bold)
+                Text("TOTAL STRIKES", fontSize = 10.sp, color = OnSurfaceVar, fontWeight = FontWeight.Bold)
                 Text("14 / 20", fontSize = 24.sp, color = Primary, fontWeight = FontWeight.Bold)
             }
             Box(modifier = Modifier.width(1.dp).height(30.dp).background(OutlineVar))
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                Text("DURASI", fontSize = 10.sp, color = OnSurfaceVar, fontWeight = FontWeight.Bold)
+                Text("DURATION", fontSize = 10.sp, color = OnSurfaceVar, fontWeight = FontWeight.Bold)
                 Text("02:45", fontSize = 24.sp, color = OnSurface, fontWeight = FontWeight.Bold)
             }
             Box(modifier = Modifier.width(1.dp).height(30.dp).background(OutlineVar))
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                Text("FORM AKURASI", fontSize = 10.sp, color = OnSurfaceVar, fontWeight = FontWeight.Bold)
+                Text("FORM ACCURACY", fontSize = 10.sp, color = OnSurfaceVar, fontWeight = FontWeight.Bold)
                 Text("96%", fontSize = 24.sp, color = Primary, fontWeight = FontWeight.Bold)
             }
         }
@@ -239,8 +239,8 @@ fun ActiveTelemetryStage(onNext: () -> Unit) {
             }
             Spacer(modifier = Modifier.width(12.dp))
             Column {
-                Text("AUDIO TTS AKTIF", fontSize = 10.sp, color = Primary, fontWeight = FontWeight.Bold)
-                Text("\"Jaga dagu tetap rapat & siku terkunci!\"", fontSize = 14.sp, color = OnSurface, fontWeight = FontWeight.Bold)
+                Text("AUDIO TTS ACTIVE", fontSize = 10.sp, color = Primary, fontWeight = FontWeight.Bold)
+                Text("\"Keep chin tucked & elbows locked!\"", fontSize = 14.sp, color = OnSurface, fontWeight = FontWeight.Bold)
             }
         }
 
@@ -249,12 +249,12 @@ fun ActiveTelemetryStage(onNext: () -> Unit) {
 
             Row(modifier = Modifier.fillMaxWidth().align(Alignment.BottomCenter).padding(12.dp), horizontalArrangement = Arrangement.SpaceBetween) {
                 Column(modifier = Modifier.background(SurfaceHigh.copy(alpha=0.8f)).padding(8.dp)) {
-                    Text("SIKU KANAN", fontSize = 10.sp, color = OnSurfaceVar)
+                    Text("RIGHT ELBOW", fontSize = 10.sp, color = OnSurfaceVar)
                     Text("42° OPTIMAL", fontSize = 16.sp, color = Primary, fontWeight = FontWeight.Bold)
                 }
                 Column(modifier = Modifier.background(SurfaceHigh.copy(alpha=0.8f)).padding(8.dp), horizontalAlignment = Alignment.End) {
-                    Text("ROTASI BAHU", fontSize = 10.sp, color = OnSurfaceVar)
-                    Text("18° TERKUNCI", fontSize = 16.sp, color = OnSurface, fontWeight = FontWeight.Bold)
+                    Text("SHOULDER ROTATION", fontSize = 10.sp, color = OnSurfaceVar)
+                    Text("18° LOCKED", fontSize = 16.sp, color = OnSurface, fontWeight = FontWeight.Bold)
                 }
             }
         }
@@ -267,7 +267,7 @@ fun ActiveTelemetryStage(onNext: () -> Unit) {
         ) {
             Icon(Icons.Default.Flag, contentDescription = null, tint = Color(0xFF4f2227))
             Spacer(modifier = Modifier.width(8.dp))
-            Text("SELESAI SESI (SENTUH / HANDS-FREE)", color = Color(0xFF4f2227), fontWeight = FontWeight.Bold)
+            Text("FINISH SESSION (TOUCH / HANDS-FREE)", color = Color(0xFF4f2227), fontWeight = FontWeight.Bold)
         }
         Spacer(modifier = Modifier.height(8.dp))
     }
@@ -285,16 +285,16 @@ fun DebriefStage(onClose: () -> Unit) {
                 Text("88%", fontSize = 48.sp, fontWeight = FontWeight.Bold, color = OnSurface)
                 Text("FORM ACCURACY", fontSize = 10.sp, color = OnSurfaceVar, fontWeight = FontWeight.Bold)
             }
-            Text("TINGKAT A: ELITE STRIKER", fontSize = 12.sp, color = Primary, fontWeight = FontWeight.Bold, modifier = Modifier.align(Alignment.BottomCenter).padding(bottom=16.dp))
+            Text("TIER A: ELITE STRIKER", fontSize = 12.sp, color = Primary, fontWeight = FontWeight.Bold, modifier = Modifier.align(Alignment.BottomCenter).padding(bottom=16.dp))
         }
 
         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            DebriefStatCard(modifier = Modifier.weight(1f), title = "TARGET HIT", value = "20/20", sub = "100% EFISIENSI")
+            DebriefStatCard(modifier = Modifier.weight(1f), title = "TARGET HIT", value = "20/20", sub = "100% EFFICIENCY")
             DebriefStatCard(modifier = Modifier.weight(1f), title = "FORM FAULTS", value = "02", sub = "Elbow Flare", isAlert = true)
         }
         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            DebriefStatCard(modifier = Modifier.weight(1f), title = "DRILL TIME", value = "08:30", sub = "Ritme Konstan")
-            DebriefStatCard(modifier = Modifier.weight(1f), title = "STREAK", value = "+1 Hari", sub = "6 HARI BERUNTUN")
+            DebriefStatCard(modifier = Modifier.weight(1f), title = "DRILL TIME", value = "08:30", sub = "Constant Rhythm")
+            DebriefStatCard(modifier = Modifier.weight(1f), title = "STREAK", value = "+1 Day", sub = "6-DAY STREAK")
         }
 
         Column(modifier = Modifier.fillMaxWidth().background(SurfaceLow).padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
@@ -304,12 +304,12 @@ fun DebriefStage(onClose: () -> Unit) {
                 Text("GEMINI AI BREAKDOWN", fontSize = 14.sp, fontWeight = FontWeight.Bold, color = OnSurface)
             }
             Column(modifier = Modifier.background(SurfaceContainer).padding(12.dp)) {
-                Text("KEKUATAN KINETIK - OPTIMAL", fontSize = 12.sp, color = Primary, fontWeight = FontWeight.Bold)
-                Text("Retensi guard solid saat jab ekstensi. Momentum bahu menyerap daya pantul dengan presisi tinggi.", fontSize = 12.sp, color = OnSurfaceVar, modifier = Modifier.padding(top=4.dp))
+                Text("KINETIC POWER - OPTIMAL", fontSize = 12.sp, color = Primary, fontWeight = FontWeight.Bold)
+                Text("Solid guard retention during jab extension. Shoulder momentum absorbs rebound with high precision.", fontSize = 12.sp, color = OnSurfaceVar, modifier = Modifier.padding(top=4.dp))
             }
             Column(modifier = Modifier.background(SurfaceContainer).padding(12.dp)) {
-                Text("EVALUASI POSTUR - CATATAN", fontSize = 12.sp, color = Secondary, fontWeight = FontWeight.Bold)
-                Text("Variasi penurunan pinggul ringan terdeteksi pada reps akhir. Pertahankan rotasi panggul tetap sejajar sumbu kaki kiri.", fontSize = 12.sp, color = OnSurfaceVar, modifier = Modifier.padding(top=4.dp))
+                Text("POSTURE EVALUATION - NOTES", fontSize = 12.sp, color = Secondary, fontWeight = FontWeight.Bold)
+                Text("Slight hip drop detected on late reps. Maintain pelvic rotation aligned with lead foot axis.", fontSize = 12.sp, color = OnSurfaceVar, modifier = Modifier.padding(top=4.dp))
             }
         }
 
@@ -322,7 +322,7 @@ fun DebriefStage(onClose: () -> Unit) {
         ) {
             Icon(Icons.Default.CheckCircle, contentDescription = null, tint = Color(0xFF4f2227))
             Spacer(modifier = Modifier.width(8.dp))
-            Text("SIMPAN & KEMBALI KE BERANDA", color = Color(0xFF4f2227), fontWeight = FontWeight.Bold)
+            Text("SAVE & RETURN TO HOME", color = Color(0xFF4f2227), fontWeight = FontWeight.Bold)
         }
         Spacer(modifier = Modifier.height(24.dp))
     }
@@ -344,7 +344,7 @@ fun ArenaDashboardContent(
 ) {
     var selectedMode by remember { mutableStateOf("venue") }
     var isInitializing by remember { mutableStateOf(false) }
-    var buttonText by remember { mutableStateOf("Mulai Panduan AR") }
+    var buttonText by remember { mutableStateOf("Start AR Guide") }
     val coroutineScope = rememberCoroutineScope()
 
     Scaffold(
@@ -428,7 +428,7 @@ fun ArenaDashboardContent(
                     }
                     Row(modifier = Modifier.background(SecondaryContainer).padding(horizontal = 8.dp, vertical = 2.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
                         Box(modifier = Modifier.size(6.dp).background(Primary))
-                        Text(text = "Dipilih", fontSize = 10.sp, fontWeight = FontWeight.Bold, color = Color(0xFFe5a9b0))
+                        Text(text = "Selected", fontSize = 10.sp, fontWeight = FontWeight.Bold, color = Color(0xFFe5a9b0))
                     }
                 }
                 Text(text = "Heavy Bag & Stance Mat", fontSize = 16.sp, fontWeight = FontWeight.Bold, color = Primary)

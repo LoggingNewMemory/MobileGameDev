@@ -41,7 +41,7 @@ object PresetExercises {
                 title = "Do 20 Uppercuts",
                 targetCount = 20,
                 targetPunchName = "Uppercuts",
-                instruction = "Pukulan vertikal: tekuk siku ~90°, dorong ke atas dari pinggang ke dagu.",
+                instruction = "Vertical strike: bend elbow ~90°, drive upward from hips to chin.",
                 badgeColor = Color(0xFFFFB3BA),
                 matches = { it == PunchType.LEFT_UPPERCUT || it == PunchType.RIGHT_UPPERCUT }
             ),
@@ -50,7 +50,7 @@ object PresetExercises {
                 title = "Do 15 Left Jabs",
                 targetCount = 15,
                 targetPunchName = "Left Jabs",
-                instruction = "Luruskan lead arm (kiri) langsung ke depan dan tarik cepat ke posisi guard.",
+                instruction = "Snap lead arm straight forward and recover quickly to guard position.",
                 badgeColor = Color(0xFF64B5F6),
                 matches = { it == PunchType.LEFT_JAB }
             ),
@@ -59,7 +59,7 @@ object PresetExercises {
                 title = "Do 10 Left Jabs",
                 targetCount = 10,
                 targetPunchName = "Rapid Jabs",
-                instruction = "Burst speed: 10 pukulan jab cepat berturut-turut dengan guard rapat.",
+                instruction = "Burst speed: 10 rapid jabs in succession with tight guard.",
                 badgeColor = Color(0xFF81C784),
                 matches = { it == PunchType.LEFT_JAB }
             ),
@@ -68,7 +68,7 @@ object PresetExercises {
                 title = "Do 15 Strikes / Cross",
                 targetCount = 15,
                 targetPunchName = "Strikes",
-                instruction = "Straight power: lepaskan pukulan lurus tangan belakang dengan rotasi torso penuh.",
+                instruction = "Straight power: drive rear hand straight with full torso rotation.",
                 badgeColor = Color(0xFFFFB74D),
                 matches = { it == PunchType.STRIKE }
             )
@@ -83,14 +83,14 @@ object PresetExercises {
         name = "Power Hook & Uppercut",
         code = "SYS.DRL-02",
         subtitle = "TARGET: ROTATIONAL MOMENTUM",
-        description = "Melatih transfer tenaga rotasional melalui hook horizontal dan uppercut beruntun.",
+        description = "Develop rotational kinetic power transfer via horizontal hooks and rapid uppercuts.",
         steps = listOf(
             ExerciseStep(
                 id = "step_1_left_hook",
                 title = "Do 15 Left Hooks",
                 targetCount = 15,
                 targetPunchName = "Left Hooks",
-                instruction = "Ayunkan lengan kiri horizontal setinggi dagu dengan rotasi pinggul kiri.",
+                instruction = "Swing left arm horizontally at chin level with lead hip rotation.",
                 badgeColor = Color(0xFFFFB3BA),
                 matches = { it == PunchType.LEFT_HOOK }
             ),
@@ -99,7 +99,7 @@ object PresetExercises {
                 title = "Do 15 Right Hooks",
                 targetCount = 15,
                 targetPunchName = "Right Hooks",
-                instruction = "Gunakan rotasi kaki belakang dan lepaskan hook kanan melintang.",
+                instruction = "Drive off rear foot rotation and release right hook across target.",
                 badgeColor = Color(0xFFBA68C8),
                 matches = { it == PunchType.RIGHT_HOOK }
             ),
@@ -108,7 +108,7 @@ object PresetExercises {
                 title = "Do 20 Uppercuts",
                 targetCount = 20,
                 targetPunchName = "Uppercuts",
-                instruction = "Drive pukulan vertikal ke atas bergantian kiri dan kanan.",
+                instruction = "Drive vertical upward strikes alternating left and right.",
                 badgeColor = Color(0xFF4FC3F7),
                 matches = { it == PunchType.LEFT_UPPERCUT || it == PunchType.RIGHT_UPPERCUT }
             )

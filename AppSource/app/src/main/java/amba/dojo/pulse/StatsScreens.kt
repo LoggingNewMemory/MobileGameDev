@@ -74,10 +74,10 @@ private fun TabScaffold(
     }
 }
 
-/** "Progres" / Kemajuan tab. */
+/** "Progres" / Progress tab. */
 @Composable
 fun ProgresScreen(onNavigate: (String) -> Unit = {}, onNextCourse: () -> Unit = {}) {
-    TabScaffold("progres", onNavigate, "Kemajuan", "Minggu Ini") {
+    TabScaffold("progres", onNavigate, "Progress", "This Week") {
         DojoCard {
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
                 MonoLabel("WEIGHT TRACKING", size = 9)
@@ -144,10 +144,10 @@ fun ProgresScreen(onNavigate: (String) -> Unit = {}, onNextCourse: () -> Unit = 
     }
 }
 
-/** "Aktivitas" tab. */
+/** "Aktivitas" / Activity tab. */
 @Composable
 fun AktivitasScreen(onNavigate: (String) -> Unit = {}, onStartTraining: () -> Unit = {}) {
-    TabScaffold("aktivitas", onNavigate, "Aktivitas") {
+    TabScaffold("aktivitas", onNavigate, "Activity") {
         val days = listOf("M", "T", "W", "T", "F", "S", "S")
         val dates = listOf(22, 23, 24, 25, 26, 27, 28)
         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
@@ -300,7 +300,7 @@ fun ProfilScreen(onNavigate: (String) -> Unit = {}, onLogout: () -> Unit = {}) {
                                 fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace
                             )
                             Text(
-                                "Profil Fighter",
+                                "Fighter Profile",
                                 color = TextPrim,
                                 fontSize = 20.sp,
                                 fontWeight = FontWeight.ExtraBold
@@ -314,7 +314,7 @@ fun ProfilScreen(onNavigate: (String) -> Unit = {}, onLogout: () -> Unit = {}) {
                                     .border(1.dp, Color(0xFF262630), CircleShape),
                                 contentAlignment = Alignment.Center
                             ) {
-                                Icon(Icons.Default.Notifications, contentDescription = "Notifikasi", tint = TextSec, modifier = Modifier.size(18.dp))
+                                Icon(Icons.Default.Notifications, contentDescription = "Notifications", tint = TextSec, modifier = Modifier.size(18.dp))
                             }
                             // Settings icon
                             Box(
@@ -323,7 +323,7 @@ fun ProfilScreen(onNavigate: (String) -> Unit = {}, onLogout: () -> Unit = {}) {
                                     .border(1.dp, Color(0xFF262630), CircleShape),
                                 contentAlignment = Alignment.Center
                             ) {
-                                Icon(Icons.Default.Settings, contentDescription = "Pengaturan", tint = TextSec, modifier = Modifier.size(18.dp))
+                                Icon(Icons.Default.Settings, contentDescription = "Settings", tint = TextSec, modifier = Modifier.size(18.dp))
                             }
                         }
                     }
@@ -460,13 +460,13 @@ fun ProfilScreen(onNavigate: (String) -> Unit = {}, onLogout: () -> Unit = {}) {
                             Spacer(Modifier.height(12.dp))
                             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.Bottom) {
                                 Column {
-                                    Text("Saldo Poin Fighter", color = TextMut, fontSize = 10.sp, letterSpacing = 1.sp)
+                                    Text("Fighter Points Balance", color = TextMut, fontSize = 10.sp, letterSpacing = 1.sp)
                                     Spacer(Modifier.height(4.dp))
                                     Row(verticalAlignment = Alignment.Bottom, horizontalArrangement = Arrangement.spacedBy(5.dp)) {
                                         Text("%,d".format(points), color = TextPrim, fontSize = 32.sp, fontWeight = FontWeight.Black)
                                         Text("DP", color = AccentCoral, fontSize = 13.sp, fontWeight = FontWeight.ExtraBold)
                                     }
-                                    Text("Estimasi: Rp ${"%.0f".format(points * 50.0).reversed().chunked(3).joinToString(".").reversed()} · Diskon 15% All Gear", color = TextSec, fontSize = 11.sp)
+                                    Text("Est: Rp ${"%.0f".format(points * 50.0).reversed().chunked(3).joinToString(".").reversed()} · 15% Off All Gear", color = TextSec, fontSize = 11.sp)
                                 }
                                 Box(
                                     modifier = Modifier
@@ -475,7 +475,7 @@ fun ProfilScreen(onNavigate: (String) -> Unit = {}, onLogout: () -> Unit = {}) {
                                         .padding(horizontal = 12.dp, vertical = 8.dp)
                                 ) {
                                     Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-                                        Text("Tukar Poin", color = AccentCoral, fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                                        Text("Redeem Points", color = AccentCoral, fontSize = 12.sp, fontWeight = FontWeight.Bold)
                                         Icon(Icons.Default.KeyboardArrowDown, contentDescription = null, tint = AccentCoral, modifier = Modifier.size(14.dp))
                                     }
                                 }
@@ -501,20 +501,20 @@ fun ProfilScreen(onNavigate: (String) -> Unit = {}, onLogout: () -> Unit = {}) {
                     Column(modifier = Modifier.padding(horizontal = 20.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
                         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
                             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                                Text("KATALOG REDEEM HADIAH", color = TextPrim, fontSize = 11.sp, fontWeight = FontWeight.Bold, letterSpacing = 1.sp)
+                                Text("REWARDS REDEEM CATALOG", color = TextPrim, fontSize = 11.sp, fontWeight = FontWeight.Bold, letterSpacing = 1.sp)
                                 Box(modifier = Modifier.background(Color(0xFF1D1D26), RoundedCornerShape(50)).border(1.dp, Color(0xFF2B2B38), RoundedCornerShape(50)).padding(horizontal = 8.dp, vertical = 3.dp)) {
-                                    Text("4 Tersedia", color = TextSec, fontSize = 10.sp, fontWeight = FontWeight.Bold)
+                                    Text("4 Available", color = TextSec, fontSize = 10.sp, fontWeight = FontWeight.Bold)
                                 }
                             }
-                            Text("Update Mingguan", color = AccentCoral, fontSize = 11.sp, fontWeight = FontWeight.SemiBold)
+                            Text("Weekly Update", color = AccentCoral, fontSize = 11.sp, fontWeight = FontWeight.SemiBold)
                         }
 
                         data class RItem(val cat: String, val title: String, val sub: String, val cost: Int, val type: String)
                         val catalog = listOf(
-                            RItem("Voucher Belanja Gear", "Potongan Rp 50.000 Store", "Semua item gear di Dojo Store", 1_000, "voucher"),
-                            RItem("Akses Khusus", "Gratis 1 Sesi Sparring VR / AI Ar…", "Analisis MediaPipe Biomekanik", 1_500, "vr"),
-                            RItem("Hardware Reward", "Smart Biometric Handwraps Ma…", "Reticle optik kompatibel sensor HUD", 2_000, "hardware"),
-                            RItem("Official Merch", "Tactical Velcro Patch DojoPulse", "Patch bordir taktikal edisi terbatas", 800, "patch")
+                            RItem("Gear Shopping Voucher", "Rp 50,000 Store Discount", "All gear items in Dojo Store", 1_000, "voucher"),
+                            RItem("Special Access", "Free 1 Session VR Sparring / AI Ar…", "MediaPipe Biomechanics Analysis", 1_500, "vr"),
+                            RItem("Hardware Reward", "Smart Biometric Handwraps Ma…", "Optical reticle compatible with sensor HUD", 2_000, "hardware"),
+                            RItem("Official Merch", "Tactical Velcro Patch DojoPulse", "Limited edition tactical embroidered patch", 800, "patch")
                         )
                         catalog.forEach { item ->
                             val (iconBg, iconBrd, iconTint) = when (item.type) {
@@ -550,9 +550,9 @@ fun ProfilScreen(onNavigate: (String) -> Unit = {}, onLogout: () -> Unit = {}) {
                                         onClick = {
                                             if (canAfford) {
                                                 points -= item.cost
-                                                toastMessage = "Berhasil menukar ${item.cost} DP untuk: ${item.title}"
+                                                toastMessage = "Successfully redeemed ${item.cost} DP for: ${item.title}"
                                             } else {
-                                                toastMessage = "Poin tidak mencukupi (Perlu ${item.cost} DP)"
+                                                toastMessage = "Insufficient points (Need ${item.cost} DP)"
                                             }
                                         },
                                         contentPadding = PaddingValues(horizontal = 12.dp, vertical = 4.dp),
@@ -573,7 +573,7 @@ fun ProfilScreen(onNavigate: (String) -> Unit = {}, onLogout: () -> Unit = {}) {
                 item {
                     Column(modifier = Modifier.padding(horizontal = 20.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
                         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
-                            Text("PROMO & VOUCHER SAYA", color = TextPrim, fontSize = 11.sp, fontWeight = FontWeight.Bold, letterSpacing = 1.sp)
+                            Text("MY PROMOS & VOUCHERS", color = TextPrim, fontSize = 11.sp, fontWeight = FontWeight.Bold, letterSpacing = 1.sp)
                             Text("[LOG_SYNC: ON]", color = TextMut, fontSize = 10.sp, fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace)
                         }
                         // Tab pills
@@ -581,7 +581,7 @@ fun ProfilScreen(onNavigate: (String) -> Unit = {}, onLogout: () -> Unit = {}) {
                             modifier = Modifier.fillMaxWidth().background(BgCard, RoundedCornerShape(10.dp)).border(1.dp, BgCardBorder, RoundedCornerShape(10.dp)).padding(4.dp),
                             horizontalArrangement = Arrangement.spacedBy(4.dp)
                         ) {
-                            listOf(true to "Voucher Aktif (2)", false to "Riwayat Terpakai (1)").forEach { (isAktif, label) ->
+                            listOf(true to "Active Vouchers (2)", false to "Used History (1)").forEach { (isAktif, label) ->
                                 Box(
                                     modifier = Modifier.weight(1f)
                                         .background(if (voucherTabAktif == isAktif) AccentRed else Color.Transparent, RoundedCornerShape(8.dp))
@@ -602,16 +602,16 @@ fun ProfilScreen(onNavigate: (String) -> Unit = {}, onLogout: () -> Unit = {}) {
                                         Text("DOJOCHAMP", color = AccentCoral, fontSize = 11.sp, fontWeight = FontWeight.Bold, fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace)
                                     }
                                     Box(modifier = Modifier.background(Color(0x1A34D399), RoundedCornerShape(4.dp)).border(1.dp, Color(0xFF166534), RoundedCornerShape(4.dp)).padding(horizontal = 8.dp, vertical = 3.dp)) {
-                                        Text("Aktif", color = Emerald, fontSize = 10.sp, fontWeight = FontWeight.Bold)
+                                        Text("Active", color = Emerald, fontSize = 10.sp, fontWeight = FontWeight.Bold)
                                     }
                                 }
-                                Text("Diskon 30% Matras & Wraps", color = TextPrim, fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                                Text("30% Off Mats & Wraps", color = TextPrim, fontSize = 12.sp, fontWeight = FontWeight.Bold)
                                 androidx.compose.material3.HorizontalDivider(color = Color(0xFF1E1E28), thickness = 1.dp)
                                 Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
-                                    Text("Berlaku s.d. 30 Nov 2026", color = TextMut, fontSize = 11.sp)
-                                    Row(modifier = Modifier.clickable { toastMessage = "Kode DOJOCHAMP disalin!" }, verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                                    Text("Valid until Nov 30, 2026", color = TextMut, fontSize = 11.sp)
+                                    Row(modifier = Modifier.clickable { toastMessage = "Code DOJOCHAMP copied!" }, verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
                                         Icon(Icons.Default.ContentCopy, contentDescription = null, tint = AccentCoral, modifier = Modifier.size(14.dp))
-                                        Text("Salin Kode", color = AccentCoral, fontSize = 11.sp, fontWeight = FontWeight.SemiBold)
+                                        Text("Copy Code", color = AccentCoral, fontSize = 11.sp, fontWeight = FontWeight.SemiBold)
                                     }
                                 }
                             }
@@ -622,16 +622,16 @@ fun ProfilScreen(onNavigate: (String) -> Unit = {}, onLogout: () -> Unit = {}) {
                                         Text("GEARCASH20", color = AccentCoral, fontSize = 11.sp, fontWeight = FontWeight.Bold, fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace)
                                     }
                                     Box(modifier = Modifier.background(Color(0x1A34D399), RoundedCornerShape(4.dp)).border(1.dp, Color(0xFF166534), RoundedCornerShape(4.dp)).padding(horizontal = 8.dp, vertical = 3.dp)) {
-                                        Text("Aktif", color = Emerald, fontSize = 10.sp, fontWeight = FontWeight.Bold)
+                                        Text("Active", color = Emerald, fontSize = 10.sp, fontWeight = FontWeight.Bold)
                                     }
                                 }
                                 Text("Cashback 20% Apparel & Fightwear", color = TextPrim, fontSize = 12.sp, fontWeight = FontWeight.Bold)
                                 androidx.compose.material3.HorizontalDivider(color = Color(0xFF1E1E28), thickness = 1.dp)
                                 Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
-                                    Text("Min. belanja Rp 250.000", color = TextMut, fontSize = 11.sp)
-                                    Row(modifier = Modifier.clickable { toastMessage = "Kode GEARCASH20 disalin!" }, verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                                    Text("Min. spend Rp 250,000", color = TextMut, fontSize = 11.sp)
+                                    Row(modifier = Modifier.clickable { toastMessage = "Code GEARCASH20 copied!" }, verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
                                         Icon(Icons.Default.ContentCopy, contentDescription = null, tint = AccentCoral, modifier = Modifier.size(14.dp))
-                                        Text("Salin Kode", color = AccentCoral, fontSize = 11.sp, fontWeight = FontWeight.SemiBold)
+                                        Text("Copy Code", color = AccentCoral, fontSize = 11.sp, fontWeight = FontWeight.SemiBold)
                                     }
                                 }
                             }
@@ -643,13 +643,13 @@ fun ProfilScreen(onNavigate: (String) -> Unit = {}, onLogout: () -> Unit = {}) {
                                         Text("HBAG-OCT-FREE", color = TextMut, fontSize = 11.sp, fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace)
                                     }
                                     Box(modifier = Modifier.background(Color(0xFF27272A), RoundedCornerShape(4.dp)).padding(horizontal = 8.dp, vertical = 3.dp)) {
-                                        Text("Sudah Digunakan", color = TextMut, fontSize = 10.sp)
+                                        Text("Already Used", color = TextMut, fontSize = 10.sp)
                                     }
                                 }
-                                Text("Gratis 1 Jam Sesi Heavy Bag Zona B", color = TextSec, fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                                Text("Free 1 Hour Heavy Bag Session Zone B", color = TextSec, fontSize = 12.sp, fontWeight = FontWeight.Bold)
                                 androidx.compose.material3.HorizontalDivider(color = Color(0xFF1E1E28), thickness = 1.dp)
                                 Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                                    Text("Ditukar 02 Okt 2026", color = TextMut, fontSize = 11.sp)
+                                    Text("Redeemed Oct 02, 2026", color = TextMut, fontSize = 11.sp)
                                     Text("STATION #02", color = TextMut, fontSize = 10.sp, fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace)
                                 }
                             }
@@ -661,12 +661,12 @@ fun ProfilScreen(onNavigate: (String) -> Unit = {}, onLogout: () -> Unit = {}) {
                 // ── 5. Settings ──────────────────────────────────────────
                 item {
                     Column(modifier = Modifier.padding(horizontal = 20.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                        Text("PENGATURAN AKUN & SENSOR", color = TextPrim, fontSize = 11.sp, fontWeight = FontWeight.Bold, letterSpacing = 1.sp)
+                        Text("ACCOUNT & SENSOR SETTINGS", color = TextPrim, fontSize = 11.sp, fontWeight = FontWeight.Bold, letterSpacing = 1.sp)
                         data class SRow(val icon: androidx.compose.ui.graphics.vector.ImageVector, val iconBg: Color, val iconBrd: Color, val iconTint: Color, val title: String, val sub: String, val badge: String? = null)
                         listOf(
-                            SRow(Icons.Default.Wifi,  Color(0xFF21151B), Color(0xFF3E1D27), AccentCoral, "Hubungkan Sensor Wearable", "MediaPipe Ring Sensor v2 aktif", "Terhubung 94%"),
-                            SRow(Icons.Default.Lock,  Color(0xFF171B26), Color(0xFF1F2D42), Sky,         "Ganti Kata Sandi & Biometrik",  "Update kredensial fighter HUD"),
-                            SRow(Icons.Default.Help,  Color(0xFF241D14), Color(0xFF3E2E18), Amber,       "FAQ & Bantuan Dojo",            "Panduan poin, klaim garansi & instruksi")
+                            SRow(Icons.Default.Wifi,  Color(0xFF21151B), Color(0xFF3E1D27), AccentCoral, "Connect Wearable Sensor", "MediaPipe Ring Sensor v2 active", "Connected 94%"),
+                            SRow(Icons.Default.Lock,  Color(0xFF171B26), Color(0xFF1F2D42), Sky,         "Change Password & Biometrics",  "Update fighter HUD credentials"),
+                            SRow(Icons.Default.Help,  Color(0xFF241D14), Color(0xFF3E2E18), Amber,       "FAQ & Dojo Support",            "Points guide, warranty claims & manuals")
                         ).forEach { s ->
                             Row(
                                 modifier = Modifier.fillMaxWidth().background(BgCard, RoundedCornerShape(12.dp)).border(1.dp, Color(0xFF202028), RoundedCornerShape(12.dp)).clickable { }.padding(12.dp),
@@ -745,7 +745,7 @@ fun ProfilScreen(onNavigate: (String) -> Unit = {}, onLogout: () -> Unit = {}) {
                     Spacer(Modifier.width(10.dp))
                     Text(msg, color = TextPrim, fontSize = 12.sp, modifier = Modifier.weight(1f))
                     androidx.compose.material3.TextButton(onClick = { toastMessage = null }) {
-                        Text("TUTUP", color = AccentCoral, fontSize = 11.sp, fontWeight = FontWeight.Bold)
+                        Text("CLOSE", color = AccentCoral, fontSize = 11.sp, fontWeight = FontWeight.Bold)
                     }
                 }
             }

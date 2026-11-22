@@ -296,11 +296,11 @@ fun DojoBottomBar(
     modifier: Modifier = Modifier
 ) {
     val items = listOf(
-        DojoNavItem("dashboard", "Beranda", Icons.Default.Home),
-        DojoNavItem("latihan", "Latihan", Icons.Default.FitnessCenter),
-        DojoNavItem("progres", "Progres", Icons.Default.BarChart),
+        DojoNavItem("dashboard", "Home", Icons.Default.Home),
+        DojoNavItem("latihan", "Training", Icons.Default.FitnessCenter),
+        DojoNavItem("progres", "Progress", Icons.Default.BarChart),
         DojoNavItem("market", "Market", Icons.Default.ShoppingCart),
-        DojoNavItem("profil", "Profil", Icons.Default.Person)
+        DojoNavItem("profil", "Profile", Icons.Default.Person)
     )
 
     Surface(

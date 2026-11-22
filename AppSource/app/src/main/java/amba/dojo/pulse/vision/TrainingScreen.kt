@@ -172,11 +172,11 @@ fun TrainingScreen(
                                                         if (currentStepIndex + 1 < currentRoutine.steps.size) {
                                                             currentStepIndex++
                                                             currentStepCount = 0
-                                                            stepNoticeMessage = "DRILL STEP SELESAI! LANJUT KE: ${currentRoutine.steps[currentStepIndex].title.uppercase()}"
+                                                            stepNoticeMessage = "DRILL STEP COMPLETE! NEXT: ${currentRoutine.steps[currentStepIndex].title.uppercase()}"
                                                         } else {
                                                             currentStepCount = step.targetCount
                                                             isRoutineFinished = true
-                                                            stepNoticeMessage = "LUAR BIASA! SELURUH TARGET LATIHAN TUNTAS!"
+                                                            stepNoticeMessage = "OUTSTANDING! ALL TRAINING TARGETS COMPLETED!"
                                                         }
                                                     } else {
                                                         currentStepCount = newCount
@@ -268,13 +268,13 @@ fun TrainingScreen(
                 currentStepIndex = 0
                 currentStepCount = 0
                 isRoutineFinished = false
-                stepNoticeMessage = "DRILL DIGANTI KE: ${PresetExercises.ALL_ROUTINES[(selectedRoutineIndex)].name.uppercase()}"
+                stepNoticeMessage = "DRILL SWITCHED TO: ${PresetExercises.ALL_ROUTINES[(selectedRoutineIndex)].name.uppercase()}"
             },
             onResetRoutine = {
                 currentStepIndex = 0
                 currentStepCount = 0
                 isRoutineFinished = false
-                stepNoticeMessage = "DRILL DIMULAI ULANG DARI STEP 1"
+                stepNoticeMessage = "DRILL RESTARTED FROM STEP 1"
             },
             onToggleCamera = { isFrontCamera = !isFrontCamera },
             onFinish = { onFinishTraining(telemetry) },
@@ -428,13 +428,13 @@ fun TrainingHudOverlay(
                             Spacer(modifier = Modifier.width(8.dp))
                             Column {
                                 Text(
-                                    "SELURUH TARGET LATIHAN TUNTAS!",
+                                    "ALL TRAINING TARGETS COMPLETED!",
                                     color = Color.White,
                                     fontSize = 15.sp,
                                     fontWeight = FontWeight.Black
                                 )
                                 Text(
-                                    "Semua step latihan berhasil diselesaikan dengan baik.",
+                                    "All drill steps successfully completed with solid technique.",
                                     color = Color(0xFFB0BEC5),
                                     fontSize = 11.sp
                                 )
@@ -520,7 +520,7 @@ fun TrainingHudOverlay(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Column {
-                        Text("TARGET PUKULAN", color = Color.LightGray, fontSize = 10.sp, fontWeight = FontWeight.Bold)
+                        Text("STRIKE TARGET", color = Color.LightGray, fontSize = 10.sp, fontWeight = FontWeight.Bold)
                         Text(
                             "${telemetry.totalStrikes} / ${telemetry.targetStrikes} Strikes",
                             color = Color.White,
@@ -568,7 +568,7 @@ fun TrainingHudOverlay(
                 ) {
                     Icon(Icons.Default.CheckCircle, contentDescription = null, tint = Color.White)
                     Spacer(modifier = Modifier.width(8.dp))
-                    Text("SELESAIKAN LATIHAN", color = Color.White, fontWeight = FontWeight.Bold, fontSize = 14.sp)
+                    Text("FINISH TRAINING", color = Color.White, fontWeight = FontWeight.Bold, fontSize = 14.sp)
                 }
             }
         }

@@ -87,7 +87,7 @@ fun DashboardPage(
             ) {
                 Icon(Icons.Default.PlayArrow, contentDescription = null, tint = Color.White)
                 Spacer(Modifier.width(8.dp))
-                Text("MULAI LATIHAN", color = Color.White, fontFamily = Dojo.Mono, fontWeight = FontWeight.Bold, letterSpacing = 1.sp)
+                Text("START TRAINING", color = Color.White, fontFamily = Dojo.Mono, fontWeight = FontWeight.Bold, letterSpacing = 1.sp)
             }
             Spacer(Modifier.height(4.dp))
         }
