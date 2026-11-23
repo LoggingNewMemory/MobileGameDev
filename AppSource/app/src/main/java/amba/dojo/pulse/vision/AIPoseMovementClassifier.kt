@@ -14,7 +14,13 @@ import kotlin.math.sqrt
 data class MovementPrediction(
     val label: String,
     val confidence: Float,
-    val allProbabilities: Map<String, Float>
+    val allProbabilities: Map<String, Float>,
+    /**
+     * False when the input is outside what the model was trained on (hips not visible → the
+     * hip-centred normalisation and lower-body angles are garbage). Callers must not trust the
+     * prediction then.
+     */
+    val inDistribution: Boolean = true
 )
 
 class AIPoseMovementClassifier(
@@ -25,6 +31,8 @@ class AIPoseMovementClassifier(
     companion object {
         const val WINDOW_SIZE = 16
         const val FEATURE_DIM = 68
+        /** Velocity features are expressed per 1/30 s so they match training regardless of camera FPS. */
+        const val REFERENCE_FRAME_MS = 1000f / 30f
 
         private val KEY_LANDMARKS = intArrayOf(
             PoseLandmark.NOSE,            // 0
@@ -49,6 +57,7 @@ class AIPoseMovementClassifier(
     private var hasPrevLandmarks = false
     private val prevWristL = FloatArray(3)
     private val prevWristR = FloatArray(3)
+    private var prevTimestampMs = 0L
 
     init {
         try {
@@ -85,7 +94,12 @@ class AIPoseMovementClassifier(
         interpreter = Interpreter(modelByteBuffer, options)
     }
 
-    fun processPose(pose: Pose, imageWidth: Int = 0, imageHeight: Int = 0): MovementPrediction? {
+    fun processPose(
+        pose: Pose,
+        imageWidth: Int = 0,
+        imageHeight: Int = 0,
+        timestampMs: Long = System.currentTimeMillis()
+    ): MovementPrediction? {
         val lShoulder = pose.getPoseLandmark(PoseLandmark.LEFT_SHOULDER)
         val rShoulder = pose.getPoseLandmark(PoseLandmark.RIGHT_SHOULDER)
         val lWrist = pose.getPoseLandmark(PoseLandmark.LEFT_WRIST)
@@ -115,17 +129,24 @@ class AIPoseMovementClassifier(
         // If framed too close or neither hand is actively in boxing view:
         // athlete is not in boxing stance, output Idle with high confidence
         if (isFramedTooClose || (!isLeftWristInFrame && !isRightWristInFrame)) {
+            // Drop stale frames so the next window is a contiguous clip, not a mix of old and new motion.
+            reset()
             val defaultProbMap = labels.associateWith { label ->
                 if (label.equals("Idle", ignoreCase = true) || label.contains("Idle")) 0.99f else 0.001f
             }
             return MovementPrediction(
                 label = "Idle",
                 confidence = 0.99f,
-                allProbabilities = defaultProbMap
+                allProbabilities = defaultProbMap,
+                inDistribution = false
             )
         }
 
-        val features = extractFeatures(pose, imageWidth, imageHeight)
+        val lHip = pose.getPoseLandmark(PoseLandmark.LEFT_HIP)
+        val rHip = pose.getPoseLandmark(PoseLandmark.RIGHT_HIP)
+        val hipsVisible = (lHip?.inFrameLikelihood ?: 0f) >= 0.5f && (rHip?.inFrameLikelihood ?: 0f) >= 0.5f
+
+        val features = extractFeatures(pose, imageWidth, imageHeight, timestampMs)
         if (sequenceBuffer.size >= WINDOW_SIZE) {
             sequenceBuffer.removeFirst()
         }
@@ -165,11 +186,12 @@ class AIPoseMovementClassifier(
         return MovementPrediction(
             label = labels[maxIndex],
             confidence = maxConf,
-            allProbabilities = probMap
+            allProbabilities = probMap,
+            inDistribution = hipsVisible
         )
     }
 
-    private fun extractFeatures(pose: Pose, imageWidth: Int, imageHeight: Int): FloatArray {
+    private fun extractFeatures(pose: Pose, imageWidth: Int, imageHeight: Int, timestampMs: Long): FloatArray {
         val features = FloatArray(FEATURE_DIM)
 
         val widthF = if (imageWidth > 0) imageWidth.toFloat() else 1f
@@ -261,15 +283,18 @@ class AIPoseMovementClassifier(
         features[cursor++] = (lW[1] - rW[1]) / scale
         features[cursor++] = (lW[2] - rW[2]) / scale
 
-        // 6. Instantaneous wrist velocities (normalized by scale)
-        if (hasPrevLandmarks) {
-            features[cursor++] = (lW[0] - prevWristL[0]) / scale
-            features[cursor++] = (lW[1] - prevWristL[1]) / scale
-            features[cursor++] = (lW[2] - prevWristL[2]) / scale
+        // 6. Wrist velocities (normalized by scale), expressed per 1/30 s so that a 15 fps phone and the
+        //    30 fps training videos produce the same magnitudes for the same physical speed.
+        val dtMs = (timestampMs - prevTimestampMs).toFloat()
+        if (hasPrevLandmarks && dtMs > 0f && dtMs <= 250f) {
+            val k = REFERENCE_FRAME_MS / dtMs
+            features[cursor++] = (lW[0] - prevWristL[0]) / scale * k
+            features[cursor++] = (lW[1] - prevWristL[1]) / scale * k
+            features[cursor++] = (lW[2] - prevWristL[2]) / scale * k
 
-            features[cursor++] = (rW[0] - prevWristR[0]) / scale
-            features[cursor++] = (rW[1] - prevWristR[1]) / scale
-            features[cursor++] = (rW[2] - prevWristR[2]) / scale
+            features[cursor++] = (rW[0] - prevWristR[0]) / scale * k
+            features[cursor++] = (rW[1] - prevWristR[1]) / scale * k
+            features[cursor++] = (rW[2] - prevWristR[2]) / scale * k
         } else {
             features[cursor++] = 0f
             features[cursor++] = 0f
@@ -287,6 +312,7 @@ class AIPoseMovementClassifier(
         prevWristR[0] = rW[0]
         prevWristR[1] = rW[1]
         prevWristR[2] = rW[2]
+        prevTimestampMs = timestampMs
         hasPrevLandmarks = true
 
         return features

@@ -21,6 +21,7 @@ REQUIRED_PACKAGES = [
     "numpy<2,>=1.26.4",
     "ml-dtypes==0.3.2",
     "scikit-learn",
+    "scipy",
     "pandas",
     "joblib",
     "matplotlib"
@@ -73,6 +74,9 @@ def main():
     print(f"    {venv_python} train.py --sport all")
     print(f"    # To retrain with refreshed cache:")
     print(f"    {venv_python} train.py --sport boxing --force")
+    print("\nv2 pipeline (recommended, see docs/PUNCH_DEFINITIONS.md):")
+    print(f"    {venv_python} extract_skeletons.py --videos <dataset_dir> --out skeletons --preview")
+    print(f"    {venv_python} train_v2.py --skeletons skeletons --out models_v2 --cv")
     print("=" * 60)
 
 if __name__ == "__main__":
