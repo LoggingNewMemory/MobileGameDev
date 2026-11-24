@@ -24,7 +24,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLifecycleOwner
-import androidx.compose.ui.text.font.FontFamily
+import amba.dojo.pulse.ui.theme.GoogleSans
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -78,12 +78,29 @@ fun TrainingScreen(
     }
     val classifier = remember { PunchClassifier(FighterStance.ORTHODOX, aiClassifier) }
 
+    // Guided Dummy Training Routine State
+    var selectedRoutineIndex by remember { mutableIntStateOf(0) }
+    val currentRoutine = PresetExercises.ALL_ROUTINES[selectedRoutineIndex]
+    var currentStepIndex by remember { mutableIntStateOf(0) }
+    var currentStepCount by remember { mutableIntStateOf(0) }
+    var lastRecordedStrikes by remember { mutableIntStateOf(0) }
+    var isRoutineFinished by remember { mutableStateOf(false) }
+    var stepNoticeMessage by remember { mutableStateOf<String?>(null) }
+
     // 3-minute Drill Timer countdown (180 seconds)
     var timeLeftSeconds by remember { mutableIntStateOf(180) }
     LaunchedEffect(Unit) {
         while (timeLeftSeconds > 0) {
             delay(1000L)
             timeLeftSeconds--
+        }
+    }
+
+    // Auto-clear step completion notice after 3 seconds
+    LaunchedEffect(stepNoticeMessage) {
+        if (stepNoticeMessage != null) {
+            delay(3000L)
+            stepNoticeMessage = null
         }
     }
 
@@ -143,6 +160,30 @@ fun TrainingScreen(
 
                                         val updated = classifier.processPose(pose, width, height)
                                         telemetry = updated
+
+                                        // Progress tracking for guided training exercise
+                                        if (updated.totalStrikes > lastRecordedStrikes) {
+                                            lastRecordedStrikes = updated.totalStrikes
+                                            if (!isRoutineFinished && currentStepIndex < currentRoutine.steps.size) {
+                                                val step = currentRoutine.steps[currentStepIndex]
+                                                if (step.matches(updated.lastDetectedPunch)) {
+                                                    val newCount = currentStepCount + 1
+                                                    if (newCount >= step.targetCount) {
+                                                        if (currentStepIndex + 1 < currentRoutine.steps.size) {
+                                                            currentStepIndex++
+                                                            currentStepCount = 0
+                                                            stepNoticeMessage = "DRILL STEP COMPLETE! NEXT: ${currentRoutine.steps[currentStepIndex].title.uppercase()}"
+                                                        } else {
+                                                            currentStepCount = step.targetCount
+                                                            isRoutineFinished = true
+                                                            stepNoticeMessage = "OUTSTANDING! ALL TRAINING TARGETS COMPLETED!"
+                                                        }
+                                                    } else {
+                                                        currentStepCount = newCount
+                                                    }
+                                                }
+                                            }
+                                        }
                                     }
                                     .addOnCompleteListener {
                                         imageProxy.close()
@@ -217,6 +258,24 @@ fun TrainingScreen(
             telemetry = telemetry,
             timeLeftSeconds = timeLeftSeconds,
             isFrontCamera = isFrontCamera,
+            currentRoutine = currentRoutine,
+            currentStepIndex = currentStepIndex,
+            currentStepCount = currentStepCount,
+            isRoutineFinished = isRoutineFinished,
+            stepNoticeMessage = stepNoticeMessage,
+            onCycleRoutine = {
+                selectedRoutineIndex = (selectedRoutineIndex + 1) % PresetExercises.ALL_ROUTINES.size
+                currentStepIndex = 0
+                currentStepCount = 0
+                isRoutineFinished = false
+                stepNoticeMessage = "DRILL SWITCHED TO: ${PresetExercises.ALL_ROUTINES[(selectedRoutineIndex)].name.uppercase()}"
+            },
+            onResetRoutine = {
+                currentStepIndex = 0
+                currentStepCount = 0
+                isRoutineFinished = false
+                stepNoticeMessage = "DRILL RESTARTED FROM STEP 1"
+            },
             onToggleCamera = { isFrontCamera = !isFrontCamera },
             onFinish = { onFinishTraining(telemetry) },
             onBack = onNavigateBack,
@@ -230,6 +289,13 @@ fun TrainingHudOverlay(
     telemetry: TrainingTelemetry,
     timeLeftSeconds: Int,
     isFrontCamera: Boolean,
+    currentRoutine: TrainingExerciseRoutine,
+    currentStepIndex: Int,
+    currentStepCount: Int,
+    isRoutineFinished: Boolean,
+    stepNoticeMessage: String?,
+    onCycleRoutine: () -> Unit,
+    onResetRoutine: () -> Unit,
     onToggleCamera: () -> Unit,
     onFinish: () -> Unit,
     onBack: () -> Unit,
@@ -240,6 +306,7 @@ fun TrainingHudOverlay(
     val minutes = timeLeftSeconds / 60
     val seconds = timeLeftSeconds % 60
     val timerString = String.format("%02d:%02d", minutes, seconds)
+    val currentStep = if (currentStepIndex < currentRoutine.steps.size) currentRoutine.steps[currentStepIndex] else null
 
     Column(
         modifier = Modifier
@@ -268,66 +335,11 @@ fun TrainingHudOverlay(
                     )
                 }
 
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Box(modifier = Modifier.size(8.dp).background(accentPink))
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Text(
-                        "SENSOR LINK: 60FPS HUD",
-                        color = Color.White,
-                        fontSize = 11.sp,
-                        fontWeight = FontWeight.Bold,
-                        letterSpacing = 1.sp
-                    )
-                }
-
-                Row {
-                    IconButton(
-                        onClick = onOpenTutorial,
-                        modifier = Modifier
-                            .size(40.dp)
-                            .background(Color(0x88121212), CircleShape)
-                    ) {
-                        Icon(Icons.Default.HelpOutline, contentDescription = "Tutorial", tint = Color.White)
-                    }
-
-                    Spacer(modifier = Modifier.width(8.dp))
-
-                    IconButton(
-                        onClick = onToggleCamera,
-                        modifier = Modifier
-                            .size(40.dp)
-                            .background(Color(0x88121212), CircleShape)
-                    ) {
-                        Icon(Icons.Default.FlipCameraAndroid, contentDescription = "Switch Camera", tint = Color.White)
-                    }
-                }
-            }
-
-            Spacer(modifier = Modifier.height(12.dp))
-
-            // Subtitle & Session Timer
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
+                // Session Timer
                 Box(
                     modifier = Modifier
-                        .background(accentRed, RoundedCornerShape(4.dp))
-                        .padding(horizontal = 8.dp, vertical = 4.dp)
-                ) {
-                    Text(
-                        "LATIHAN UTAMA [SYS.DRL-09]",
-                        color = Color.White,
-                        fontSize = 11.sp,
-                        fontWeight = FontWeight.Bold
-                    )
-                }
-
-                Box(
-                    modifier = Modifier
-                        .background(Color(0xAA121212), RoundedCornerShape(4.dp))
-                        .padding(horizontal = 10.dp, vertical = 4.dp)
+                        .background(Color(0xAA121212), RoundedCornerShape(6.dp))
+                        .padding(horizontal = 12.dp, vertical = 6.dp)
                 ) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Icon(Icons.Default.Timer, contentDescription = null, tint = accentPink, modifier = Modifier.size(14.dp))
@@ -337,94 +349,156 @@ fun TrainingHudOverlay(
                             color = Color.White,
                             fontSize = 14.sp,
                             fontWeight = FontWeight.Bold,
-                            fontFamily = FontFamily.Monospace
+                            fontFamily = GoogleSans
                         )
                     }
                 }
             }
-        }
 
-        // Center HUD: Active Punch Feedback Callout
-        Box(
-            modifier = Modifier.fillMaxWidth(),
-            contentAlignment = Alignment.Center
-        ) {
-            Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                AnimatedVisibility(
-                    visible = telemetry.detectedPunch != PunchType.IDLE && telemetry.detectedPunch != PunchType.GUARD,
-                    enter = fadeIn(animationSpec = androidx.compose.animation.core.tween(150)),
-                    exit = fadeOut(animationSpec = androidx.compose.animation.core.tween(150))
-                ) {
-                    Box(
-                        modifier = Modifier
-                            .background(Color(0xDD3B0918), RoundedCornerShape(8.dp))
-                            .border(1.dp, accentPink, RoundedCornerShape(8.dp))
-                            .padding(horizontal = 20.dp, vertical = 10.dp)
+            Spacer(modifier = Modifier.height(10.dp))
+
+            // Guided Exercise Target Card (Precision Striking Drill)
+            Card(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(top = 10.dp),
+                shape = RoundedCornerShape(10.dp),
+                colors = CardDefaults.cardColors(containerColor = Color(0xDD161622)),
+                border = androidx.compose.foundation.BorderStroke(
+                    1.dp,
+                    if (isRoutineFinished) Color(0xFF81C784) else accentPink.copy(alpha = 0.6f)
+                )
+            ) {
+                Column(modifier = Modifier.padding(12.dp)) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                            Text(
-                                text = telemetry.detectedPunch.displayName.uppercase(),
-                                color = Color.White,
-                                fontSize = 22.sp,
-                                fontWeight = FontWeight.Black,
-                                letterSpacing = 2.sp
-                            )
-                            if (telemetry.aiConfidence > 0f) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Box(
+                                modifier = Modifier
+                                    .background(
+                                        if (isRoutineFinished) Color(0xFF2E7D32) else accentRed,
+                                        RoundedCornerShape(4.dp)
+                                    )
+                                    .padding(horizontal = 6.dp, vertical = 2.dp)
+                            ) {
                                 Text(
-                                    text = "AI ACCURACY: ${(telemetry.aiConfidence * 100).toInt()}%",
-                                    color = accentPink,
-                                    fontSize = 11.sp,
+                                    if (isRoutineFinished) "FINISHED" else "STEP ${currentStepIndex + 1}/${currentRoutine.steps.size}",
+                                    color = Color.White,
+                                    fontSize = 10.sp,
                                     fontWeight = FontWeight.Bold,
-                                    fontFamily = FontFamily.Monospace
+                                    fontFamily = GoogleSans
+                                )
+                            }
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text(
+                                if (isRoutineFinished) "ALL DRILLS COMPLETE" else currentRoutine.subtitle,
+                                color = if (isRoutineFinished) Color(0xFF81C784) else accentPink,
+                                fontSize = 11.sp,
+                                fontWeight = FontWeight.Bold
+                            )
+                        }
+
+                        // Cycle routine button
+                        IconButton(
+                            onClick = onCycleRoutine,
+                            modifier = Modifier.size(24.dp)
+                        ) {
+                            Icon(
+                                Icons.Default.Refresh,
+                                contentDescription = "Ganti Drill",
+                                tint = Color.LightGray,
+                                modifier = Modifier.size(16.dp)
+                            )
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(6.dp))
+
+                    if (isRoutineFinished) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Icon(
+                                Icons.Default.EmojiEvents,
+                                contentDescription = null,
+                                tint = Color(0xFFFFD54F),
+                                modifier = Modifier.size(28.dp)
+                            )
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Column {
+                                Text(
+                                    "ALL TRAINING TARGETS COMPLETED!",
+                                    color = Color.White,
+                                    fontSize = 15.sp,
+                                    fontWeight = FontWeight.Black
+                                )
+                                Text(
+                                    "All drill steps successfully completed with solid technique.",
+                                    color = Color(0xFFB0BEC5),
+                                    fontSize = 11.sp
                                 )
                             }
                         }
-                    }
-                }
-
-                Spacer(modifier = Modifier.height(8.dp))
-
-                // Telemetry cards overlay (Left & Right stats like in the mockup image)
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween
-                ) {
-                    // Left: Punch Angle Card
-                    Box(
-                        modifier = Modifier
-                            .background(Color(0xBB121212), RoundedCornerShape(8.dp))
-                            .padding(10.dp)
-                    ) {
-                        Column {
-                            Text("PUNCH ANGLE", color = Color.LightGray, fontSize = 9.sp, fontWeight = FontWeight.Bold)
+                    } else if (currentStep != null) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
                             Text(
-                                "${telemetry.punchAngle.toInt()}° PRECISION",
+                                text = currentStep.title.uppercase(),
                                 color = Color.White,
-                                fontSize = 13.sp,
-                                fontWeight = FontWeight.Bold
+                                fontSize = 16.sp,
+                                fontWeight = FontWeight.Black,
+                                letterSpacing = 1.sp
                             )
-                            Text("VALIDASI SUDUT AKTIF", color = accentPink, fontSize = 9.sp)
+                            Text(
+                                text = "$currentStepCount / ${currentStep.targetCount}",
+                                color = currentStep.badgeColor,
+                                fontSize = 17.sp,
+                                fontWeight = FontWeight.Bold,
+                                fontFamily = GoogleSans
+                            )
                         }
+
+                        Spacer(modifier = Modifier.height(6.dp))
+
+                        val stepProgress = (currentStepCount.toFloat() / currentStep.targetCount.toFloat()).coerceIn(0f, 1f)
+                        LinearProgressIndicator(
+                            progress = { stepProgress },
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(6.dp)
+                                .clip(RoundedCornerShape(3.dp)),
+                            color = currentStep.badgeColor,
+                            trackColor = Color(0xFF2A2A38)
+                        )
+
+                        Spacer(modifier = Modifier.height(6.dp))
+
+                        Text(
+                            text = currentStep.instruction,
+                            color = Color(0xFFCCCCCC),
+                            fontSize = 11.sp,
+                            lineHeight = 14.sp
+                        )
                     }
 
-                    // Right: Return Guard Card
-                    Box(
-                        modifier = Modifier
-                            .background(Color(0xBB121212), RoundedCornerShape(8.dp))
-                            .padding(10.dp)
-                    ) {
-                        Column(horizontalAlignment = Alignment.End) {
-                            Text("RETURN GUARD", color = Color.LightGray, fontSize = 9.sp, fontWeight = FontWeight.Bold)
+                    // Temporary step transition notice
+                    stepNoticeMessage?.let { notice ->
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .background(Color(0xFF1B5E20), RoundedCornerShape(4.dp))
+                                .padding(vertical = 4.dp, horizontal = 8.dp)
+                        ) {
                             Text(
-                                String.format("%.2f DETIK", telemetry.returnGuardTimeSeconds),
-                                color = accentPink,
-                                fontSize = 13.sp,
+                                text = notice,
+                                color = Color.White,
+                                fontSize = 10.sp,
                                 fontWeight = FontWeight.Bold
-                            )
-                            Text(
-                                if (telemetry.isGuardActive) "ORTHODOX GUARD [OK]" else "STRIKE EXTENDED",
-                                color = if (telemetry.isGuardActive) Color(0xFF81C784) else accentPink,
-                                fontSize = 9.sp
                             )
                         }
                     }
@@ -432,80 +506,22 @@ fun TrainingHudOverlay(
             }
         }
 
-        // Bottom HUD Card: Progress, Form Score, and Finish Button
-        Card(
-            modifier = Modifier.fillMaxWidth(),
-            colors = CardDefaults.cardColors(containerColor = Color(0xDD1E1E1E)),
-            shape = RoundedCornerShape(12.dp)
+
+        // Bottom HUD: Finish Button
+        Button(
+            onClick = onFinish,
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(48.dp),
+            shape = RoundedCornerShape(10.dp),
+            colors = ButtonDefaults.buttonColors(containerColor = accentRed)
         ) {
-            Column(modifier = Modifier.padding(14.dp)) {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Column {
-                        Text("TARGET PUKULAN", color = Color.LightGray, fontSize = 10.sp, fontWeight = FontWeight.Bold)
-                        Text(
-                            "${telemetry.totalStrikes} / ${telemetry.targetStrikes} Strikes",
-                            color = Color.White,
-                            fontSize = 16.sp,
-                            fontWeight = FontWeight.Bold
-                        )
-                    }
-
-                    Column(horizontalAlignment = Alignment.End) {
-                        Text("FORM SCORE", color = Color.LightGray, fontSize = 10.sp, fontWeight = FontWeight.Bold)
-                        Text(
-                            "${telemetry.formScore}% Akurat",
-                            color = accentPink,
-                            fontSize = 16.sp,
-                            fontWeight = FontWeight.Bold
-                        )
-                    }
-                }
-
-                Spacer(modifier = Modifier.height(8.dp))
-
-                val progress = (telemetry.totalStrikes.toFloat() / telemetry.targetStrikes.toFloat()).coerceIn(0f, 1f)
-                LinearProgressIndicator(
-                    progress = { progress },
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(6.dp)
-                        .clip(RoundedCornerShape(3.dp)),
-                    color = accentPink,
-                    trackColor = Color(0xFF333333)
-                )
-
-                Spacer(modifier = Modifier.height(10.dp))
-
-                // Breakdown of punches matching Dataset categories
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween
-                ) {
-                    Text("JAB: ${telemetry.strikeCounts[PunchType.LEFT_JAB] ?: 0}", color = Color.LightGray, fontSize = 10.sp)
-                    Text("STRIKE: ${telemetry.strikeCounts[PunchType.STRIKE] ?: 0}", color = Color.LightGray, fontSize = 10.sp)
-                    Text("HOOK: ${(telemetry.strikeCounts[PunchType.LEFT_HOOK] ?: 0) + (telemetry.strikeCounts[PunchType.RIGHT_HOOK] ?: 0)}", color = Color.LightGray, fontSize = 10.sp)
-                    Text("UPPER: ${(telemetry.strikeCounts[PunchType.LEFT_UPPERCUT] ?: 0) + (telemetry.strikeCounts[PunchType.RIGHT_UPPERCUT] ?: 0)}", color = Color.LightGray, fontSize = 10.sp)
-                }
-
-                Spacer(modifier = Modifier.height(12.dp))
-
-                Button(
-                    onClick = onFinish,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(44.dp),
-                    shape = RoundedCornerShape(8.dp),
-                    colors = ButtonDefaults.buttonColors(containerColor = accentRed)
-                ) {
-                    Icon(Icons.Default.CheckCircle, contentDescription = null, tint = Color.White)
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Text("SELESAIKAN LATIHAN", color = Color.White, fontWeight = FontWeight.Bold, fontSize = 14.sp)
-                }
-            }
+            Text(
+                "FINISH TRAINING",
+                color = Color.White,
+                fontWeight = FontWeight.Bold,
+                fontSize = 14.sp
+            )
         }
     }
 }

@@ -19,7 +19,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.font.FontFamily
+import amba.dojo.pulse.ui.theme.GoogleSans
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
@@ -97,7 +97,7 @@ fun RegisterPage(onRegisterSuccess: () -> Unit, onNavigateToLogin: () -> Unit) {
                 fontSize = 24.sp,
                 fontWeight = FontWeight.Bold,
                 letterSpacing = 2.sp,
-                fontFamily = FontFamily.SansSerif
+                fontFamily = GoogleSans
             )
 
             Spacer(modifier = Modifier.height(48.dp))
@@ -110,7 +110,7 @@ fun RegisterPage(onRegisterSuccess: () -> Unit, onNavigateToLogin: () -> Unit) {
                         color = textColor,
                         fontSize = 14.sp,
                         fontWeight = FontWeight.SemiBold,
-                        fontFamily = FontFamily.SansSerif
+                        fontFamily = GoogleSans
                     )
                     Spacer(modifier = Modifier.width(8.dp))
                     Icon(
@@ -147,7 +147,7 @@ fun RegisterPage(onRegisterSuccess: () -> Unit, onNavigateToLogin: () -> Unit) {
                         color = textColor,
                         fontSize = 14.sp,
                         fontWeight = FontWeight.SemiBold,
-                        fontFamily = FontFamily.SansSerif
+                        fontFamily = GoogleSans
                     )
                     Spacer(modifier = Modifier.width(8.dp))
                     Icon(
@@ -186,7 +186,7 @@ fun RegisterPage(onRegisterSuccess: () -> Unit, onNavigateToLogin: () -> Unit) {
                         color = textColor,
                         fontSize = 14.sp,
                         fontWeight = FontWeight.SemiBold,
-                        fontFamily = FontFamily.SansSerif
+                        fontFamily = GoogleSans
                     )
                     Spacer(modifier = Modifier.width(8.dp))
                     Icon(
@@ -222,7 +222,7 @@ fun RegisterPage(onRegisterSuccess: () -> Unit, onNavigateToLogin: () -> Unit) {
                     text = errorMessage ?: "",
                     color = Color.Red,
                     fontSize = 14.sp,
-                    fontFamily = FontFamily.SansSerif
+                    fontFamily = GoogleSans
                 )
             }
 
@@ -278,7 +278,7 @@ fun RegisterPage(onRegisterSuccess: () -> Unit, onNavigateToLogin: () -> Unit) {
                         color = textColor,
                         fontWeight = FontWeight.Bold,
                         fontSize = 16.sp,
-                        fontFamily = FontFamily.SansSerif
+                        fontFamily = GoogleSans
                     )
                 }
             }
@@ -291,14 +291,14 @@ fun RegisterPage(onRegisterSuccess: () -> Unit, onNavigateToLogin: () -> Unit) {
                     text = "Already have an account? ",
                     color = Color.LightGray,
                     fontSize = 14.sp,
-                    fontFamily = FontFamily.SansSerif
+                    fontFamily = GoogleSans
                 )
                 Text(
                     text = "Login",
                     color = textColor,
                     fontSize = 14.sp,
                     fontWeight = FontWeight.Bold,
-                    fontFamily = FontFamily.SansSerif,
+                    fontFamily = GoogleSans,
                     modifier = Modifier.clickable { onNavigateToLogin() }
                 )
             }
@@ -328,7 +328,7 @@ fun RegisterPage(onRegisterSuccess: () -> Unit, onNavigateToLogin: () -> Unit) {
                     text = "Register With Google",
                     color = textColor,
                     fontSize = 16.sp,
-                    fontFamily = FontFamily.SansSerif
+                    fontFamily = GoogleSans
                 )
             }
         }

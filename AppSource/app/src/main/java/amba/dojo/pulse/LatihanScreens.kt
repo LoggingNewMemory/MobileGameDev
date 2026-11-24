@@ -70,11 +70,11 @@ fun LatihanScreen(
     onOpenArenas: () -> Unit = {}
 ) {
     var query by remember { mutableStateOf("") }
-    var category by remember { mutableStateOf("Semua") }
-    val categories = listOf("Semua") + Disciplines.map { it.category }
+    var category by remember { mutableStateOf("All") }
+    val categories = listOf("All") + Disciplines.map { it.category }
 
     val filtered = Disciplines.filter {
-        (category == "Semua" || it.category == category) &&
+        (category == "All" || it.category == category) &&
             it.title.contains(query.trim(), ignoreCase = true)
     }
 
@@ -90,7 +90,7 @@ fun LatihanScreen(
                 .padding(horizontal = 16.dp, vertical = 12.dp),
             verticalArrangement = Arrangement.spacedBy(14.dp)
         ) {
-            Text("Latihan", color = Dojo.Text, fontSize = 22.sp, fontWeight = FontWeight.Bold)
+            Text("Training", color = Dojo.Text, fontSize = 22.sp, fontWeight = FontWeight.Bold)
 
             val searchShape = RoundedCornerShape(10.dp)
             Row(
@@ -295,7 +295,7 @@ fun WorkoutDetailScreen(
                 shape = RoundedCornerShape(12.dp),
                 colors = ButtonDefaults.buttonColors(containerColor = Dojo.Red)
             ) {
-                Text("MULAI ROUND  →", color = Color.White, fontFamily = Dojo.Mono, fontWeight = FontWeight.Bold, letterSpacing = 1.sp)
+                Text("START ROUND  →", color = Color.White, fontFamily = Dojo.Mono, fontWeight = FontWeight.Bold, letterSpacing = 1.sp)
             }
         }
     }

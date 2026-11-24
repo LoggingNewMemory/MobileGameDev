@@ -16,6 +16,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.*
+import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -27,6 +28,7 @@ import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.StrokeJoin
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.text.font.FontWeight
+import amba.dojo.pulse.ui.theme.GoogleSans
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -74,55 +76,91 @@ private fun TabScaffold(
     }
 }
 
-/** "Progres" / Kemajuan tab. */
+/** "Progres" / Progress tab. */
 @Composable
 fun ProgresScreen(onNavigate: (String) -> Unit = {}, onNextCourse: () -> Unit = {}) {
-    TabScaffold("progres", onNavigate, "Kemajuan", "Minggu Ini") {
+    // ── Collect live data from repository ──
+    val sessions by TrainingRepository.sessions.collectAsState()
+    val stats = remember(sessions) { TrainingRepository.weeklyStats() }
+
+    // Weight tracking: derive from sessions (simulated drift for display)
+    val baseWeight = 72.5f
+    val weightDelta = if (sessions.isEmpty()) 0f else -(sessions.takeLast(7).size * 0.17f)
+    val currentWeight = baseWeight + weightDelta
+    val weightChange  = weightDelta
+
+    // Build line chart values from weekly session durations (normalised)
+    val chartValues: List<Float> = if (sessions.size >= 2) {
+        val last8 = sessions.takeLast(8)
+        val maxVal = last8.maxOf { it.durationSeconds }.coerceAtLeast(1)
+        last8.map { 1f - (it.durationSeconds.toFloat() / maxVal).coerceIn(0.1f, 1f) }
+    } else {
+        listOf(0.72f, 0.66f, 0.7f, 0.58f, 0.52f, 0.46f, 0.4f, 0.3f)
+    }
+
+    val accuracyLabel = if (stats.avgFormScore > 0) "${stats.avgFormScore}.0%" else "88.4%"
+    val velocityLabel = if (stats.peakVelocityMs > 0f) "${"%.1f".format(stats.peakVelocityMs)} m/s" else "24.5 m/s"
+    val energyTotal   = if (stats.totalStrikes > 0) stats.totalStrikes * 3 else 2_350  // ~3 Cal / punch
+    val targetPunches = if (sessions.isNotEmpty()) sessions.last().totalStrikes else 6_842
+    val goalPunches   = 10_000
+    val targetProgress = (targetPunches.toFloat() / goalPunches).coerceIn(0f, 1f)
+
+    // Bar chart: weekly daily totals
+    val barLabels = listOf("M", "T", "W", "T", "F", "S", "S")
+    val barValues = if (stats.weeklyBarValues.any { it > 0f }) stats.weeklyBarValues
+                    else listOf(0.28f, 0.34f, 0.8f, 0.3f, 1f, 0.5f, 0.2f)
+    val barHighlight = if (stats.weeklyBarHighlights.isNotEmpty()) stats.weeklyBarHighlights
+                       else setOf(2, 4)
+
+    TabScaffold("progres", onNavigate, "Progress", "This Week") {
+        // Weight Tracking card
         DojoCard {
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
                 MonoLabel("WEIGHT TRACKING", size = 9)
-                MonoLabel("↓ 1.2 kg", size = 9, color = Dojo.Red, bold = true)
+                val changeSign = if (weightChange <= 0f) "↓" else "↑"
+                val changeAbs  = kotlin.math.abs(weightChange)
+                MonoLabel(
+                    "$changeSign ${"%.1f".format(changeAbs)} kg",
+                    size = 9, color = Dojo.Red, bold = true
+                )
             }
             Spacer(Modifier.height(4.dp))
             Row(verticalAlignment = Alignment.Bottom) {
-                Text("72.5", color = Dojo.Text, fontFamily = Dojo.Mono, fontSize = 26.sp, fontWeight = FontWeight.Bold)
+                Text("${"%.1f".format(currentWeight)}", color = Dojo.Text, fontFamily = Dojo.Mono, fontSize = 26.sp, fontWeight = FontWeight.Bold)
                 Spacer(Modifier.width(4.dp))
                 MonoLabel("kg", size = 11, modifier = Modifier.padding(bottom = 4.dp))
             }
             Spacer(Modifier.height(8.dp))
-            LineChart(
-                values = listOf(0.72f, 0.66f, 0.7f, 0.58f, 0.52f, 0.46f, 0.4f, 0.3f),
-                modifier = Modifier.fillMaxWidth().height(72.dp)
-            )
+            LineChart(values = chartValues, modifier = Modifier.fillMaxWidth().height(72.dp))
         }
 
+        // Stats tiles
         Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-            StatTile("ACCURACY", "88.4%", Modifier.weight(1f))
-            StatTile("VELOCITY", "24.5 m/s", Modifier.weight(1f), valueColor = Dojo.Red)
-            StatTile("FATIGUE", "Normal", Modifier.weight(1f))
+            StatTile("ACCURACY",   accuracyLabel,  Modifier.weight(1f))
+            StatTile("VELOCITY",   velocityLabel,  Modifier.weight(1f), valueColor = Dojo.Red)
+            StatTile("FATIGUE",    if (stats.avgFormScore >= 70) "Normal" else "High", Modifier.weight(1f))
         }
 
+        // Energy burned card
         DojoCard {
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
                 MonoLabel("ENERGY BURNED", size = 9)
-                Text("2,350 Cal", color = Dojo.Red, fontFamily = Dojo.Mono, fontSize = 11.sp, fontWeight = FontWeight.Bold)
+                Text("%,d Cal".format(energyTotal), color = Dojo.Red, fontFamily = Dojo.Mono, fontSize = 11.sp, fontWeight = FontWeight.Bold)
             }
             Spacer(Modifier.height(10.dp))
-            BarChart(
-                values = listOf(0.28f, 0.34f, 0.8f, 0.3f, 1f, 0.5f, 0.2f),
-                labels = listOf("M", "T", "W", "T", "F", "S", "S"),
-                highlight = setOf(2, 4)
-            )
+            BarChart(values = barValues, labels = barLabels, highlight = barHighlight)
         }
 
+        // Today's target card
         DojoCard {
             MonoLabel("TODAY'S TARGET:", size = 9)
             Spacer(Modifier.height(4.dp))
-            Text("6,842 / 10,000", color = Dojo.Red, fontFamily = Dojo.Mono, fontSize = 12.sp, fontWeight = FontWeight.Bold)
+            Text("%,d / %,d".format(targetPunches, goalPunches), color = Dojo.Red, fontFamily = Dojo.Mono, fontSize = 12.sp, fontWeight = FontWeight.Bold)
             Spacer(Modifier.height(8.dp))
-            DojoProgressBar(0.68f)
+            DojoProgressBar(targetProgress)
         }
 
+        // Next course banner
         val shape = RoundedCornerShape(14.dp)
         Box(
             modifier = Modifier
@@ -144,78 +182,112 @@ fun ProgresScreen(onNavigate: (String) -> Unit = {}, onNextCourse: () -> Unit = 
     }
 }
 
-/** "Aktivitas" tab. */
+/** "Aktivitas" / Activity tab. */
 @Composable
 fun AktivitasScreen(onNavigate: (String) -> Unit = {}, onStartTraining: () -> Unit = {}) {
-    TabScaffold("aktivitas", onNavigate, "Aktivitas") {
-        val days = listOf("M", "T", "W", "T", "F", "S", "S")
-        val dates = listOf(22, 23, 24, 25, 26, 27, 28)
+    // ── Live data ──
+    val sessions by TrainingRepository.sessions.collectAsState()
+    val stats = remember(sessions) { TrainingRepository.weeklyStats() }
+
+    // Calendar week: today highlighted
+    val cal = java.util.Calendar.getInstance()
+    val todayDow = cal.get(java.util.Calendar.DAY_OF_WEEK) // Sun=1..Sat=7
+    val days  = listOf("M", "T", "W", "T", "F", "S", "S")
+    // Build 7 dates for Mon..Sun of current week
+    val mondayCal = cal.clone() as java.util.Calendar
+    mondayCal.set(java.util.Calendar.DAY_OF_WEEK, java.util.Calendar.MONDAY)
+    val dates = (0..6).map { offset ->
+        val c = mondayCal.clone() as java.util.Calendar
+        c.add(java.util.Calendar.DAY_OF_MONTH, offset)
+        c.get(java.util.Calendar.DAY_OF_MONTH)
+    }
+    val todayIndex = ((todayDow + 5) % 7) // Mon=0..Sun=6
+
+    // Last session stats for activity ring
+    val lastSession = sessions.lastOrNull()
+    val punchCount  = lastSession?.totalStrikes ?: 6_842
+    val goalPunch   = 10_000
+    val ringProgress = (punchCount.toFloat() / goalPunch).coerceIn(0f, 1f)
+    val achieved = ringProgress >= 1f
+
+    // Distance/Impact/Active from last session
+    val distanceKm  = lastSession?.let { "%.1f".format(it.totalStrikes * 0.00077f) } ?: "5.3"
+    val impactKg    = lastSession?.let { it.totalStrikes * 3 / 10 } ?: 486
+    val activeLabel = lastSession?.let {
+        val h = it.durationSeconds / 3600; val m = (it.durationSeconds % 3600) / 60
+        if (h > 0) "${h}h ${"%02d".format(m)}m" else "${m}m"
+    } ?: "1h 08m"
+
+    // Heart rate line chart — varies by formScore (simulate)
+    val hrBase = lastSession?.let { (it.formScore * 0.6f + 50f) / 160f } ?: 0.5f
+    val hrValues = listOf(hrBase, hrBase, hrBase, hrBase * 0.3f, hrBase * 1.8f, hrBase,
+                          hrBase, hrBase, hrBase * 0.3f, hrBase * 1.8f, hrBase, hrBase)
+                        .map { it.coerceIn(0.05f, 1f) }
+    val avgHr = lastSession?.let { (it.formScore * 0.6f + 50f).toInt() } ?: 86
+
+    TabScaffold("aktivitas", onNavigate, "Activity") {
+        // Week strip
         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
             days.forEachIndexed { i, d ->
-                val today = dates[i] == 25
+                val isToday = i == todayIndex
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
                     MonoLabel(d, size = 9)
                     Spacer(Modifier.height(6.dp))
                     Box(
-                        modifier = Modifier
-                            .size(30.dp)
-                            .clip(CircleShape)
-                            .background(if (today) Dojo.Red else Color.Transparent),
+                        modifier = Modifier.size(30.dp).clip(CircleShape)
+                            .background(if (isToday) Dojo.Red else Color.Transparent),
                         contentAlignment = Alignment.Center
                     ) {
-                        MonoLabel("${dates[i]}", size = 10, color = if (today) Color.White else Dojo.Muted, bold = today)
+                        MonoLabel("${dates[i]}", size = 10, color = if (isToday) Color.White else Dojo.Muted, bold = isToday)
                     }
                 }
             }
         }
 
+        // Punch ring card
         DojoCard {
             Column(modifier = Modifier.fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally) {
-                ProgressRing(progress = 0.68f, size = 130.dp, stroke = 10.dp) {
+                ProgressRing(progress = ringProgress, size = 130.dp, stroke = 10.dp) {
                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                        Text("6,842", color = Dojo.Text, fontFamily = Dojo.Mono, fontSize = 20.sp, fontWeight = FontWeight.Bold)
+                        Text("%,d".format(punchCount), color = Dojo.Text, fontFamily = Dojo.Mono, fontSize = 20.sp, fontWeight = FontWeight.Bold)
                         MonoLabel("PUNCHES", size = 8)
                     }
                 }
                 Spacer(Modifier.height(14.dp))
                 val pill = RoundedCornerShape(50)
                 Box(
-                    Modifier
-                        .clip(pill)
-                        .border(1.dp, Dojo.Red, pill)
-                        .padding(horizontal = 14.dp, vertical = 5.dp)
-                ) { MonoLabel("Target Achieved", size = 9, color = Dojo.Red) }
+                    Modifier.clip(pill).border(1.dp, Dojo.Red, pill).padding(horizontal = 14.dp, vertical = 5.dp)
+                ) {
+                    MonoLabel(
+                        if (achieved) "Target Achieved" else "%,d / %,d target".format(punchCount, goalPunch),
+                        size = 9, color = Dojo.Red
+                    )
+                }
             }
         }
 
+        // Activity tiles
         Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-            StatTile("DISTANCE", "5.3 km", Modifier.weight(1f))
-            StatTile("IMPACT", "486 kg", Modifier.weight(1f), valueColor = Dojo.Red)
-            StatTile("ACTIVE", "1h 08m", Modifier.weight(1f))
+            StatTile("DISTANCE", "$distanceKm km",    Modifier.weight(1f))
+            StatTile("IMPACT",   "$impactKg kg",       Modifier.weight(1f), valueColor = Dojo.Red)
+            StatTile("ACTIVE",   activeLabel,           Modifier.weight(1f))
         }
 
+        // Heart rate card
         DojoCard {
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
                 MonoLabel("HEART RATE", size = 9)
-                MonoLabel("86 bpm Avg", size = 9, color = Dojo.Red, bold = true)
+                MonoLabel("$avgHr bpm Avg", size = 9, color = Dojo.Red, bold = true)
             }
             Spacer(Modifier.height(8.dp))
-            LineChart(
-                values = listOf(0.5f, 0.5f, 0.5f, 0.15f, 0.9f, 0.5f, 0.5f, 0.5f, 0.15f, 0.9f, 0.5f, 0.5f),
-                modifier = Modifier.fillMaxWidth().height(60.dp),
-                smooth = false
-            )
+            LineChart(values = hrValues, modifier = Modifier.fillMaxWidth().height(60.dp), smooth = false)
         }
 
+        // Start training button
         val shape = RoundedCornerShape(12.dp)
         Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(52.dp)
-                .clip(shape)
-                .border(1.dp, Dojo.Red, shape)
-                .clickable { onStartTraining() }
-                .padding(horizontal = 16.dp),
+            modifier = Modifier.fillMaxWidth().height(52.dp).clip(shape).border(1.dp, Dojo.Red, shape)
+                .clickable { onStartTraining() }.padding(horizontal = 16.dp),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
@@ -292,15 +364,7 @@ fun ProfilScreen(onNavigate: (String) -> Unit = {}, onLogout: () -> Unit = {}) {
                     ) {
                         Column {
                             Text(
-                                "DOJOPULSE // SYS",
-                                color = AccentCoral,
-                                fontSize = 10.sp,
-                                fontWeight = FontWeight.Black,
-                                letterSpacing = 1.5.sp,
-                                fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace
-                            )
-                            Text(
-                                "Profil Fighter",
+                                "Profile",
                                 color = TextPrim,
                                 fontSize = 20.sp,
                                 fontWeight = FontWeight.ExtraBold
@@ -314,7 +378,7 @@ fun ProfilScreen(onNavigate: (String) -> Unit = {}, onLogout: () -> Unit = {}) {
                                     .border(1.dp, Color(0xFF262630), CircleShape),
                                 contentAlignment = Alignment.Center
                             ) {
-                                Icon(Icons.Default.Notifications, contentDescription = "Notifikasi", tint = TextSec, modifier = Modifier.size(18.dp))
+                                Icon(Icons.Default.Notifications, contentDescription = "Notifications", tint = TextSec, modifier = Modifier.size(18.dp))
                             }
                             // Settings icon
                             Box(
@@ -323,7 +387,7 @@ fun ProfilScreen(onNavigate: (String) -> Unit = {}, onLogout: () -> Unit = {}) {
                                     .border(1.dp, Color(0xFF262630), CircleShape),
                                 contentAlignment = Alignment.Center
                             ) {
-                                Icon(Icons.Default.Settings, contentDescription = "Pengaturan", tint = TextSec, modifier = Modifier.size(18.dp))
+                                Icon(Icons.Default.Settings, contentDescription = "Settings", tint = TextSec, modifier = Modifier.size(18.dp))
                             }
                         }
                     }
@@ -338,31 +402,6 @@ fun ProfilScreen(onNavigate: (String) -> Unit = {}, onLogout: () -> Unit = {}) {
                         border = androidx.compose.foundation.BorderStroke(1.dp, BgCardBorder)
                     ) {
                         Column(modifier = Modifier.padding(16.dp)) {
-                            // ID + VIP badge
-                            Row(
-                                modifier = Modifier.fillMaxWidth(),
-                                horizontalArrangement = Arrangement.SpaceBetween,
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                Text(
-                                    "ID: $shortId",
-                                    color = TextMut,
-                                    fontSize = 10.sp,
-                                    fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace,
-                                    letterSpacing = 1.sp
-                                )
-                                Box(
-                                    modifier = Modifier
-                                        .background(Color(0xFF2B1419), RoundedCornerShape(4.dp))
-                                        .border(1.dp, Color(0xFF522129), RoundedCornerShape(4.dp))
-                                        .padding(horizontal = 8.dp, vertical = 3.dp)
-                                ) {
-                                    Text("ELITE STRIKER VIP", color = AccentCoral, fontSize = 9.sp, fontWeight = FontWeight.ExtraBold, letterSpacing = 1.sp)
-                                }
-                            }
-
-                            Spacer(Modifier.height(14.dp))
-
                             // Avatar + info
                             Row(
                                 verticalAlignment = Alignment.CenterVertically,
@@ -443,7 +482,7 @@ fun ProfilScreen(onNavigate: (String) -> Unit = {}, onLogout: () -> Unit = {}) {
                                     Box(modifier = Modifier.background(AccentRed, RoundedCornerShape(4.dp)).padding(horizontal = 8.dp, vertical = 3.dp)) {
                                         Text("POINTS RESERVE", color = TextPrim, fontSize = 9.sp, fontWeight = FontWeight.Black, letterSpacing = 1.sp)
                                     }
-                                    Text("⚡ REWARD HUB", color = AccentCoral, fontSize = 11.sp, fontWeight = FontWeight.Bold)
+                                    Text("REWARD HUB", color = AccentCoral, fontSize = 11.sp, fontWeight = FontWeight.Bold)
                                 }
                                 Row(
                                     modifier = Modifier
@@ -454,19 +493,19 @@ fun ProfilScreen(onNavigate: (String) -> Unit = {}, onLogout: () -> Unit = {}) {
                                     horizontalArrangement = Arrangement.spacedBy(5.dp)
                                 ) {
                                     Box(modifier = Modifier.size(6.dp).clip(CircleShape).background(AccentCoral))
-                                    Text("TIER: ELITE", color = TextPrim, fontSize = 10.sp, fontWeight = FontWeight.Bold, fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace)
+                                    Text("TIER: ELITE", color = TextPrim, fontSize = 10.sp, fontWeight = FontWeight.Bold, fontFamily = GoogleSans)
                                 }
                             }
                             Spacer(Modifier.height(12.dp))
                             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.Bottom) {
                                 Column {
-                                    Text("Saldo Poin Fighter", color = TextMut, fontSize = 10.sp, letterSpacing = 1.sp)
+                                    Text("Fighter Points Balance", color = TextMut, fontSize = 10.sp, letterSpacing = 1.sp)
                                     Spacer(Modifier.height(4.dp))
                                     Row(verticalAlignment = Alignment.Bottom, horizontalArrangement = Arrangement.spacedBy(5.dp)) {
                                         Text("%,d".format(points), color = TextPrim, fontSize = 32.sp, fontWeight = FontWeight.Black)
                                         Text("DP", color = AccentCoral, fontSize = 13.sp, fontWeight = FontWeight.ExtraBold)
                                     }
-                                    Text("Estimasi: Rp ${"%.0f".format(points * 50.0).reversed().chunked(3).joinToString(".").reversed()} · Diskon 15% All Gear", color = TextSec, fontSize = 11.sp)
+                                    Text("Est: Rp ${"%.0f".format(points * 50.0).reversed().chunked(3).joinToString(".").reversed()} · 15% Off All Gear", color = TextSec, fontSize = 11.sp)
                                 }
                                 Box(
                                     modifier = Modifier
@@ -475,7 +514,7 @@ fun ProfilScreen(onNavigate: (String) -> Unit = {}, onLogout: () -> Unit = {}) {
                                         .padding(horizontal = 12.dp, vertical = 8.dp)
                                 ) {
                                     Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-                                        Text("Tukar Poin", color = AccentCoral, fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                                        Text("Redeem Points", color = AccentCoral, fontSize = 12.sp, fontWeight = FontWeight.Bold)
                                         Icon(Icons.Default.KeyboardArrowDown, contentDescription = null, tint = AccentCoral, modifier = Modifier.size(14.dp))
                                     }
                                 }
@@ -501,20 +540,20 @@ fun ProfilScreen(onNavigate: (String) -> Unit = {}, onLogout: () -> Unit = {}) {
                     Column(modifier = Modifier.padding(horizontal = 20.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
                         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
                             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                                Text("KATALOG REDEEM HADIAH", color = TextPrim, fontSize = 11.sp, fontWeight = FontWeight.Bold, letterSpacing = 1.sp)
+                                Text("REWARDS REDEEM CATALOG", color = TextPrim, fontSize = 11.sp, fontWeight = FontWeight.Bold, letterSpacing = 1.sp)
                                 Box(modifier = Modifier.background(Color(0xFF1D1D26), RoundedCornerShape(50)).border(1.dp, Color(0xFF2B2B38), RoundedCornerShape(50)).padding(horizontal = 8.dp, vertical = 3.dp)) {
-                                    Text("4 Tersedia", color = TextSec, fontSize = 10.sp, fontWeight = FontWeight.Bold)
+                                    Text("4 Available", color = TextSec, fontSize = 10.sp, fontWeight = FontWeight.Bold)
                                 }
                             }
-                            Text("Update Mingguan", color = AccentCoral, fontSize = 11.sp, fontWeight = FontWeight.SemiBold)
+                            Text("Weekly Update", color = AccentCoral, fontSize = 11.sp, fontWeight = FontWeight.SemiBold)
                         }
 
                         data class RItem(val cat: String, val title: String, val sub: String, val cost: Int, val type: String)
                         val catalog = listOf(
-                            RItem("Voucher Belanja Gear", "Potongan Rp 50.000 Store", "Semua item gear di Dojo Store", 1_000, "voucher"),
-                            RItem("Akses Khusus", "Gratis 1 Sesi Sparring VR / AI Ar…", "Analisis MediaPipe Biomekanik", 1_500, "vr"),
-                            RItem("Hardware Reward", "Smart Biometric Handwraps Ma…", "Reticle optik kompatibel sensor HUD", 2_000, "hardware"),
-                            RItem("Official Merch", "Tactical Velcro Patch DojoPulse", "Patch bordir taktikal edisi terbatas", 800, "patch")
+                            RItem("Gear Shopping Voucher", "Rp 50,000 Store Discount", "All gear items in Dojo Store", 1_000, "voucher"),
+                            RItem("Special Access", "Free 1 Session VR Sparring / AI Ar…", "MediaPipe Biomechanics Analysis", 1_500, "vr"),
+                            RItem("Hardware Reward", "Smart Biometric Handwraps Ma…", "Optical reticle compatible with sensor HUD", 2_000, "hardware"),
+                            RItem("Official Merch", "Tactical Velcro Patch DojoPulse", "Limited edition tactical embroidered patch", 800, "patch")
                         )
                         catalog.forEach { item ->
                             val (iconBg, iconBrd, iconTint) = when (item.type) {
@@ -550,9 +589,9 @@ fun ProfilScreen(onNavigate: (String) -> Unit = {}, onLogout: () -> Unit = {}) {
                                         onClick = {
                                             if (canAfford) {
                                                 points -= item.cost
-                                                toastMessage = "Berhasil menukar ${item.cost} DP untuk: ${item.title}"
+                                                toastMessage = "Successfully redeemed ${item.cost} DP for: ${item.title}"
                                             } else {
-                                                toastMessage = "Poin tidak mencukupi (Perlu ${item.cost} DP)"
+                                                toastMessage = "Insufficient points (Need ${item.cost} DP)"
                                             }
                                         },
                                         contentPadding = PaddingValues(horizontal = 12.dp, vertical = 4.dp),
@@ -573,15 +612,14 @@ fun ProfilScreen(onNavigate: (String) -> Unit = {}, onLogout: () -> Unit = {}) {
                 item {
                     Column(modifier = Modifier.padding(horizontal = 20.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
                         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
-                            Text("PROMO & VOUCHER SAYA", color = TextPrim, fontSize = 11.sp, fontWeight = FontWeight.Bold, letterSpacing = 1.sp)
-                            Text("[LOG_SYNC: ON]", color = TextMut, fontSize = 10.sp, fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace)
+                            Text("MY PROMOS & VOUCHERS", color = TextPrim, fontSize = 11.sp, fontWeight = FontWeight.Bold, letterSpacing = 1.sp)
                         }
                         // Tab pills
                         Row(
                             modifier = Modifier.fillMaxWidth().background(BgCard, RoundedCornerShape(10.dp)).border(1.dp, BgCardBorder, RoundedCornerShape(10.dp)).padding(4.dp),
                             horizontalArrangement = Arrangement.spacedBy(4.dp)
                         ) {
-                            listOf(true to "Voucher Aktif (2)", false to "Riwayat Terpakai (1)").forEach { (isAktif, label) ->
+                            listOf(true to "Active Vouchers (2)", false to "Used History (1)").forEach { (isAktif, label) ->
                                 Box(
                                     modifier = Modifier.weight(1f)
                                         .background(if (voucherTabAktif == isAktif) AccentRed else Color.Transparent, RoundedCornerShape(8.dp))
@@ -599,19 +637,19 @@ fun ProfilScreen(onNavigate: (String) -> Unit = {}, onLogout: () -> Unit = {}) {
                             Column(modifier = Modifier.fillMaxWidth().background(BgCard, RoundedCornerShape(12.dp)).border(1.dp, BgCardBorder, RoundedCornerShape(12.dp)).padding(12.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                                 Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
                                     Box(modifier = Modifier.background(Color(0xFF291419), RoundedCornerShape(4.dp)).border(1.dp, Color(0xFF4B2029), RoundedCornerShape(4.dp)).padding(horizontal = 8.dp, vertical = 3.dp)) {
-                                        Text("DOJOCHAMP", color = AccentCoral, fontSize = 11.sp, fontWeight = FontWeight.Bold, fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace)
+                                        Text("DOJOCHAMP", color = AccentCoral, fontSize = 11.sp, fontWeight = FontWeight.Bold, fontFamily = GoogleSans)
                                     }
                                     Box(modifier = Modifier.background(Color(0x1A34D399), RoundedCornerShape(4.dp)).border(1.dp, Color(0xFF166534), RoundedCornerShape(4.dp)).padding(horizontal = 8.dp, vertical = 3.dp)) {
-                                        Text("Aktif", color = Emerald, fontSize = 10.sp, fontWeight = FontWeight.Bold)
+                                        Text("Active", color = Emerald, fontSize = 10.sp, fontWeight = FontWeight.Bold)
                                     }
                                 }
-                                Text("Diskon 30% Matras & Wraps", color = TextPrim, fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                                Text("30% Off Mats & Wraps", color = TextPrim, fontSize = 12.sp, fontWeight = FontWeight.Bold)
                                 androidx.compose.material3.HorizontalDivider(color = Color(0xFF1E1E28), thickness = 1.dp)
                                 Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
-                                    Text("Berlaku s.d. 30 Nov 2026", color = TextMut, fontSize = 11.sp)
-                                    Row(modifier = Modifier.clickable { toastMessage = "Kode DOJOCHAMP disalin!" }, verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                                    Text("Valid until Nov 30, 2026", color = TextMut, fontSize = 11.sp)
+                                    Row(modifier = Modifier.clickable { toastMessage = "Code DOJOCHAMP copied!" }, verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
                                         Icon(Icons.Default.ContentCopy, contentDescription = null, tint = AccentCoral, modifier = Modifier.size(14.dp))
-                                        Text("Salin Kode", color = AccentCoral, fontSize = 11.sp, fontWeight = FontWeight.SemiBold)
+                                        Text("Copy Code", color = AccentCoral, fontSize = 11.sp, fontWeight = FontWeight.SemiBold)
                                     }
                                 }
                             }
@@ -619,19 +657,19 @@ fun ProfilScreen(onNavigate: (String) -> Unit = {}, onLogout: () -> Unit = {}) {
                             Column(modifier = Modifier.fillMaxWidth().background(BgCard, RoundedCornerShape(12.dp)).border(1.dp, BgCardBorder, RoundedCornerShape(12.dp)).padding(12.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                                 Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
                                     Box(modifier = Modifier.background(Color(0xFF291419), RoundedCornerShape(4.dp)).border(1.dp, Color(0xFF4B2029), RoundedCornerShape(4.dp)).padding(horizontal = 8.dp, vertical = 3.dp)) {
-                                        Text("GEARCASH20", color = AccentCoral, fontSize = 11.sp, fontWeight = FontWeight.Bold, fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace)
+                                        Text("GEARCASH20", color = AccentCoral, fontSize = 11.sp, fontWeight = FontWeight.Bold, fontFamily = GoogleSans)
                                     }
                                     Box(modifier = Modifier.background(Color(0x1A34D399), RoundedCornerShape(4.dp)).border(1.dp, Color(0xFF166534), RoundedCornerShape(4.dp)).padding(horizontal = 8.dp, vertical = 3.dp)) {
-                                        Text("Aktif", color = Emerald, fontSize = 10.sp, fontWeight = FontWeight.Bold)
+                                        Text("Active", color = Emerald, fontSize = 10.sp, fontWeight = FontWeight.Bold)
                                     }
                                 }
                                 Text("Cashback 20% Apparel & Fightwear", color = TextPrim, fontSize = 12.sp, fontWeight = FontWeight.Bold)
                                 androidx.compose.material3.HorizontalDivider(color = Color(0xFF1E1E28), thickness = 1.dp)
                                 Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
-                                    Text("Min. belanja Rp 250.000", color = TextMut, fontSize = 11.sp)
-                                    Row(modifier = Modifier.clickable { toastMessage = "Kode GEARCASH20 disalin!" }, verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                                    Text("Min. spend Rp 250,000", color = TextMut, fontSize = 11.sp)
+                                    Row(modifier = Modifier.clickable { toastMessage = "Code GEARCASH20 copied!" }, verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
                                         Icon(Icons.Default.ContentCopy, contentDescription = null, tint = AccentCoral, modifier = Modifier.size(14.dp))
-                                        Text("Salin Kode", color = AccentCoral, fontSize = 11.sp, fontWeight = FontWeight.SemiBold)
+                                        Text("Copy Code", color = AccentCoral, fontSize = 11.sp, fontWeight = FontWeight.SemiBold)
                                     }
                                 }
                             }
@@ -640,17 +678,16 @@ fun ProfilScreen(onNavigate: (String) -> Unit = {}, onLogout: () -> Unit = {}) {
                             Column(modifier = Modifier.fillMaxWidth().background(BgCard.copy(alpha = 0.6f), RoundedCornerShape(12.dp)).border(1.dp, BgCardBorder, RoundedCornerShape(12.dp)).padding(12.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                                 Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
                                     Box(modifier = Modifier.background(Color(0xFF1C1C24), RoundedCornerShape(4.dp)).padding(horizontal = 8.dp, vertical = 3.dp)) {
-                                        Text("HBAG-OCT-FREE", color = TextMut, fontSize = 11.sp, fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace)
+                                        Text("HBAG-OCT-FREE", color = TextMut, fontSize = 11.sp, fontFamily = GoogleSans)
                                     }
                                     Box(modifier = Modifier.background(Color(0xFF27272A), RoundedCornerShape(4.dp)).padding(horizontal = 8.dp, vertical = 3.dp)) {
-                                        Text("Sudah Digunakan", color = TextMut, fontSize = 10.sp)
+                                        Text("Already Used", color = TextMut, fontSize = 10.sp)
                                     }
                                 }
-                                Text("Gratis 1 Jam Sesi Heavy Bag Zona B", color = TextSec, fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                                Text("Free 1 Hour Heavy Bag Session Zone B", color = TextSec, fontSize = 12.sp, fontWeight = FontWeight.Bold)
                                 androidx.compose.material3.HorizontalDivider(color = Color(0xFF1E1E28), thickness = 1.dp)
                                 Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                                    Text("Ditukar 02 Okt 2026", color = TextMut, fontSize = 11.sp)
-                                    Text("STATION #02", color = TextMut, fontSize = 10.sp, fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace)
+                                    Text("Redeemed Oct 02, 2026", color = TextMut, fontSize = 11.sp)
                                 }
                             }
                         }
@@ -661,12 +698,12 @@ fun ProfilScreen(onNavigate: (String) -> Unit = {}, onLogout: () -> Unit = {}) {
                 // ── 5. Settings ──────────────────────────────────────────
                 item {
                     Column(modifier = Modifier.padding(horizontal = 20.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                        Text("PENGATURAN AKUN & SENSOR", color = TextPrim, fontSize = 11.sp, fontWeight = FontWeight.Bold, letterSpacing = 1.sp)
+                        Text("ACCOUNT & SENSOR SETTINGS", color = TextPrim, fontSize = 11.sp, fontWeight = FontWeight.Bold, letterSpacing = 1.sp)
                         data class SRow(val icon: androidx.compose.ui.graphics.vector.ImageVector, val iconBg: Color, val iconBrd: Color, val iconTint: Color, val title: String, val sub: String, val badge: String? = null)
                         listOf(
-                            SRow(Icons.Default.Wifi,  Color(0xFF21151B), Color(0xFF3E1D27), AccentCoral, "Hubungkan Sensor Wearable", "MediaPipe Ring Sensor v2 aktif", "Terhubung 94%"),
-                            SRow(Icons.Default.Lock,  Color(0xFF171B26), Color(0xFF1F2D42), Sky,         "Ganti Kata Sandi & Biometrik",  "Update kredensial fighter HUD"),
-                            SRow(Icons.Default.Help,  Color(0xFF241D14), Color(0xFF3E2E18), Amber,       "FAQ & Bantuan Dojo",            "Panduan poin, klaim garansi & instruksi")
+                            SRow(Icons.Default.Wifi,  Color(0xFF21151B), Color(0xFF3E1D27), AccentCoral, "Connect Wearable Sensor", "MediaPipe Ring Sensor v2 active", "Connected 94%"),
+                            SRow(Icons.Default.Lock,  Color(0xFF171B26), Color(0xFF1F2D42), Sky,         "Change Password & Biometrics",  "Update fighter HUD credentials"),
+                            SRow(Icons.Default.Help,  Color(0xFF241D14), Color(0xFF3E2E18), Amber,       "FAQ & Dojo Support",            "Points guide, warranty claims & manuals")
                         ).forEach { s ->
                             Row(
                                 modifier = Modifier.fillMaxWidth().background(BgCard, RoundedCornerShape(12.dp)).border(1.dp, Color(0xFF202028), RoundedCornerShape(12.dp)).clickable { }.padding(12.dp),
@@ -715,13 +752,13 @@ fun ProfilScreen(onNavigate: (String) -> Unit = {}, onLogout: () -> Unit = {}) {
                         ) {
                             Icon(Icons.Default.Logout, contentDescription = null, tint = AccentCoral, modifier = Modifier.size(16.dp))
                             Spacer(Modifier.width(8.dp))
-                            Text("LOGOUT FIGHTER HUD", color = AccentCoral, fontSize = 12.sp, fontWeight = FontWeight.Bold, letterSpacing = 1.sp)
+                            Text("LOG OUT", color = AccentCoral, fontSize = 12.sp, fontWeight = FontWeight.Bold, letterSpacing = 1.sp)
                         }
                         Text(
-                            "DOJOPULSE FIRMWARE V4.1.2 // TEL-ENGINE ACTIVE",
+                            "DojoPulse v4.1.2",
                             color = TextMut,
                             fontSize = 10.sp,
-                            fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace
+                            fontFamily = GoogleSans
                         )
                     }
                     Spacer(Modifier.height(8.dp))
@@ -745,7 +782,7 @@ fun ProfilScreen(onNavigate: (String) -> Unit = {}, onLogout: () -> Unit = {}) {
                     Spacer(Modifier.width(10.dp))
                     Text(msg, color = TextPrim, fontSize = 12.sp, modifier = Modifier.weight(1f))
                     androidx.compose.material3.TextButton(onClick = { toastMessage = null }) {
-                        Text("TUTUP", color = AccentCoral, fontSize = 11.sp, fontWeight = FontWeight.Bold)
+                        Text("CLOSE", color = AccentCoral, fontSize = 11.sp, fontWeight = FontWeight.Bold)
                     }
                 }
             }

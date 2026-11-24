@@ -24,7 +24,7 @@ class AIPoseMovementClassifier(
 ) {
     companion object {
         const val WINDOW_SIZE = 16
-        const val FEATURE_DIM = 62
+        const val FEATURE_DIM = 68
 
         private val KEY_LANDMARKS = intArrayOf(
             PoseLandmark.NOSE,            // 0
@@ -46,6 +46,9 @@ class AIPoseMovementClassifier(
     private var interpreter: Interpreter? = null
     private val labels = mutableListOf<String>()
     private val sequenceBuffer = ArrayDeque<FloatArray>(WINDOW_SIZE)
+    private var hasPrevLandmarks = false
+    private val prevWristL = FloatArray(3)
+    private val prevWristR = FloatArray(3)
 
     init {
         try {
@@ -83,6 +86,45 @@ class AIPoseMovementClassifier(
     }
 
     fun processPose(pose: Pose, imageWidth: Int = 0, imageHeight: Int = 0): MovementPrediction? {
+        val lShoulder = pose.getPoseLandmark(PoseLandmark.LEFT_SHOULDER)
+        val rShoulder = pose.getPoseLandmark(PoseLandmark.RIGHT_SHOULDER)
+        val lWrist = pose.getPoseLandmark(PoseLandmark.LEFT_WRIST)
+        val rWrist = pose.getPoseLandmark(PoseLandmark.RIGHT_WRIST)
+        val lWristLikelihood = lWrist?.inFrameLikelihood ?: 0f
+        val rWristLikelihood = rWrist?.inFrameLikelihood ?: 0f
+
+        val heightF = if (imageHeight > 0) imageHeight.toFloat() else 1f
+
+        // Check if user is framed too close (bust/selfie view with shoulders filling bottom of screen)
+        val avgShoulderY = if (lShoulder != null && rShoulder != null) {
+            (lShoulder.position.y + rShoulder.position.y) / (2f * heightF)
+        } else if (lShoulder != null) {
+            lShoulder.position.y / heightF
+        } else if (rShoulder != null) {
+            rShoulder.position.y / heightF
+        } else {
+            1f
+        }
+
+        val isFramedTooClose = avgShoulderY > 0.68f
+
+        // Check if hands are present and elevated (not resting in lap / off-screen)
+        val isLeftWristInFrame = lWrist != null && lWristLikelihood >= 0.40f && lWrist.position.y < (heightF * 0.90f)
+        val isRightWristInFrame = rWrist != null && rWristLikelihood >= 0.40f && rWrist.position.y < (heightF * 0.90f)
+
+        // If framed too close or neither hand is actively in boxing view:
+        // athlete is not in boxing stance, output Idle with high confidence
+        if (isFramedTooClose || (!isLeftWristInFrame && !isRightWristInFrame)) {
+            val defaultProbMap = labels.associateWith { label ->
+                if (label.equals("Idle", ignoreCase = true) || label.contains("Idle")) 0.99f else 0.001f
+            }
+            return MovementPrediction(
+                label = "Idle",
+                confidence = 0.99f,
+                allProbabilities = defaultProbMap
+            )
+        }
+
         val features = extractFeatures(pose, imageWidth, imageHeight)
         if (sequenceBuffer.size >= WINDOW_SIZE) {
             sequenceBuffer.removeFirst()
@@ -219,6 +261,34 @@ class AIPoseMovementClassifier(
         features[cursor++] = (lW[1] - rW[1]) / scale
         features[cursor++] = (lW[2] - rW[2]) / scale
 
+        // 6. Instantaneous wrist velocities (normalized by scale)
+        if (hasPrevLandmarks) {
+            features[cursor++] = (lW[0] - prevWristL[0]) / scale
+            features[cursor++] = (lW[1] - prevWristL[1]) / scale
+            features[cursor++] = (lW[2] - prevWristL[2]) / scale
+
+            features[cursor++] = (rW[0] - prevWristR[0]) / scale
+            features[cursor++] = (rW[1] - prevWristR[1]) / scale
+            features[cursor++] = (rW[2] - prevWristR[2]) / scale
+        } else {
+            features[cursor++] = 0f
+            features[cursor++] = 0f
+            features[cursor++] = 0f
+
+            features[cursor++] = 0f
+            features[cursor++] = 0f
+            features[cursor++] = 0f
+        }
+
+        prevWristL[0] = lW[0]
+        prevWristL[1] = lW[1]
+        prevWristL[2] = lW[2]
+
+        prevWristR[0] = rW[0]
+        prevWristR[1] = rW[1]
+        prevWristR[2] = rW[2]
+        hasPrevLandmarks = true
+
         return features
     }
 
@@ -242,6 +312,7 @@ class AIPoseMovementClassifier(
 
     fun reset() {
         sequenceBuffer.clear()
+        hasPrevLandmarks = false
     }
 
     fun close() {
