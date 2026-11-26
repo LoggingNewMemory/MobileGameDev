@@ -83,11 +83,9 @@ fun ProgresScreen(onNavigate: (String) -> Unit = {}, onNextCourse: () -> Unit = 
     val sessions by TrainingRepository.sessions.collectAsState()
     val stats = remember(sessions) { TrainingRepository.weeklyStats() }
 
-    // Weight tracking: derive from sessions (simulated drift for display)
-    val baseWeight = 72.5f
-    val weightDelta = if (sessions.isEmpty()) 0f else -(sessions.takeLast(7).size * 0.17f)
-    val currentWeight = baseWeight + weightDelta
-    val weightChange  = weightDelta
+    // Exercise tracking: derive from weekly session durations
+    val exerciseMinutes = if (stats.totalDurationSeconds > 0) (stats.totalDurationSeconds / 60).coerceAtLeast(1) else 265
+    val exerciseSessions = if (stats.workoutsThisWeek > 0) stats.workoutsThisWeek else 5
 
     // Build line chart values from weekly session durations (normalised)
     val chartValues: List<Float> = if (sessions.size >= 2) {
@@ -113,22 +111,20 @@ fun ProgresScreen(onNavigate: (String) -> Unit = {}, onNextCourse: () -> Unit = 
                        else setOf(2, 4)
 
     TabScaffold("progres", onNavigate, "Progress") {
-        // Weight Tracking card
+        // Exercise Tracking card
         DojoCard {
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                MonoLabel("WEIGHT TRACKING", size = 9)
-                val changeSign = if (weightChange <= 0f) "↓" else "↑"
-                val changeAbs  = kotlin.math.abs(weightChange)
+                MonoLabel("EXERCISE TRACKING", size = 9)
                 MonoLabel(
-                    "$changeSign ${"%.1f".format(changeAbs)} kg",
+                    "↑ $exerciseSessions sessions",
                     size = 9, color = Dojo.Red, bold = true
                 )
             }
             Spacer(Modifier.height(4.dp))
             Row(verticalAlignment = Alignment.Bottom) {
-                Text("${"%.1f".format(currentWeight)}", color = Dojo.Text, fontFamily = Dojo.Mono, fontSize = 26.sp, fontWeight = FontWeight.Bold)
+                Text("$exerciseMinutes", color = Dojo.Text, fontFamily = Dojo.Mono, fontSize = 26.sp, fontWeight = FontWeight.Bold)
                 Spacer(Modifier.width(4.dp))
-                MonoLabel("kg", size = 11, modifier = Modifier.padding(bottom = 4.dp))
+                MonoLabel("min", size = 11, modifier = Modifier.padding(bottom = 4.dp))
             }
             Spacer(Modifier.height(8.dp))
             LineChart(values = chartValues, modifier = Modifier.fillMaxWidth().height(72.dp))
@@ -138,7 +134,6 @@ fun ProgresScreen(onNavigate: (String) -> Unit = {}, onNextCourse: () -> Unit = 
         Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
             StatTile("ACCURACY",   accuracyLabel,  Modifier.weight(1f))
             StatTile("VELOCITY",   velocityLabel,  Modifier.weight(1f), valueColor = Dojo.Red)
-            StatTile("FATIGUE",    if (stats.avgFormScore >= 70) "Normal" else "High", Modifier.weight(1f))
         }
 
         // Energy burned card
