@@ -25,8 +25,8 @@ object PresetExercises {
     /**
      * Primary Dummy Exercise Drill requested by user:
      * - Do 20 Uppercuts
-     * - Do 15 Left Jabs
-     * - Do 10 Left Jabs
+     * - Do 15 Jabs
+     * - Do 10 Jabs
      * - Do 15 Left Strikes
      */
     val DRILL_PRECISION_COMBO = TrainingExerciseRoutine(
@@ -47,21 +47,21 @@ object PresetExercises {
             ),
             ExerciseStep(
                 id = "step_2_left_jab",
-                title = "Do 15 Left Jabs",
+                title = "Do 15 Jabs",
                 targetCount = 15,
-                targetPunchName = "Left Jabs",
+                targetPunchName = "Jabs",
                 instruction = "Snap lead arm straight forward and recover quickly to guard position.",
                 badgeColor = Color(0xFF64B5F6),
-                matches = { it == PunchType.LEFT_JAB }
+                matches = { it == PunchType.JAB }
             ),
             ExerciseStep(
                 id = "step_3_rapid_jab",
-                title = "Do 10 Left Jabs",
+                title = "Do 10 Jabs",
                 targetCount = 10,
                 targetPunchName = "Rapid Jabs",
                 instruction = "Burst speed: 10 rapid jabs in succession with tight guard.",
                 badgeColor = Color(0xFF81C784),
-                matches = { it == PunchType.LEFT_JAB }
+                matches = { it == PunchType.JAB }
             ),
             ExerciseStep(
                 id = "step_4_strikes",
@@ -70,7 +70,7 @@ object PresetExercises {
                 targetPunchName = "Left Strikes",
                 instruction = "Straight power: drive left hand straight with full torso rotation.",
                 badgeColor = Color(0xFFFFB74D),
-                matches = { it == PunchType.LEFT_JAB }
+                matches = { it == PunchType.JAB }
             )
         )
     )

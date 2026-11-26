@@ -32,14 +32,14 @@ class PunchClassifier(
 
     private val punchCounts = mutableMapOf(
         PunchType.LEFT_HOOK to 0,
-        PunchType.LEFT_JAB to 0,
+        PunchType.JAB to 0,
         PunchType.LEFT_UPPERCUT to 0,
         PunchType.RIGHT_HOOK to 0,
         PunchType.RIGHT_UPPERCUT to 0,
         PunchType.STRIKE to 0
     )
 
-    private var lastDetectedPunch = PunchType.LEFT_JAB
+    private var lastDetectedPunch = PunchType.JAB
     private var currentPunch = PunchType.IDLE
     private var currentConfidence = 0f
     private var feedback = "Stance ready. Guard up!"
@@ -152,7 +152,7 @@ class PunchClassifier(
         // Lead-hand straight = jab, rear-hand straight = cross ("Strike").
         StrikeKind.STRAIGHT -> {
             val isLead = (arm == Arm.LEFT) == (stance == FighterStance.ORTHODOX)
-            if (isLead) PunchType.LEFT_JAB else PunchType.STRIKE
+            if (isLead) PunchType.JAB else PunchType.STRIKE
         }
     }
 

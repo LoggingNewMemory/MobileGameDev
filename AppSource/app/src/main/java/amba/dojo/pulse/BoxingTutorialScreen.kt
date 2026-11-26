@@ -262,7 +262,7 @@ fun SixPunchesSection(
     Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
         PunchTutorialCard(
             number = "1",
-            title = "LEFT JAB",
+            title = "JAB",
             subtitle = "Rapid straight lead-hand punch",
             targetAngle = "140° - 165°",
             targetRecovery = "< 0.20s",
@@ -470,7 +470,7 @@ fun AiCoachHudSection(
 
                 HudGuideItem(
                     title = "PUNCH ANGLE (Elbow Extension)",
-                    desc = "Measures arm extension on Left Jab / Strike. Target: 140° - 165°. Incomplete extension reduces form score.",
+                    desc = "Measures arm extension on Jab / Strike. Target: 140° - 165°. Incomplete extension reduces form score.",
                     accentPink = accentPink,
                     textPrimary = textPrimary,
                     textSecondary = textSecondary
