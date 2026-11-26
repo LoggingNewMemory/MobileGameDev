@@ -692,9 +692,7 @@ fun ProfilScreen(onNavigate: (String) -> Unit = {}, onLogout: () -> Unit = {}) {
                         Text("ACCOUNT & SENSOR SETTINGS", color = TextPrim, fontSize = 11.sp, fontWeight = FontWeight.Bold, letterSpacing = 1.sp)
                         data class SRow(val icon: androidx.compose.ui.graphics.vector.ImageVector, val iconBg: Color, val iconBrd: Color, val iconTint: Color, val title: String, val sub: String, val badge: String? = null)
                         listOf(
-                            SRow(Icons.Default.Wifi,  Color(0xFF21151B), Color(0xFF3E1D27), AccentCoral, "Connect Wearable Sensor", "MediaPipe Ring Sensor v2 active", "Connected 94%"),
-                            SRow(Icons.Default.Lock,  Color(0xFF171B26), Color(0xFF1F2D42), Sky,         "Change Password & Biometrics",  "Update fighter HUD credentials"),
-                            SRow(Icons.Default.Help,  Color(0xFF241D14), Color(0xFF3E2E18), Amber,       "FAQ & Dojo Support",            "Points guide, warranty claims & manuals")
+                            SRow(Icons.Default.Lock,  Color(0xFF171B26), Color(0xFF1F2D42), Sky,         "Change Password & Biometrics",  "Update fighter HUD credentials")
                         ).forEach { s ->
                             Row(
                                 modifier = Modifier.fillMaxWidth().background(BgCard, RoundedCornerShape(12.dp)).border(1.dp, Color(0xFF202028), RoundedCornerShape(12.dp)).clickable { }.padding(12.dp),
@@ -745,12 +743,6 @@ fun ProfilScreen(onNavigate: (String) -> Unit = {}, onLogout: () -> Unit = {}) {
                             Spacer(Modifier.width(8.dp))
                             Text("LOG OUT", color = AccentCoral, fontSize = 12.sp, fontWeight = FontWeight.Bold, letterSpacing = 1.sp)
                         }
-                        Text(
-                            "DojoPulse v4.1.2",
-                            color = TextMut,
-                            fontSize = 10.sp,
-                            fontFamily = GoogleSans
-                        )
                     }
                     Spacer(Modifier.height(8.dp))
                 }

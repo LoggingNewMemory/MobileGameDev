@@ -1134,29 +1134,12 @@ private fun PfSettingsSection() {
             softWrap = false
         )
         PfSettingsRow(
-            Icons.Default.Wifi,
-            Color(0xFF21151B),
-            Color(0xFF3E1D27),
-            AccentCoral,
-            "Connect Wearable Sensor",
-            "MediaPipe Ring Sensor v2 active",
-            badge = "Connected 94%"
-        )
-        PfSettingsRow(
             Icons.Default.Lock,
             Color(0xFF171B26),
             Color(0xFF1F2D42),
             SkyBlue,
             "Change Password & Biometrics",
             "Update password and account security"
-        )
-        PfSettingsRow(
-            Icons.Default.HelpOutline,
-            Color(0xFF241D14),
-            Color(0xFF3E2E18),
-            AmberYellow,
-            "FAQ & Dojo Support",
-            "Points guide, warranty claims & manuals"
         )
     }
 }
@@ -1269,14 +1252,6 @@ private fun PfLogoutSection(onLogout: () -> Unit) {
                 softWrap = false
             )
         }
-        Text(
-            "DojoPulse v4.1.2",
-            color = TextDim,
-            fontSize = 10.sp,
-            fontFamily = GoogleSans,
-            maxLines = 1,
-            softWrap = false
-        )
     }
 }
 
