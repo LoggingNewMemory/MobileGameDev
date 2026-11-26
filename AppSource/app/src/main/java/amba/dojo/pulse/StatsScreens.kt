@@ -96,8 +96,8 @@ fun ProgresScreen(onNavigate: (String) -> Unit = {}, onNextCourse: () -> Unit = 
         listOf(0.72f, 0.66f, 0.7f, 0.58f, 0.52f, 0.46f, 0.4f, 0.3f)
     }
 
-    val accuracyLabel = if (stats.avgFormScore > 0) "${stats.avgFormScore}.0%" else "88.4%"
-    val velocityLabel = if (stats.peakVelocityMs > 0f) "${"%.1f".format(stats.peakVelocityMs)} m/s" else "24.5 m/s"
+    val formScoreLabel = if (stats.avgFormScore > 0) "${stats.avgFormScore}%" else "88%"
+    val strikesLabel   = if (stats.totalStrikes > 0) "%,d".format(stats.totalStrikes) else "1,240"
     val energyTotal   = if (stats.totalStrikes > 0) stats.totalStrikes * 3 else 2_350  // ~3 Cal / punch
     val targetPunches = if (sessions.isNotEmpty()) sessions.last().totalStrikes else 6_842
     val goalPunches   = 10_000
@@ -132,8 +132,8 @@ fun ProgresScreen(onNavigate: (String) -> Unit = {}, onNextCourse: () -> Unit = 
 
         // Stats tiles
         Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-            StatTile("ACCURACY",   accuracyLabel,  Modifier.weight(1f))
-            StatTile("VELOCITY",   velocityLabel,  Modifier.weight(1f), valueColor = Dojo.Red)
+            StatTile("FORM SCORE", formScoreLabel, Modifier.weight(1f))
+            StatTile("STRIKES",    strikesLabel,   Modifier.weight(1f), valueColor = Dojo.Red)
         }
 
         // Energy burned card
