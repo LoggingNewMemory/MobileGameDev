@@ -341,7 +341,6 @@ private fun PfTopBar() {
             softWrap = false
         )
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            PfNavIcon(Icons.Default.Notifications, "Notifications")
             PfNavIcon(Icons.Default.Settings, "Settings")
         }
     }

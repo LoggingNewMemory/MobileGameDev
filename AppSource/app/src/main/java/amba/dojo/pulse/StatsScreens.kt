@@ -371,15 +371,6 @@ fun ProfilScreen(onNavigate: (String) -> Unit = {}, onLogout: () -> Unit = {}) {
                             )
                         }
                         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                            // Notification icon
-                            Box(
-                                modifier = Modifier.size(36.dp).clip(CircleShape)
-                                    .background(Color(0xFF16161C))
-                                    .border(1.dp, Color(0xFF262630), CircleShape),
-                                contentAlignment = Alignment.Center
-                            ) {
-                                Icon(Icons.Default.Notifications, contentDescription = "Notifications", tint = TextSec, modifier = Modifier.size(18.dp))
-                            }
                             // Settings icon
                             Box(
                                 modifier = Modifier.size(36.dp).clip(CircleShape)

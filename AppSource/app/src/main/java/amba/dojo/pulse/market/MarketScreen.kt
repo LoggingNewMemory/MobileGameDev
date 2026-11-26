@@ -12,7 +12,6 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AddShoppingCart
 import androidx.compose.material.icons.filled.LocalShipping
-import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Shield
 import androidx.compose.material.icons.filled.ShoppingCart
@@ -116,7 +115,6 @@ fun TopSection() {
         }
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             IconBadge(Icons.Default.Search, size = 36.dp)
-            IconBadge(Icons.Default.Notifications, size = 36.dp)
         }
     }
 }

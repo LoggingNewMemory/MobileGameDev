@@ -361,7 +361,6 @@ fun ArenaDashboardContent(
                         Text(text = "ARENAS", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = OnSurface, letterSpacing = (-0.5).sp)
                     }
                     Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-                        IconButton(onClick = { }) { Icon(imageVector = Icons.Default.Notifications, contentDescription = "Notifications", tint = OnSurfaceVar) }
                         Box(modifier = Modifier.size(32.dp).background(Primary, shape = CircleShape), contentAlignment = Alignment.Center) {
                             Icon(imageVector = Icons.Default.Person, contentDescription = "Profile", tint = Color(0xFF4f2227), modifier = Modifier.size(18.dp))
                         }

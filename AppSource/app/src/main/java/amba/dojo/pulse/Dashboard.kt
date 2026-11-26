@@ -8,7 +8,6 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -106,7 +105,6 @@ private fun HomeHeader(name: String) {
             Spacer(Modifier.height(2.dp))
             Text("Ready to crush your targets today?", color = Dojo.Muted, fontSize = 12.sp)
         }
-        IconBadge(Icons.Default.Notifications)
     }
 }
 
