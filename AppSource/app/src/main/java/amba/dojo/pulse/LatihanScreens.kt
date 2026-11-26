@@ -31,6 +31,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
@@ -70,6 +71,7 @@ fun LatihanScreen(
     onOpenArenas: () -> Unit = {}
 ) {
     var query by remember { mutableStateOf("") }
+    var isSearchFocused by remember { mutableStateOf(false) }
     var category by remember { mutableStateOf("All") }
     val categories = listOf("All") + Disciplines.map { it.category }
 
@@ -102,17 +104,27 @@ fun LatihanScreen(
                     .padding(horizontal = 12.dp, vertical = 11.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Box(modifier = Modifier.weight(1f)) {
-                    if (query.isEmpty()) MonoLabel("Search Combos...", size = 11)
-                    BasicTextField(
-                        value = query,
-                        onValueChange = { query = it },
-                        singleLine = true,
-                        textStyle = TextStyle(color = Dojo.Text, fontSize = 12.sp, fontFamily = Dojo.Mono),
-                        cursorBrush = SolidColor(Dojo.Red),
-                        modifier = Modifier.fillMaxWidth()
-                    )
-                }
+                BasicTextField(
+                    value = query,
+                    onValueChange = { query = it },
+                    singleLine = true,
+                    textStyle = TextStyle(color = Dojo.Text, fontSize = 12.sp, fontFamily = Dojo.Mono),
+                    cursorBrush = SolidColor(Dojo.Red),
+                    modifier = Modifier
+                        .weight(1f)
+                        .onFocusChanged { isSearchFocused = it.isFocused },
+                    decorationBox = { innerTextField ->
+                        Box(
+                            modifier = Modifier.fillMaxWidth(),
+                            contentAlignment = Alignment.CenterStart
+                        ) {
+                            if (query.isEmpty() && !isSearchFocused) {
+                                MonoLabel("Search Combos...", size = 12)
+                            }
+                            innerTextField()
+                        }
+                    }
+                )
                 Icon(Icons.Default.Search, contentDescription = null, tint = Dojo.Muted, modifier = Modifier.size(16.dp))
             }
 
