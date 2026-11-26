@@ -79,6 +79,7 @@ data class StrikeDetectorConfig(
 
     // --- smoothing (One-Euro) ---
     val filterMinCutoffHz: Float = 2.5f,
+    val zFilterMinCutoffHz: Float = 2.5f,
     val filterBeta: Float = 0.5f,
 
     // --- stroke segmentation ---
@@ -177,7 +178,9 @@ class StrikeDetector(private val cfg: StrikeDetectorConfig = StrikeDetectorConfi
         var strokeEndT = 0L
         var lastStrokeDir = Vec3(0f, 0f, 0f)
         var lowSpeedFrames = 0
-        val fx = OneEuro(); val fy = OneEuro(); val fz = OneEuro()
+        val fx = OneEuro(cfg.filterMinCutoffHz)
+        val fy = OneEuro(cfg.filterMinCutoffHz)
+        val fz = OneEuro(cfg.zFilterMinCutoffHz)
 
         fun lose() {
             tracked = false
@@ -470,11 +473,15 @@ class StrikeDetector(private val cfg: StrikeDetectorConfig = StrikeDetectorConfi
         )
     }
 
-    private fun isBallistic(m: StrokeMetrics): Boolean =
-        m.peakSpeed >= cfg.minPeakSpeed &&
+    private fun isBallistic(m: StrokeMetrics): Boolean {
+        val dist2d = dist2(m.lateral, m.netVertical)
+        val pureDepthJitter = dist2d < 0.10f && m.forwardZ < 0.25f
+        return !pureDepthJitter &&
+                m.peakSpeed >= cfg.minPeakSpeed &&
                 m.netDisplacement >= cfg.minNetDisplacement &&
                 m.pathEfficiency >= cfg.minPathEfficiency &&
                 m.durationMs in 20L..cfg.maxStrokeMs
+    }
 
     /** Geometric scores per kind (0 = impossible). Public for tests and tuning. */
     fun scoreKinds(m: StrokeMetrics): Map<StrikeKind, Float> {
@@ -498,6 +505,7 @@ class StrikeDetector(private val cfg: StrikeDetectorConfig = StrikeDetectorConfi
         // HOOK: horizontal arc across the body toward the opposite side at head/shoulder height.
         val hookBase = if (
             m.across >= 0.25f &&
+            netV >= -0.25f &&
             m.lateral >= 0.85f * abs(netV) &&
             m.apexHeight in -1.2f..0.45f &&
             (!elbowKnown || m.elbowAngleAtEnd in 45f..150f)
@@ -570,7 +578,7 @@ class StrikeDetector(private val cfg: StrikeDetectorConfig = StrikeDetectorConfi
     private fun wdist(v: Vec3) = sqrt(v.x * v.x + v.y * v.y + (cfg.zWeight * v.z).sq())
     private fun dist3(v: Vec3) = sqrt(v.x * v.x + v.y * v.y + (cfg.zWeight * v.z).sq())
 
-    private inner class OneEuro {
+    private inner class OneEuro(private val minCutoffHz: Float = cfg.filterMinCutoffHz) {
         private var xPrev = 0f
         private var dxPrev = 0f
         private var tPrev = -1.0
@@ -581,7 +589,7 @@ class StrikeDetector(private val cfg: StrikeDetectorConfig = StrikeDetectorConfi
             val dx = (x - xPrev) / dt
             val aD = alpha(1.0f, dt)
             val dxHat = aD * dx + (1 - aD) * dxPrev
-            val cutoff = cfg.filterMinCutoffHz + cfg.filterBeta * abs(dxHat)
+            val cutoff = minCutoffHz + cfg.filterBeta * abs(dxHat)
             val a = alpha(cutoff, dt)
             val xHat = a * x + (1 - a) * xPrev
             xPrev = xHat; dxPrev = dxHat; tPrev = t

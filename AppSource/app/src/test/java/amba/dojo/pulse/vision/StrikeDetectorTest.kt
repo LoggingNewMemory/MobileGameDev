@@ -718,4 +718,22 @@ class StrikeDetectorTest {
         assertEquals(Arm.LEFT, events[0].arm)
         assertEquals(StrikeKind.STRAIGHT, events[0].kind)
     }
+
+    @Test
+    fun loweringArmsFromGuard_notMistakenForHook() {
+        // Dropping the right guard hand downward and slightly across must not fire a hook.
+        val dropped = ArmPose(-0.05f, 0.05f, -0.20f, 110f)
+        val right = path(rightGuard, 500L to rightGuard, 150L to dropped, 600L to dropped)
+        val events = run(30, 1500, rightFn = right)
+        assertEquals(events.toString(), 0, events.size)
+    }
+
+    @Test
+    fun guardHand_pureZDepthJitter_notMistakenForPunch() {
+        // Stationary guard hand with a brief noisy ML Kit depth spike (-0.25 SW) and negligible 2D travel.
+        val zSpike = ArmPose(0.22f, -0.32f, -0.45f, 55f)
+        val right = path(rightGuard, 500L to rightGuard, 100L to zSpike, 250L to rightGuard, 700L to rightGuard)
+        val events = run(30, 1700, rightFn = right)
+        assertEquals(events.toString(), 0, events.size)
+    }
 }
