@@ -98,11 +98,12 @@ class PunchClassifier(
         }
 
         val isCurrentlyInGuard = result.leftInGuard && result.rightInGuard
+        val modePrefix = if (result.framingMode == FramingMode.FULL_BODY) "Full Body" else "Half Body"
         if (timestampMs - lastStrikeTimestamp >= strikeDisplayHoldMs) {
             when {
                 result.isFramedTooClose -> {
                     currentPunch = PunchType.IDLE
-                    feedback = "Step back to start training"
+                    feedback = "Step back slightly to start training"
                 }
                 !result.shouldersVisible -> {
                     currentPunch = PunchType.IDLE
@@ -110,15 +111,15 @@ class PunchClassifier(
                 }
                 !result.leftTracked && !result.rightTracked -> {
                     currentPunch = PunchType.IDLE
-                    feedback = "Show hands & guard to start"
+                    feedback = "$modePrefix: Show hands & guard to start"
                 }
                 isCurrentlyInGuard -> {
                     currentPunch = PunchType.GUARD
-                    feedback = "Guard active. Ready to strike!"
+                    feedback = "$modePrefix: Guard active. Ready to strike!"
                 }
                 else -> {
                     currentPunch = PunchType.IDLE
-                    feedback = "Ready stance. Guard up!"
+                    feedback = "$modePrefix: Ready stance. Guard up!"
                 }
             }
         }
@@ -138,7 +139,10 @@ class PunchClassifier(
             aiConfidence = currentConfidence,
             landmarks = landmarksMap,
             imageWidth = imageWidth,
-            imageHeight = imageHeight
+            imageHeight = imageHeight,
+            framingMode = result.framingMode,
+            leftArmTracked = result.leftTracked,
+            rightArmTracked = result.rightTracked
         )
     }
 
@@ -157,6 +161,14 @@ class PunchClassifier(
         StrikeKind.UPPERCUT -> if (arm == Arm.LEFT) "Left Uppercut" else "Right UpperCut"
         StrikeKind.HOOK -> if (arm == Arm.LEFT) "Left Hook" else "Right Hook"
         StrikeKind.STRAIGHT -> if (arm == Arm.LEFT) "Left Jab" else "Strike"
+    }
+
+    /** Resets tracking/motion buffers (e.g. on camera switch) without clearing session strike counts. */
+    fun resetTrackingState() {
+        pendingGuardReturn = null
+        lastAi = null
+        detector.reset()
+        aiClassifier?.reset()
     }
 
     fun reset() {

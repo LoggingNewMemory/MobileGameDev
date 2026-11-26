@@ -126,26 +126,14 @@ fun TrainingScreen(
             .background(Color.Black)
     ) {
         if (hasCameraPermission) {
-            // Live Camera Preview
-            AndroidView(
-                factory = { ctx ->
-                    val previewView = PreviewView(ctx).apply {
-                        scaleType = PreviewView.ScaleType.FILL_CENTER
-                    }
+            var previewViewRef by remember { mutableStateOf<PreviewView?>(null) }
+            var cameraProviderRef by remember { mutableStateOf<ProcessCameraProvider?>(null) }
 
-                    val cameraProviderFuture = ProcessCameraProvider.getInstance(ctx)
-                    cameraProviderFuture.addListener({
-                        val cameraProvider = cameraProviderFuture.get()
-
-                        val preview = Preview.Builder().build().also {
-                            it.setSurfaceProvider(previewView.surfaceProvider)
-                        }
-
-                        val imageAnalysis = ImageAnalysis.Builder()
-                            .setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST)
-                            .build()
-
-                        imageAnalysis.setAnalyzer(cameraExecutor) { imageProxy ->
+            val imageAnalysis = remember {
+                ImageAnalysis.Builder()
+                    .setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST)
+                    .build().apply {
+                        setAnalyzer(cameraExecutor) { imageProxy ->
                             @androidx.annotation.OptIn(ExperimentalGetImage::class)
                             val mediaImage = imageProxy.image
                             if (mediaImage != null) {
@@ -195,24 +183,51 @@ fun TrainingScreen(
                                 imageProxy.close()
                             }
                         }
+                    }
+            }
 
-                        val cameraSelector = if (isFrontCamera) {
-                            CameraSelector.DEFAULT_FRONT_CAMERA
-                        } else {
-                            CameraSelector.DEFAULT_BACK_CAMERA
-                        }
+            DisposableEffect(cameraProviderRef) {
+                onDispose {
+                    cameraProviderRef?.unbindAll()
+                }
+            }
 
-                        try {
-                            cameraProvider.unbindAll()
-                            cameraProvider.bindToLifecycle(
-                                lifecycleOwner,
-                                cameraSelector,
-                                preview,
-                                imageAnalysis
-                            )
-                        } catch (e: Exception) {
-                            e.printStackTrace()
-                        }
+            LaunchedEffect(isFrontCamera, previewViewRef, cameraProviderRef) {
+                val pv = previewViewRef ?: return@LaunchedEffect
+                val cp = cameraProviderRef ?: return@LaunchedEffect
+                classifier.resetTrackingState()
+                val preview = Preview.Builder().build().also {
+                    it.setSurfaceProvider(pv.surfaceProvider)
+                }
+                val cameraSelector = if (isFrontCamera) {
+                    CameraSelector.DEFAULT_FRONT_CAMERA
+                } else {
+                    CameraSelector.DEFAULT_BACK_CAMERA
+                }
+                try {
+                    cp.unbindAll()
+                    cp.bindToLifecycle(
+                        lifecycleOwner,
+                        cameraSelector,
+                        preview,
+                        imageAnalysis
+                    )
+                } catch (e: Exception) {
+                    e.printStackTrace()
+                }
+            }
+
+            // Live Camera Preview
+            AndroidView(
+                factory = { ctx ->
+                    val previewView = PreviewView(ctx).apply {
+                        scaleType = PreviewView.ScaleType.FILL_CENTER
+                    }
+                    previewViewRef = previewView
+
+                    val cameraProviderFuture = ProcessCameraProvider.getInstance(ctx)
+                    cameraProviderFuture.addListener({
+                        cameraProviderRef = cameraProviderFuture.get()
                     }, ContextCompat.getMainExecutor(ctx))
 
                     previewView
@@ -338,24 +353,96 @@ fun TrainingHudOverlay(
                     )
                 }
 
-                // Session Timer
-                Box(
-                    modifier = Modifier
-                        .background(Color(0xAA121212), RoundedCornerShape(6.dp))
-                        .padding(horizontal = 12.dp, vertical = 6.dp)
-                ) {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Icon(Icons.Default.Timer, contentDescription = null, tint = accentPink, modifier = Modifier.size(14.dp))
-                        Spacer(modifier = Modifier.width(6.dp))
+                // Session Timer & Camera Toggle
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Box(
+                        modifier = Modifier
+                            .background(Color(0xAA121212), RoundedCornerShape(6.dp))
+                            .padding(horizontal = 12.dp, vertical = 6.dp)
+                    ) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Icon(Icons.Default.Timer, contentDescription = null, tint = accentPink, modifier = Modifier.size(14.dp))
+                            Spacer(modifier = Modifier.width(6.dp))
+                            Text(
+                                timerString,
+                                color = Color.White,
+                                fontSize = 14.sp,
+                                fontWeight = FontWeight.Bold,
+                                fontFamily = GoogleSans
+                            )
+                        }
+                    }
+                    Spacer(modifier = Modifier.width(8.dp))
+                    IconButton(
+                        onClick = onToggleCamera,
+                        modifier = Modifier
+                            .size(36.dp)
+                            .background(Color(0x88121212), CircleShape)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Cameraswitch,
+                            contentDescription = if (isFrontCamera) "Switch to Back Camera" else "Switch to Front Camera",
+                            tint = Color.White,
+                            modifier = Modifier.size(18.dp)
+                        )
+                    }
+                }
+            }
+
+            Spacer(modifier = Modifier.height(8.dp))
+
+            // Live Tracking Status & Detected Punch Strip
+            val framingColor = when (telemetry.framingMode) {
+                FramingMode.FULL_BODY -> Color(0xFF4CAF50)
+                FramingMode.HALF_BODY -> Color(0xFF29B6F6)
+                FramingMode.TOO_CLOSE -> Color(0xFFFFB74D)
+                FramingMode.NONE -> Color(0xFF9E9E9E)
+            }
+            val isStrikeNow = telemetry.detectedPunch != PunchType.IDLE && telemetry.detectedPunch != PunchType.GUARD
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .background(Color(0xBB12121A), RoundedCornerShape(8.dp))
+                    .border(
+                        1.dp,
+                        if (isStrikeNow) accentPink else Color(0x44FFFFFF),
+                        RoundedCornerShape(8.dp)
+                    )
+                    .padding(horizontal = 10.dp, vertical = 6.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Box(
+                        modifier = Modifier
+                            .background(framingColor.copy(alpha = 0.22f), RoundedCornerShape(4.dp))
+                            .border(1.dp, framingColor.copy(alpha = 0.7f), RoundedCornerShape(4.dp))
+                            .padding(horizontal = 6.dp, vertical = 2.dp)
+                    ) {
                         Text(
-                            timerString,
-                            color = Color.White,
-                            fontSize = 14.sp,
+                            text = telemetry.framingMode.label,
+                            color = framingColor,
+                            fontSize = 10.sp,
                             fontWeight = FontWeight.Bold,
                             fontFamily = GoogleSans
                         )
                     }
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text(
+                        text = if (isStrikeNow) telemetry.detectedPunch.displayName.uppercase() else telemetry.feedbackMessage,
+                        color = if (isStrikeNow) accentPink else Color.White,
+                        fontSize = 12.sp,
+                        fontWeight = if (isStrikeNow) FontWeight.Black else FontWeight.Medium,
+                        maxLines = 1
+                    )
                 }
+                Text(
+                    text = "${telemetry.totalStrikes} HITS",
+                    color = accentPink,
+                    fontSize = 12.sp,
+                    fontWeight = FontWeight.Bold,
+                    fontFamily = GoogleSans
+                )
             }
 
             Spacer(modifier = Modifier.height(10.dp))

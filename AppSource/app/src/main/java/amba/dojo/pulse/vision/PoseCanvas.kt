@@ -22,12 +22,14 @@ fun PoseCanvas(
         val srcWidth = telemetry.imageWidth.toFloat().coerceAtLeast(1f)
         val srcHeight = telemetry.imageHeight.toFloat().coerceAtLeast(1f)
 
-        val scaleX = size.width / srcWidth
-        val scaleY = size.height / srcHeight
+        // Match PreviewView.ScaleType.FILL_CENTER: uniform scale to cover canvas, centered.
+        val scale = maxOf(size.width / srcWidth, size.height / srcHeight)
+        val offsetX = (size.width - srcWidth * scale) / 2f
+        val offsetY = (size.height - srcHeight * scale) / 2f
 
         fun mapPoint(point: PosePoint): Offset {
             val rawX = if (isFrontCamera) (srcWidth - point.x) else point.x
-            return Offset(rawX * scaleX, point.y * scaleY)
+            return Offset(rawX * scale + offsetX, point.y * scale + offsetY)
         }
 
         fun drawBone(startType: Int, endType: Int, color: Color, strokeWidth: Float = 6f) {
@@ -91,8 +93,11 @@ fun PoseCanvas(
             drawJoint(jointType, jointColor, 6f)
         }
 
+        val leftWristColor = if (telemetry.leftArmTracked) Color(0xFF4CAF50) else Color(0x889E9E9E)
+        val rightWristColor = if (telemetry.rightArmTracked) Color(0xFF4CAF50) else Color(0x889E9E9E)
+
         // Highlight active wrists with larger glowing circles
-        drawJoint(PoseLandmark.LEFT_WRIST, accentColor, 12f)
-        drawJoint(PoseLandmark.RIGHT_WRIST, accentColor, 12f)
+        drawJoint(PoseLandmark.LEFT_WRIST, leftWristColor, 12f)
+        drawJoint(PoseLandmark.RIGHT_WRIST, rightWristColor, 12f)
     }
 }

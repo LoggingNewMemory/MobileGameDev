@@ -41,6 +41,8 @@ object BlazePoseIndex {
     const val RIGHT_WRIST = 16
     const val LEFT_HIP = 23
     const val RIGHT_HIP = 24
+    const val LEFT_KNEE = 25
+    const val RIGHT_KNEE = 26
 }
 
 /** One landmark in image pixels. [z] uses ML Kit's convention (roughly pixel scale, negative = toward camera). */
@@ -61,38 +63,40 @@ enum class StrikeKind { STRAIGHT, HOOK, UPPERCUT }
 /** Tunable thresholds. Speeds are in shoulder-widths per second (SW/s), distances in SW. */
 data class StrikeDetectorConfig(
     // --- framing ---
-    val minShoulderLikelihood: Float = 0.5f,
-    val tooCloseShoulderY: Float = 0.68f,       // shoulder line in the bottom third → bust/selfie framing
-    val tooCloseShoulderWidth: Float = 0.60f,   // shoulders span > 60% of the frame width
+    val minShoulderLikelihood: Float = 0.45f,
+    val maxShoulderGapFrames: Int = 3,          // tolerate brief shoulder occlusion during rotational punches
+    val tooCloseShoulderY: Float = 0.70f,       // shoulder line in the bottom 30% → bust/selfie framing
+    val tooCloseShoulderWidth: Float = 0.78f,   // shoulders span > 78% of the frame width
 
     // --- wrist visibility (hysteresis) ---
-    val acquireLikelihood: Float = 0.65f,       // needed for N frames in a row to start tracking a wrist
+    val acquireLikelihood: Float = 0.60f,       // needed for N frames in a row to start tracking a wrist
     val acquireFrames: Int = 3,
-    val minTrackAgeMs: Long = 200L,             // a stroke's launch must be observed on an already-settled track
-    val keepLikelihood: Float = 0.30f,          // once tracked, motion-blurred frames down to this still count
-    val maxGapFrames: Int = 2,                  // consecutive unusable frames tolerated before track loss
-    val bottomEdgeMargin: Float = 0.08f,        // wrists in the bottom 8% of the image are treated as off-screen
+    val minTrackAgeMs: Long = 150L,             // a stroke's launch must be observed on an already-settled track
+    val keepLikelihood: Float = 0.28f,          // once tracked, motion-blurred frames down to this still count
+    val maxGapFrames: Int = 4,                  // consecutive unusable frames tolerated before track loss
+    val bottomEdgeMargin: Float = 0.03f,        // wrists in the bottom 3% of the image are treated as off-screen
     val sideEdgeMargin: Float = 0.01f,
 
     // --- smoothing (One-Euro) ---
-    val filterMinCutoffHz: Float = 2.0f,
-    val filterBeta: Float = 0.4f,
+    val filterMinCutoffHz: Float = 2.5f,
+    val filterBeta: Float = 0.5f,
 
     // --- stroke segmentation ---
-    val startSpeed: Float = 1.8f,
+    val startSpeed: Float = 1.6f,
     val endSpeedFraction: Float = 0.35f,        // stroke ends when speed falls below 35% of its peak ...
-    val endSpeedFloor: Float = 1.0f,            // ... or below this absolute speed
+    val endSpeedFloor: Float = 0.9f,            // ... or below this absolute speed
     val reversalFraction: Float = 0.80f,        // or when distance from launch drops below 80% of its max
     val maxStrokeMs: Long = 700L,
     val rearmSpeed: Float = 1.2f,
-    val rearmFrames: Int = 2,
-    val minRecoveryMs: Long = 150L,
-    val crossArmSuppressMs: Long = 150L,        // the other arm cannot count within this window
+    val rearmFrames: Int = 1,
+    val minRecoveryMs: Long = 100L,
+    val maxRecoveryMs: Long = 450L,
+    val crossArmSuppressMs: Long = 90L,         // the other arm cannot count within this window
 
     // --- punch validation ---
-    val minPeakSpeed: Float = 3.0f,
-    val minNetDisplacement: Float = 0.30f,
-    val minPathEfficiency: Float = 0.60f,
+    val minPeakSpeed: Float = 2.6f,
+    val minNetDisplacement: Float = 0.24f,
+    val minPathEfficiency: Float = 0.58f,
     val zWeight: Float = 0.6f,                  // ML Kit depth is noisier than x/y; down-weight it
 
     // --- classification ---
@@ -110,6 +114,7 @@ data class StrokeMetrics(
     val netVertical: Float,     // launch → extremum vertical change (+ = up, − = down)
     val lateral: Float,         // |horizontal| travel
     val across: Float,          // + = toward the opposite shoulder (mirror-invariant)
+    val forwardZ: Float = 0f,   // + = toward the camera (mirror-invariant)
     val reachStart: Float,
     val reachGain: Float,
     val reachMax: Float,
@@ -135,6 +140,7 @@ data class DetectorFrameResult(
     val event: StrikeEvent?,
     val isFramedTooClose: Boolean,
     val shouldersVisible: Boolean,
+    val framingMode: FramingMode = FramingMode.NONE,
     val leftTracked: Boolean,
     val rightTracked: Boolean,
     val leftInGuard: Boolean,
@@ -169,6 +175,7 @@ class StrikeDetector(private val cfg: StrikeDetectorConfig = StrikeDetectorConfi
         var phase = Phase.READY
         val stroke = ArrayList<Sample>()
         var strokeEndT = 0L
+        var lastStrokeDir = Vec3(0f, 0f, 0f)
         var lowSpeedFrames = 0
         val fx = OneEuro(); val fy = OneEuro(); val fz = OneEuro()
 
@@ -186,12 +193,16 @@ class StrikeDetector(private val cfg: StrikeDetectorConfig = StrikeDetectorConfi
     private val left = ArmTracker(Arm.LEFT)
     private val right = ArmTracker(Arm.RIGHT)
     private var scale = 0f
+    private var shoulderGapFrames = 0
+    private var lastFramingMode = FramingMode.NONE
     private var lastCountT = Long.MIN_VALUE / 2
     private var lastCountArm: Arm? = null
 
     fun reset() {
         left.lose(); right.lose()
         scale = 0f
+        shoulderGapFrames = 0
+        lastFramingMode = FramingMode.NONE
         lastCountT = Long.MIN_VALUE / 2
         lastCountArm = null
     }
@@ -205,9 +216,21 @@ class StrikeDetector(private val cfg: StrikeDetectorConfig = StrikeDetectorConfi
         val shouldersVisible = ls != null && rs != null &&
                 ls.likelihood >= cfg.minShoulderLikelihood && rs.likelihood >= cfg.minShoulderLikelihood
         if (!shouldersVisible) {
-            left.lose(); right.lose()
-            return emptyResult(tooClose = false, shoulders = false)
+            shoulderGapFrames++
+            if (shoulderGapFrames > cfg.maxShoulderGapFrames || scale <= 0f) {
+                left.lose(); right.lose()
+                lastFramingMode = FramingMode.NONE
+                return emptyResult(tooClose = false, shoulders = false, framingMode = FramingMode.NONE)
+            }
+            return DetectorFrameResult(
+                event = null, isFramedTooClose = false, shouldersVisible = false,
+                framingMode = lastFramingMode,
+                leftTracked = left.tracked, rightTracked = right.tracked,
+                leftInGuard = false, rightInGuard = false,
+                leftElbowAngle = Float.NaN, rightElbowAngle = Float.NaN
+            )
         }
+        shoulderGapFrames = 0
         ls!!; rs!!
 
         val shoulderY = (ls.y + rs.y) / (2f * h)
@@ -215,8 +238,20 @@ class StrikeDetector(private val cfg: StrikeDetectorConfig = StrikeDetectorConfi
         val tooClose = shoulderY > cfg.tooCloseShoulderY || sw2d / w > cfg.tooCloseShoulderWidth
         if (tooClose) {
             left.lose(); right.lose()
-            return emptyResult(tooClose = true, shoulders = true)
+            lastFramingMode = FramingMode.TOO_CLOSE
+            return emptyResult(tooClose = true, shoulders = true, framingMode = FramingMode.TOO_CLOSE)
         }
+
+        fun inBounds(j: Joint?) = j != null && j.likelihood >= 0.45f &&
+                j.x in 0f..w && j.y in 0f..h
+        val lh = frame.joints[BlazePoseIndex.LEFT_HIP]
+        val rh = frame.joints[BlazePoseIndex.RIGHT_HIP]
+        val lk = frame.joints[BlazePoseIndex.LEFT_KNEE]
+        val rk = frame.joints[BlazePoseIndex.RIGHT_KNEE]
+        val hipsVisible = inBounds(lh) && inBounds(rh)
+        val kneesVisible = inBounds(lk) || inBounds(rk)
+        val framingMode = if (hipsVisible && kneesVisible) FramingMode.FULL_BODY else FramingMode.HALF_BODY
+        lastFramingMode = framingMode
 
         // Body scale: 3D shoulder width (robust to the bladed boxing stance), EMA-smoothed.
         val sw3d = sqrt((ls.x - rs.x).sq() + (ls.y - rs.y).sq() + (ls.z - rs.z).sq())
@@ -246,6 +281,7 @@ class StrikeDetector(private val cfg: StrikeDetectorConfig = StrikeDetectorConfi
             event = accepted,
             isFramedTooClose = false,
             shouldersVisible = true,
+            framingMode = framingMode,
             leftTracked = left.tracked,
             rightTracked = right.tracked,
             leftInGuard = leftResult.inGuard,
@@ -357,6 +393,7 @@ class StrikeDetector(private val cfg: StrikeDetectorConfig = StrikeDetectorConfi
                 val reversed = maxDist > 0.1f && curDist < maxDist * cfg.reversalFraction
                 val timedOut = s.t - anchor.t > cfg.maxStrokeMs
                 if (decelerated || reversed || timedOut) {
+                    val strokeDir = s.p - anchor.p
                     val metrics = measure(a.stroke)
                     a.stroke.clear()
                     val event = if (metrics != null && isBallistic(metrics)) classify(a.arm, metrics, s.t, ai) else null
@@ -368,6 +405,7 @@ class StrikeDetector(private val cfg: StrikeDetectorConfig = StrikeDetectorConfi
                     }
                     a.phase = Phase.RECOVERY
                     a.strokeEndT = s.t
+                    a.lastStrokeDir = strokeDir
                     a.lowSpeedFrames = 0
                     return event
                 }
@@ -375,7 +413,16 @@ class StrikeDetector(private val cfg: StrikeDetectorConfig = StrikeDetectorConfi
             }
             Phase.RECOVERY -> {
                 a.lowSpeedFrames = if (s.speed < cfg.rearmSpeed) a.lowSpeedFrames + 1 else 0
-                if (a.lowSpeedFrames >= cfg.rearmFrames && s.t - a.strokeEndT >= cfg.minRecoveryMs) {
+                val elapsed = s.t - a.strokeEndT
+                val resumedForward = if (a.samples.size >= 2) {
+                    val prev = a.samples[a.samples.size - 2]
+                    val d = s.p - prev.p
+                    val dir = a.lastStrokeDir
+                    (d.x * dir.x + d.y * dir.y + d.z * dir.z) > 0f
+                } else false
+                if (elapsed >= cfg.minRecoveryMs &&
+                    (a.lowSpeedFrames >= cfg.rearmFrames || resumedForward || elapsed >= cfg.maxRecoveryMs)
+                ) {
                     a.phase = Phase.READY
                 }
                 return null
@@ -412,6 +459,7 @@ class StrikeDetector(private val cfg: StrikeDetectorConfig = StrikeDetectorConfi
             netVertical = anchor.p.y - end.p.y,
             lateral = abs(dx),
             across = dx * anchor.acrossSign,
+            forwardZ = anchor.p.z - end.p.z,
             reachStart = reachStart,
             reachGain = reachMax - reachStart,
             reachMax = reachMax,
@@ -433,45 +481,45 @@ class StrikeDetector(private val cfg: StrikeDetectorConfig = StrikeDetectorConfi
         val vertical = m.rise
         val netV = m.netVertical
 
-        // UPPERCUT: wrist launched from chest level or below, rises vertically to ~shoulder/chin height,
-        // elbow stays bent. Hand must have been visible the whole time (guaranteed by tracking).
+        // UPPERCUT: upward-dominant punch from guard/chest toward chin/head height.
+        // Works both side-on and front-facing (where the fist also travels inward and toward the camera).
         val upper = if (
-            vertical >= 0.25f &&
-            vertical >= 1.0f * m.lateral &&
-            m.startHeight >= -0.20f &&      // started no higher than just above the shoulder line
-            m.apexHeight <= 0.15f &&        // reached at least (about) shoulder level
-            (!elbowKnown || m.elbowAngleAtEnd <= 140f)
+            vertical >= 0.20f &&
+            netV >= 0.14f &&
+            vertical >= 0.55f * m.lateral &&
+            m.startHeight >= -0.45f &&
+            m.apexHeight <= 0.20f &&
+            (!elbowKnown || m.elbowAngleAtEnd <= 165f)
         ) {
-            0.5f * ramp(vertical, 0.25f, 0.6f) +
-                    0.3f * ramp(vertical / (m.lateral + 0.05f), 1.0f, 2.5f) +
-                    0.2f * (if (elbowKnown) 1f else 0.5f)
+            0.50f + 0.50f * ramp(vertical, 0.20f, 0.55f)
         } else 0f
 
-        // HOOK: horizontal arc toward the opposite side at head/shoulder height with a bent elbow.
-        val hook = if (
-            m.across >= 0.30f &&
-            m.lateral >= 1.0f * abs(netV) &&
+        // HOOK: horizontal arc across the body toward the opposite side at head/shoulder height.
+        val hookBase = if (
+            m.across >= 0.25f &&
+            m.lateral >= 0.85f * abs(netV) &&
             m.apexHeight in -1.2f..0.45f &&
-            (!elbowKnown || m.elbowAngleAtEnd in 55f..155f)
+            (!elbowKnown || m.elbowAngleAtEnd in 45f..150f)
         ) {
-            0.5f * ramp(m.across, 0.30f, 0.8f) +
-                    0.3f * ramp(m.lateral / (abs(netV) + 0.05f), 1.0f, 2.5f) +
-                    0.2f * (if (elbowKnown) 1f else 0.5f)
+            0.50f + 0.50f * ramp(m.across, 0.25f, 0.75f)
         } else 0f
+        // An extended arm (> 130°) is more likely a cross aimed at the centerline than a bent-arm hook.
+        val hook = if (hookBase > 0f && elbowKnown && m.elbowAngleAtEnd > 130f) hookBase * 0.60f else hookBase
 
-        // STRAIGHT (jab / cross): the arm extends — reach grows toward full arm length, elbow opens.
-        val strongStraight = m.reachGain >= 0.30f && m.reachMax >= 0.80f && netV >= -0.30f &&
-                (!elbowKnown || m.elbowAngleAtEnd >= 135f)
+        // STRAIGHT (jab / cross): forward arm extension (not an uppercut or bent-arm hook).
         val straight = when {
-            strongStraight ->
-                0.5f * ramp(m.reachGain, 0.30f, 0.8f) +
-                        0.3f * ramp(m.reachMax, 0.80f, 1.3f) +
-                        0.2f * (if (elbowKnown) ramp(m.elbowAngleAtEnd, 135f, 170f) else 0.5f)
-            // Weak fallback for straight punches thrown directly at the camera, where 2D travel and the
-            // noisy depth channel under-report extension. Excludes retractions (reach shrinking, hand
-            // dropping, or moving away from the midline).
-            m.reachGain >= -0.10f && netV >= -0.15f && m.across >= -0.20f &&
-                    m.apexHeight in -1.2f..0.45f -> 0.32f
+            m.reachGain >= 0.25f && m.reachMax >= 0.75f && netV >= -0.30f &&
+                    (!elbowKnown || m.elbowAngleAtEnd >= 130f) &&
+                    !(upper > 0f && (!elbowKnown || m.elbowAngleAtEnd < 165f || m.reachMax < 0.90f)) &&
+                    !(hook > 0f && (!elbowKnown || m.elbowAngleAtEnd <= 130f)) ->
+                0.50f + 0.50f * ramp(m.reachGain, 0.25f, 0.75f)
+            // Front-camera straight fallback: only when neither uppercut nor hook fits, and there is clear forward drive.
+            upper == 0f && hook == 0f &&
+                    (m.forwardZ >= 0.20f || m.reachGain >= 0.15f) &&
+                    netV >= -0.20f && m.across >= -0.20f &&
+                    m.apexHeight in -1.2f..0.45f &&
+                    (!elbowKnown || m.elbowAngleAtEnd >= 120f) ->
+                0.35f + 0.25f * ramp(max(m.forwardZ, m.reachGain), 0.15f, 0.70f)
             else -> 0f
         }
         return mapOf(StrikeKind.STRAIGHT to straight, StrikeKind.HOOK to hook, StrikeKind.UPPERCUT to upper)
@@ -484,7 +532,9 @@ class StrikeDetector(private val cfg: StrikeDetectorConfig = StrikeDetectorConfi
         for ((kind, g) in geo) {
             if (g <= 0f) continue // AI may only re-rank kinematically plausible kinds
             val fused = if (ai != null) {
-                (1f - cfg.aiWeight) * g + cfg.aiWeight * ai.probability(arm, kind).coerceIn(0f, 1f)
+                val blended = (1f - cfg.aiWeight) * g + cfg.aiWeight * ai.probability(arm, kind).coerceIn(0f, 1f)
+                // AI may re-rank plausible types, never veto a kinematically valid punch below minAcceptScore.
+                if (g >= cfg.minAcceptScore) blended.coerceAtLeast(cfg.minAcceptScore) else blended
             } else g
             if (fused > bestScore) { bestScore = fused; bestKind = kind }
         }
@@ -495,8 +545,13 @@ class StrikeDetector(private val cfg: StrikeDetectorConfig = StrikeDetectorConfi
     private fun inGuard(p: Vec3, ownShoulder: Vec3): Boolean =
         (p.y - ownShoulder.y) in -1.1f..0.6f && abs(p.x - ownShoulder.x) < 0.9f
 
-    private fun emptyResult(tooClose: Boolean, shoulders: Boolean) = DetectorFrameResult(
+    private fun emptyResult(
+        tooClose: Boolean,
+        shoulders: Boolean,
+        framingMode: FramingMode = FramingMode.NONE
+    ) = DetectorFrameResult(
         event = null, isFramedTooClose = tooClose, shouldersVisible = shoulders,
+        framingMode = framingMode,
         leftTracked = false, rightTracked = false, leftInGuard = false, rightInGuard = false,
         leftElbowAngle = Float.NaN, rightElbowAngle = Float.NaN
     )

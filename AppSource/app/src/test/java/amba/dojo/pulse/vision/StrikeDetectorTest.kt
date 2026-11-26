@@ -362,4 +362,275 @@ class StrikeDetectorTest {
         }
         assertEquals(0, total)
     }
+
+    // ------------------------------------------------------------------------------------------
+    // Half-body vs Full-body framing, AI non-veto, and real-world edge cases
+    // ------------------------------------------------------------------------------------------
+
+    @Test
+    fun halfBodyFraming_portraitCloseShoulders_detectsStrikesAndReportsHalfBody() {
+        // Portrait half-body: shoulders span 68% of frame width, no hips/knees in frame.
+        val scene = Scene(shoulderY = 0.42f * h, swPx = 0.68f * w)
+        val det = StrikeDetector()
+        val left = path(
+            leftGuard,
+            500L to leftGuard,
+            130L to leftJabExtended,
+            180L to leftGuard,
+            700L to leftGuard
+        )
+        val events = ArrayList<StrikeEvent>()
+        var lastMode = FramingMode.NONE
+        var t = 0L
+        while (t <= 1600L) {
+            val r = det.process(frame(1_000_000L + t, scene, left(t), rightGuard))
+            lastMode = r.framingMode
+            r.event?.let { events.add(it) }
+            t += 33L
+        }
+        assertEquals(FramingMode.HALF_BODY, lastMode)
+        assertEquals(1, events.size)
+        assertEquals(StrikeKind.STRAIGHT, events[0].kind)
+    }
+
+    @Test
+    fun fullBodyFraming_withAdversarialZeroAi_doesNotVetoFrontJab() {
+        val scene = Scene(shoulderY = 0.30f * h, swPx = 140f)
+        val det = StrikeDetector()
+        // Front-facing jab with weak depth report (relies on straight fallback).
+        val weakDepthJab = ArmPose(-0.25f, -0.35f, -0.75f, 125f)
+        val left = path(leftGuard, 500L to leftGuard, 130L to weakDepthJab, 180L to leftGuard, 600L to leftGuard)
+        val zeroAi = AiStrikeProbabilities { _, _ -> 0f }
+        val events = ArrayList<StrikeEvent>()
+        var lastMode = FramingMode.NONE
+        var t = 0L
+        while (t <= 1500L) {
+            val base = frame(1_000_000L + t, scene, left(t), rightGuard)
+            val withLegs = base.joints.toMutableMap().apply {
+                put(BlazePoseIndex.LEFT_HIP, Joint(400f, 700f, 0f, 0.9f))
+                put(BlazePoseIndex.RIGHT_HIP, Joint(320f, 700f, 0f, 0.9f))
+                put(BlazePoseIndex.LEFT_KNEE, Joint(400f, 950f, 0f, 0.9f))
+                put(BlazePoseIndex.RIGHT_KNEE, Joint(320f, 950f, 0f, 0.9f))
+            }
+            val r = det.process(base.copy(joints = withLegs), zeroAi)
+            lastMode = r.framingMode
+            r.event?.let { events.add(it) }
+            t += 33L
+        }
+        assertEquals(FramingMode.FULL_BODY, lastMode)
+        assertEquals(1, events.size)
+        assertEquals(StrikeKind.STRAIGHT, events[0].kind)
+    }
+
+    @Test
+    fun crossAimedAtCenterline_extendedElbow_classifiedAsStraightNotHook() {
+        val scene = Scene()
+        // Right cross starts at right guard and drives forward + across toward centerline with extended elbow.
+        val rightCrossCenter = ArmPose(0.55f, -0.40f, -1.4f, 165f)
+        val right = path(rightGuard, 500L to rightGuard, 130L to rightCrossCenter, 180L to rightGuard, 700L to rightGuard)
+        val events = run(30, 1600, scene, rightFn = right)
+        assertEquals(1, events.size)
+        assertEquals(Arm.RIGHT, events[0].arm)
+        assertEquals(StrikeKind.STRAIGHT, events[0].kind)
+    }
+
+    @Test
+    fun briefShoulderOcclusion_doesNotDropStroke() {
+        val scene = Scene()
+        val det = StrikeDetector()
+        val left = path(leftGuard, 500L to leftGuard, 130L to leftJabExtended, 180L to leftGuard, 700L to leftGuard)
+        val events = ArrayList<StrikeEvent>()
+        var t = 0L
+        while (t <= 1600L) {
+            // Drop shoulder likelihood for 2 frames right before launch (t = 462..495)
+            val sLik = if (t in 460L..500L) 0.2f else 0.99f
+            val r = det.process(frame(1_000_000L + t, scene, left(t), rightGuard, shoulderLikelihood = sLik))
+            r.event?.let { events.add(it) }
+            t += 33L
+        }
+        assertEquals(1, events.size)
+        assertEquals(StrikeKind.STRAIGHT, events[0].kind)
+    }
+
+    @Test
+    fun scoreKinds_moderateStraightExtension_aboveMinAcceptScore() {
+        val det = StrikeDetector()
+        // Just inside strongStraight gates: previously scored ~0.12 (< 0.30 minAcceptScore) and was dropped.
+        val m = StrokeMetrics(
+            durationMs = 130, peakSpeed = 4.5f, netDisplacement = 0.45f, pathEfficiency = 0.90f,
+            rise = 0.05f, netVertical = 0.0f, lateral = 0.15f, across = 0.15f, forwardZ = 0.35f,
+            reachStart = 0.50f, reachGain = 0.30f, reachMax = 0.80f,
+            startHeight = -0.35f, apexHeight = -0.40f, elbowAngleAtEnd = 140f
+        )
+        val scores = det.scoreKinds(m)
+        assertTrue("straight=${scores[StrikeKind.STRAIGHT]} must be >= 0.50", scores[StrikeKind.STRAIGHT]!! >= 0.50f)
+    }
+
+    @Test
+    fun centerlineCross_135degElbow_classifiedAsStraightNotHook() {
+        val det = StrikeDetector()
+        val m = StrokeMetrics(
+            durationMs = 130, peakSpeed = 5.0f, netDisplacement = 0.55f, pathEfficiency = 0.90f,
+            rise = 0.05f, netVertical = 0.0f, lateral = 0.30f, across = 0.30f, forwardZ = 0.40f,
+            reachStart = 0.50f, reachGain = 0.35f, reachMax = 0.85f,
+            startHeight = -0.35f, apexHeight = -0.40f, elbowAngleAtEnd = 135f
+        )
+        val scores = det.scoreKinds(m)
+        assertTrue(
+            "straight (${scores[StrikeKind.STRAIGHT]}) must beat hook (${scores[StrikeKind.HOOK]})",
+            scores[StrikeKind.STRAIGHT]!! > scores[StrikeKind.HOOK]!!
+        )
+    }
+
+    @Test
+    fun fastOneTwoCombo_110msApart_bothCounted() {
+        val rightCrossExt = ArmPose(0.55f, -0.45f, -1.5f, 170f)
+        val left = path(leftGuard, 500L to leftGuard, 130L to leftJabExtended, 170L to leftGuard, 1500L to leftGuard)
+        val right = path(rightGuard, 610L to rightGuard, 130L to rightCrossExt, 170L to rightGuard, 1500L to rightGuard)
+        val events = run(30, 2400, leftFn = left, rightFn = right)
+        assertEquals(events.toString(), 2, events.size)
+        assertEquals(Arm.LEFT, events[0].arm)
+        assertEquals(Arm.RIGHT, events[1].arm)
+    }
+
+    @Test
+    fun extrapolatedOffscreenKnees_classifiedAsHalfBodyNotFullBody() {
+        val scene = Scene(shoulderY = 0.42f * h, swPx = 280f)
+        val det = StrikeDetector()
+        val base = frame(1_000_000L, scene, leftGuard, rightGuard)
+        val withOffscreenKnees = base.joints.toMutableMap().apply {
+            put(BlazePoseIndex.LEFT_HIP, Joint(420f, 1100f, 0f, 0.7f))
+            put(BlazePoseIndex.RIGHT_HIP, Joint(300f, 1100f, 0f, 0.7f))
+            put(BlazePoseIndex.LEFT_KNEE, Joint(420f, h + 150f, 0f, 0.6f))
+            put(BlazePoseIndex.RIGHT_KNEE, Joint(300f, h + 150f, 0f, 0.6f))
+        }
+        val r = det.process(base.copy(joints = withOffscreenKnees))
+        assertEquals(FramingMode.HALF_BODY, r.framingMode)
+    }
+
+    @Test
+    fun frontFacingUppercut_towardCenterlineFromCompactGuard_classifiedAsUppercutNotJab() {
+        // Front-facing uppercut: compact dip (-0.25f), rises toward centerline (+across) and camera (-z),
+        // with foreshortened elbow (130 deg) — previously mistaken for Left Jab.
+        val compactLoad = ArmPose(-0.20f, -0.22f, -0.15f, 85f)
+        val frontApex = ArmPose(0.05f, -0.50f, -0.55f, 130f)
+        val left = path(leftGuard, 600L to leftGuard, 150L to compactLoad, 150L to frontApex, 300L to leftGuard, 800L to leftGuard)
+        val events = run(30, 2200, leftFn = left)
+        assertEquals(events.toString(), 1, events.size)
+        assertEquals(Arm.LEFT, events[0].arm)
+        assertEquals(StrikeKind.UPPERCUT, events[0].kind)
+    }
+
+    @Test
+    fun frontFacingUppercut_hiddenElbowAndForwardZ_classifiedAsUppercutNotJab() {
+        // Front-facing uppercut where elbow is occluded (NaN) and wrist moves forward toward camera.
+        val load = ArmPose(-0.18f, 0.05f, -0.15f, Float.NaN)
+        val apex = ArmPose(0.02f, -0.40f, -0.60f, Float.NaN)
+        val left = path(leftGuard, 600L to leftGuard, 150L to load, 150L to apex, 300L to leftGuard, 800L to leftGuard)
+        val events = run(30, 2200, leftFn = left)
+        assertEquals(events.toString(), 1, events.size)
+        assertEquals(Arm.LEFT, events[0].arm)
+        assertEquals(StrikeKind.UPPERCUT, events[0].kind)
+    }
+
+    @Test
+    fun leftHook_withForwardAndUpwardComponent_classifiedAsHookNotJab() {
+        val wide = ArmPose(0.25f, -0.30f, -0.25f, 95f)
+        val across = ArmPose(-0.65f, -0.45f, -0.65f, 100f)
+        val left = path(leftGuard, 500L to leftGuard, 120L to wide, 160L to across, 300L to leftGuard, 800L to leftGuard)
+        val events = run(30, 2200, leftFn = left)
+        assertEquals(events.toString(), 1, events.size)
+        assertEquals(Arm.LEFT, events[0].arm)
+        assertEquals(StrikeKind.HOOK, events[0].kind)
+    }
+
+    @Test
+    fun lateralGuardShift_withoutForwardExtension_notMistakenForLeftJab() {
+        // Quick sideways adjustment of the left hand (not moving forward or across) must not trigger Left Jab.
+        val shiftedOut = ArmPose(0.10f, -0.35f, -0.20f, 55f)
+        val left = path(leftGuard, 500L to leftGuard, 120L to shiftedOut, 300L to leftGuard, 800L to leftGuard)
+        val events = run(30, 2000, leftFn = left)
+        assertEquals(events.toString(), 0, events.size)
+    }
+
+    @Test
+    fun frontFacingUppercut_noDipFromHighGuard_classifiedAsUppercutNotJab() {
+        // Front-facing uppercut thrown directly from chin guard (-0.34f) without a deep dip.
+        val highApex = ArmPose(-0.05f, -0.68f, -0.55f, 130f)
+        val left = path(leftGuard, 600L to leftGuard, 140L to highApex, 300L to leftGuard, 800L to leftGuard)
+        val events = run(30, 2200, leftFn = left)
+        assertEquals(events.toString(), 1, events.size)
+        assertEquals(Arm.LEFT, events[0].arm)
+        assertEquals(StrikeKind.UPPERCUT, events[0].kind)
+    }
+
+    @Test
+    fun frontFacingUppercut_foreshortened142DegElbowAndForwardZ_classifiedAsUppercutNotJab() {
+        // Front-facing uppercut where foreshortening makes elbow read ~142-156 deg and z moves toward camera.
+        val load = ArmPose(-0.20f, -0.15f, -0.15f, 90f)
+        val apex = ArmPose(-0.35f, -0.52f, -0.95f, 142f)
+        val left = path(leftGuard, 600L to leftGuard, 150L to load, 150L to apex, 300L to leftGuard, 800L to leftGuard)
+        val events = run(30, 2200, leftFn = left)
+        assertEquals(events.toString(), 1, events.size)
+        assertEquals(Arm.LEFT, events[0].arm)
+        assertEquals(StrikeKind.UPPERCUT, events[0].kind)
+    }
+
+    @Test
+    fun leftHook_occludedElbowWithForwardReach_classifiedAsHookNotJab() {
+        // Left hook where elbow is occluded (NaN) and forward Z creates reachGain >= 0.25.
+        val wide = ArmPose(0.25f, -0.30f, -0.20f, Float.NaN)
+        val across = ArmPose(-0.65f, -0.35f, -0.85f, Float.NaN)
+        val left = path(leftGuard, 500L to leftGuard, 120L to wide, 150L to across, 300L to leftGuard, 800L to leftGuard)
+        val events = run(30, 2200, leftFn = left)
+        assertEquals(events.toString(), 1, events.size)
+        assertEquals(Arm.LEFT, events[0].arm)
+        assertEquals(StrikeKind.HOOK, events[0].kind)
+    }
+
+    @Test
+    fun guardFidget_withMinorDepthJitter_notMistakenForLeftJab() {
+        // Small forward depth jitter (0.12 SW) during a guard adjustment must not fire Left Jab.
+        val fidget = ArmPose(-0.15f, -0.30f, -0.35f, 125f)
+        val left = path(leftGuard, 500L to leftGuard, 100L to fidget, 300L to leftGuard, 800L to leftGuard)
+        val events = run(30, 2000, leftFn = left)
+        assertEquals(events.toString(), 0, events.size)
+    }
+
+    @Test
+    fun continuousUppercuts_withoutPause_allCounted() {
+        // 4 continuous uppercuts in a row with no pause at the bottom turnaround.
+        val bottom = ArmPose(-0.20f, -0.05f, -0.15f, 85f)
+        val apex = ArmPose(-0.20f, -0.58f, -0.45f, 115f)
+        val left = path(
+            leftGuard, 500L to leftGuard, 120L to bottom,
+            150L to apex, 150L to bottom,
+            150L to apex, 150L to bottom,
+            150L to apex, 150L to bottom,
+            150L to apex, 200L to leftGuard, 500L to leftGuard
+        )
+        val events = run(30, 2600, leftFn = left)
+        assertEquals(events.toString(), 4, events.size)
+        assertTrue(events.all { it.arm == Arm.LEFT && it.kind == StrikeKind.UPPERCUT })
+    }
+
+    @Test
+    fun continuousRollingUppercuts_speedNeverZero_allCounted() {
+        // Circular/rolling continuous uppercuts where the fist traces an oval and never pauses.
+        val events = run(30, 2800, leftFn = { t ->
+            when {
+                t < 500L -> leftGuard
+                t < 2300L -> {
+                    val phase = ((t - 500L) / 360.0) * (2.0 * Math.PI)
+                    val y = (-0.32f + 0.28f * kotlin.math.cos(phase)).toFloat()
+                    val z = (-0.30f - 0.20f * kotlin.math.sin(phase)).toFloat()
+                    val x = (-0.20f - 0.08f * kotlin.math.sin(phase)).toFloat()
+                    ArmPose(x, y, z, 105f)
+                }
+                else -> leftGuard
+            }
+        })
+        assertTrue("Expected >= 4 rolling uppercuts, got ${events.size}: $events", events.size >= 4)
+        assertTrue(events.all { it.arm == Arm.LEFT && it.kind == StrikeKind.UPPERCUT })
+    }
 }

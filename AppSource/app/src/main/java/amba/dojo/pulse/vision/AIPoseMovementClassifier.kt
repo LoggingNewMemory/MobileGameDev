@@ -120,11 +120,11 @@ class AIPoseMovementClassifier(
             1f
         }
 
-        val isFramedTooClose = avgShoulderY > 0.68f
+        val isFramedTooClose = avgShoulderY > 0.70f
 
-        // Check if hands are present and elevated (not resting in lap / off-screen)
-        val isLeftWristInFrame = lWrist != null && lWristLikelihood >= 0.40f && lWrist.position.y < (heightF * 0.90f)
-        val isRightWristInFrame = rWrist != null && rWristLikelihood >= 0.40f && rWrist.position.y < (heightF * 0.90f)
+        // Check if hands are present and elevated (not resting off-screen)
+        val isLeftWristInFrame = lWrist != null && lWristLikelihood >= 0.40f && lWrist.position.y < (heightF * 0.97f)
+        val isRightWristInFrame = rWrist != null && rWristLikelihood >= 0.40f && rWrist.position.y < (heightF * 0.97f)
 
         // If framed too close or neither hand is actively in boxing view:
         // athlete is not in boxing stance, output Idle with high confidence
@@ -142,9 +142,17 @@ class AIPoseMovementClassifier(
             )
         }
 
+        val widthF = if (imageWidth > 0) imageWidth.toFloat() else 1f
+        fun inBounds(lm: PoseLandmark?): Boolean = lm != null && lm.inFrameLikelihood >= 0.45f &&
+                lm.position.x in 0f..widthF && lm.position.y in 0f..heightF
+
         val lHip = pose.getPoseLandmark(PoseLandmark.LEFT_HIP)
         val rHip = pose.getPoseLandmark(PoseLandmark.RIGHT_HIP)
-        val hipsVisible = (lHip?.inFrameLikelihood ?: 0f) >= 0.5f && (rHip?.inFrameLikelihood ?: 0f) >= 0.5f
+        val lKnee = pose.getPoseLandmark(PoseLandmark.LEFT_KNEE)
+        val rKnee = pose.getPoseLandmark(PoseLandmark.RIGHT_KNEE)
+        val hipsVisible = inBounds(lHip) && inBounds(rHip)
+        val kneesVisible = inBounds(lKnee) || inBounds(rKnee)
+        val fullBodyVisible = hipsVisible && kneesVisible
 
         val features = extractFeatures(pose, imageWidth, imageHeight, timestampMs)
         if (sequenceBuffer.size >= WINDOW_SIZE) {
@@ -187,7 +195,7 @@ class AIPoseMovementClassifier(
             label = labels[maxIndex],
             confidence = maxConf,
             allProbabilities = probMap,
-            inDistribution = hipsVisible
+            inDistribution = fullBodyVisible
         )
     }
 

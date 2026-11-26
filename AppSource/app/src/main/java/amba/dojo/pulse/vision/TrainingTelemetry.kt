@@ -33,6 +33,13 @@ enum class FighterStance {
     SOUTHPAW  // Right hand lead, Left hand rear
 }
 
+enum class FramingMode(val label: String) {
+    NONE("NO BODY"),
+    TOO_CLOSE("STEP BACK"),
+    HALF_BODY("HALF BODY"),
+    FULL_BODY("FULL BODY")
+}
+
 data class PosePoint(
     val x: Float,
     val y: Float,
@@ -61,5 +68,8 @@ data class TrainingTelemetry(
     val aiConfidence: Float = 0f,
     val landmarks: Map<Int, PosePoint> = emptyMap(),
     val imageWidth: Int = 480,
-    val imageHeight: Int = 640
+    val imageHeight: Int = 640,
+    val framingMode: FramingMode = FramingMode.NONE,
+    val leftArmTracked: Boolean = false,
+    val rightArmTracked: Boolean = false
 )
