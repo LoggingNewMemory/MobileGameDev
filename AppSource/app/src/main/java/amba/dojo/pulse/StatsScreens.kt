@@ -112,7 +112,7 @@ fun ProgresScreen(onNavigate: (String) -> Unit = {}, onNextCourse: () -> Unit = 
     val barHighlight = if (stats.weeklyBarHighlights.isNotEmpty()) stats.weeklyBarHighlights
                        else setOf(2, 4)
 
-    TabScaffold("progres", onNavigate, "Progress", "This Week") {
+    TabScaffold("progres", onNavigate, "Progress") {
         // Weight Tracking card
         DojoCard {
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {

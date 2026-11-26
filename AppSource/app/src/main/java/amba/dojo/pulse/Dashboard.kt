@@ -117,12 +117,6 @@ private fun ActivityOverviewCard() {
             verticalAlignment = Alignment.CenterVertically
         ) {
             MonoLabel("ACTIVITY OVERVIEW", color = Dojo.Text, size = 11, bold = true)
-            Box(
-                Modifier
-                    .clip(RoundedCornerShape(4.dp))
-                    .background(Dojo.SurfaceAlt)
-                    .padding(horizontal = 8.dp, vertical = 3.dp)
-            ) { MonoLabel("This Week", size = 9) }
         }
         Spacer(Modifier.height(16.dp))
         Row(verticalAlignment = Alignment.CenterVertically) {
