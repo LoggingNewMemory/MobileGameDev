@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.compose.animation.core.tween
@@ -30,8 +31,14 @@ import androidx.navigation.NavType
 import androidx.navigation.navArgument
 
 class MainActivity : ComponentActivity() {
+
+    // Track training start time to compute duration
+    private var trainingStartMs: Long = 0L
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        // Init repository once — loads persisted sessions
+        TrainingRepository.init(this)
         enableEdgeToEdge(
             statusBarStyle = SystemBarStyle.dark(Color.TRANSPARENT),
             navigationBarStyle = SystemBarStyle.dark(Color.TRANSPARENT)
@@ -164,7 +171,10 @@ class MainActivity : ComponentActivity() {
                             }
                             composable("training") {
                                 amba.dojo.pulse.vision.TrainingScreen(
-                                    onFinishTraining = {
+                                    onFinishTraining = { telemetry ->
+                                        // Save session result into the repository
+                                        val durationSecs = ((System.currentTimeMillis() - trainingStartMs) / 1000).toInt()
+                                        TrainingRepository.save(telemetry, durationSecs)
                                         navController.popBackStack()
                                     },
                                     onNavigateBack = {
@@ -174,6 +184,8 @@ class MainActivity : ComponentActivity() {
                                         navController.navigate("tutorial")
                                     }
                                 )
+                                // Record start time when training composable enters
+                                LaunchedEffect(Unit) { trainingStartMs = System.currentTimeMillis() }
                             }
                             composable("tutorial") {
                                 BoxingTutorialScreen(

@@ -150,6 +150,9 @@ fun TrainingScreen(
                             val mediaImage = imageProxy.image
                             if (mediaImage != null) {
                                 val rotation = imageProxy.imageInfo.rotationDegrees
+                                // Sensor timestamp of THIS frame (ns → ms). Using wall-clock time at callback
+                                // would fold ML Kit's variable latency into dt and corrupt velocities.
+                                val frameTimestampMs = imageProxy.imageInfo.timestamp / 1_000_000L
                                 val image = InputImage.fromMediaImage(mediaImage, rotation)
 
                                 poseDetector.process(image)
@@ -158,7 +161,7 @@ fun TrainingScreen(
                                         val width = if (isRotated) imageProxy.height else imageProxy.width
                                         val height = if (isRotated) imageProxy.width else imageProxy.height
 
-                                        val updated = classifier.processPose(pose, width, height)
+                                        val updated = classifier.processPose(pose, width, height, frameTimestampMs)
                                         telemetry = updated
 
                                         // Progress tracking for guided training exercise

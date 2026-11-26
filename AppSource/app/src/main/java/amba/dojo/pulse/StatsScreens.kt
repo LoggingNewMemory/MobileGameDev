@@ -16,6 +16,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.*
+import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -78,52 +79,88 @@ private fun TabScaffold(
 /** "Progres" / Progress tab. */
 @Composable
 fun ProgresScreen(onNavigate: (String) -> Unit = {}, onNextCourse: () -> Unit = {}) {
+    // ── Collect live data from repository ──
+    val sessions by TrainingRepository.sessions.collectAsState()
+    val stats = remember(sessions) { TrainingRepository.weeklyStats() }
+
+    // Weight tracking: derive from sessions (simulated drift for display)
+    val baseWeight = 72.5f
+    val weightDelta = if (sessions.isEmpty()) 0f else -(sessions.takeLast(7).size * 0.17f)
+    val currentWeight = baseWeight + weightDelta
+    val weightChange  = weightDelta
+
+    // Build line chart values from weekly session durations (normalised)
+    val chartValues: List<Float> = if (sessions.size >= 2) {
+        val last8 = sessions.takeLast(8)
+        val maxVal = last8.maxOf { it.durationSeconds }.coerceAtLeast(1)
+        last8.map { 1f - (it.durationSeconds.toFloat() / maxVal).coerceIn(0.1f, 1f) }
+    } else {
+        listOf(0.72f, 0.66f, 0.7f, 0.58f, 0.52f, 0.46f, 0.4f, 0.3f)
+    }
+
+    val accuracyLabel = if (stats.avgFormScore > 0) "${stats.avgFormScore}.0%" else "88.4%"
+    val velocityLabel = if (stats.peakVelocityMs > 0f) "${"%.1f".format(stats.peakVelocityMs)} m/s" else "24.5 m/s"
+    val energyTotal   = if (stats.totalStrikes > 0) stats.totalStrikes * 3 else 2_350  // ~3 Cal / punch
+    val targetPunches = if (sessions.isNotEmpty()) sessions.last().totalStrikes else 6_842
+    val goalPunches   = 10_000
+    val targetProgress = (targetPunches.toFloat() / goalPunches).coerceIn(0f, 1f)
+
+    // Bar chart: weekly daily totals
+    val barLabels = listOf("M", "T", "W", "T", "F", "S", "S")
+    val barValues = if (stats.weeklyBarValues.any { it > 0f }) stats.weeklyBarValues
+                    else listOf(0.28f, 0.34f, 0.8f, 0.3f, 1f, 0.5f, 0.2f)
+    val barHighlight = if (stats.weeklyBarHighlights.isNotEmpty()) stats.weeklyBarHighlights
+                       else setOf(2, 4)
+
     TabScaffold("progres", onNavigate, "Progress", "This Week") {
+        // Weight Tracking card
         DojoCard {
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
                 MonoLabel("WEIGHT TRACKING", size = 9)
-                MonoLabel("↓ 1.2 kg", size = 9, color = Dojo.Red, bold = true)
+                val changeSign = if (weightChange <= 0f) "↓" else "↑"
+                val changeAbs  = kotlin.math.abs(weightChange)
+                MonoLabel(
+                    "$changeSign ${"%.1f".format(changeAbs)} kg",
+                    size = 9, color = Dojo.Red, bold = true
+                )
             }
             Spacer(Modifier.height(4.dp))
             Row(verticalAlignment = Alignment.Bottom) {
-                Text("72.5", color = Dojo.Text, fontFamily = Dojo.Mono, fontSize = 26.sp, fontWeight = FontWeight.Bold)
+                Text("${"%.1f".format(currentWeight)}", color = Dojo.Text, fontFamily = Dojo.Mono, fontSize = 26.sp, fontWeight = FontWeight.Bold)
                 Spacer(Modifier.width(4.dp))
                 MonoLabel("kg", size = 11, modifier = Modifier.padding(bottom = 4.dp))
             }
             Spacer(Modifier.height(8.dp))
-            LineChart(
-                values = listOf(0.72f, 0.66f, 0.7f, 0.58f, 0.52f, 0.46f, 0.4f, 0.3f),
-                modifier = Modifier.fillMaxWidth().height(72.dp)
-            )
+            LineChart(values = chartValues, modifier = Modifier.fillMaxWidth().height(72.dp))
         }
 
+        // Stats tiles
         Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-            StatTile("ACCURACY", "88.4%", Modifier.weight(1f))
-            StatTile("VELOCITY", "24.5 m/s", Modifier.weight(1f), valueColor = Dojo.Red)
-            StatTile("FATIGUE", "Normal", Modifier.weight(1f))
+            StatTile("ACCURACY",   accuracyLabel,  Modifier.weight(1f))
+            StatTile("VELOCITY",   velocityLabel,  Modifier.weight(1f), valueColor = Dojo.Red)
+            StatTile("FATIGUE",    if (stats.avgFormScore >= 70) "Normal" else "High", Modifier.weight(1f))
         }
 
+        // Energy burned card
         DojoCard {
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
                 MonoLabel("ENERGY BURNED", size = 9)
-                Text("2,350 Cal", color = Dojo.Red, fontFamily = Dojo.Mono, fontSize = 11.sp, fontWeight = FontWeight.Bold)
+                Text("%,d Cal".format(energyTotal), color = Dojo.Red, fontFamily = Dojo.Mono, fontSize = 11.sp, fontWeight = FontWeight.Bold)
             }
             Spacer(Modifier.height(10.dp))
-            BarChart(
-                values = listOf(0.28f, 0.34f, 0.8f, 0.3f, 1f, 0.5f, 0.2f),
-                labels = listOf("M", "T", "W", "T", "F", "S", "S"),
-                highlight = setOf(2, 4)
-            )
+            BarChart(values = barValues, labels = barLabels, highlight = barHighlight)
         }
 
+        // Today's target card
         DojoCard {
             MonoLabel("TODAY'S TARGET:", size = 9)
             Spacer(Modifier.height(4.dp))
-            Text("6,842 / 10,000", color = Dojo.Red, fontFamily = Dojo.Mono, fontSize = 12.sp, fontWeight = FontWeight.Bold)
+            Text("%,d / %,d".format(targetPunches, goalPunches), color = Dojo.Red, fontFamily = Dojo.Mono, fontSize = 12.sp, fontWeight = FontWeight.Bold)
             Spacer(Modifier.height(8.dp))
-            DojoProgressBar(0.68f)
+            DojoProgressBar(targetProgress)
         }
 
+        // Next course banner
         val shape = RoundedCornerShape(14.dp)
         Box(
             modifier = Modifier
@@ -148,75 +185,109 @@ fun ProgresScreen(onNavigate: (String) -> Unit = {}, onNextCourse: () -> Unit = 
 /** "Aktivitas" / Activity tab. */
 @Composable
 fun AktivitasScreen(onNavigate: (String) -> Unit = {}, onStartTraining: () -> Unit = {}) {
+    // ── Live data ──
+    val sessions by TrainingRepository.sessions.collectAsState()
+    val stats = remember(sessions) { TrainingRepository.weeklyStats() }
+
+    // Calendar week: today highlighted
+    val cal = java.util.Calendar.getInstance()
+    val todayDow = cal.get(java.util.Calendar.DAY_OF_WEEK) // Sun=1..Sat=7
+    val days  = listOf("M", "T", "W", "T", "F", "S", "S")
+    // Build 7 dates for Mon..Sun of current week
+    val mondayCal = cal.clone() as java.util.Calendar
+    mondayCal.set(java.util.Calendar.DAY_OF_WEEK, java.util.Calendar.MONDAY)
+    val dates = (0..6).map { offset ->
+        val c = mondayCal.clone() as java.util.Calendar
+        c.add(java.util.Calendar.DAY_OF_MONTH, offset)
+        c.get(java.util.Calendar.DAY_OF_MONTH)
+    }
+    val todayIndex = ((todayDow + 5) % 7) // Mon=0..Sun=6
+
+    // Last session stats for activity ring
+    val lastSession = sessions.lastOrNull()
+    val punchCount  = lastSession?.totalStrikes ?: 6_842
+    val goalPunch   = 10_000
+    val ringProgress = (punchCount.toFloat() / goalPunch).coerceIn(0f, 1f)
+    val achieved = ringProgress >= 1f
+
+    // Distance/Impact/Active from last session
+    val distanceKm  = lastSession?.let { "%.1f".format(it.totalStrikes * 0.00077f) } ?: "5.3"
+    val impactKg    = lastSession?.let { it.totalStrikes * 3 / 10 } ?: 486
+    val activeLabel = lastSession?.let {
+        val h = it.durationSeconds / 3600; val m = (it.durationSeconds % 3600) / 60
+        if (h > 0) "${h}h ${"%02d".format(m)}m" else "${m}m"
+    } ?: "1h 08m"
+
+    // Heart rate line chart — varies by formScore (simulate)
+    val hrBase = lastSession?.let { (it.formScore * 0.6f + 50f) / 160f } ?: 0.5f
+    val hrValues = listOf(hrBase, hrBase, hrBase, hrBase * 0.3f, hrBase * 1.8f, hrBase,
+                          hrBase, hrBase, hrBase * 0.3f, hrBase * 1.8f, hrBase, hrBase)
+                        .map { it.coerceIn(0.05f, 1f) }
+    val avgHr = lastSession?.let { (it.formScore * 0.6f + 50f).toInt() } ?: 86
+
     TabScaffold("aktivitas", onNavigate, "Activity") {
-        val days = listOf("M", "T", "W", "T", "F", "S", "S")
-        val dates = listOf(22, 23, 24, 25, 26, 27, 28)
+        // Week strip
         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
             days.forEachIndexed { i, d ->
-                val today = dates[i] == 25
+                val isToday = i == todayIndex
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
                     MonoLabel(d, size = 9)
                     Spacer(Modifier.height(6.dp))
                     Box(
-                        modifier = Modifier
-                            .size(30.dp)
-                            .clip(CircleShape)
-                            .background(if (today) Dojo.Red else Color.Transparent),
+                        modifier = Modifier.size(30.dp).clip(CircleShape)
+                            .background(if (isToday) Dojo.Red else Color.Transparent),
                         contentAlignment = Alignment.Center
                     ) {
-                        MonoLabel("${dates[i]}", size = 10, color = if (today) Color.White else Dojo.Muted, bold = today)
+                        MonoLabel("${dates[i]}", size = 10, color = if (isToday) Color.White else Dojo.Muted, bold = isToday)
                     }
                 }
             }
         }
 
+        // Punch ring card
         DojoCard {
             Column(modifier = Modifier.fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally) {
-                ProgressRing(progress = 0.68f, size = 130.dp, stroke = 10.dp) {
+                ProgressRing(progress = ringProgress, size = 130.dp, stroke = 10.dp) {
                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                        Text("6,842", color = Dojo.Text, fontFamily = Dojo.Mono, fontSize = 20.sp, fontWeight = FontWeight.Bold)
+                        Text("%,d".format(punchCount), color = Dojo.Text, fontFamily = Dojo.Mono, fontSize = 20.sp, fontWeight = FontWeight.Bold)
                         MonoLabel("PUNCHES", size = 8)
                     }
                 }
                 Spacer(Modifier.height(14.dp))
                 val pill = RoundedCornerShape(50)
                 Box(
-                    Modifier
-                        .clip(pill)
-                        .border(1.dp, Dojo.Red, pill)
-                        .padding(horizontal = 14.dp, vertical = 5.dp)
-                ) { MonoLabel("Target Achieved", size = 9, color = Dojo.Red) }
+                    Modifier.clip(pill).border(1.dp, Dojo.Red, pill).padding(horizontal = 14.dp, vertical = 5.dp)
+                ) {
+                    MonoLabel(
+                        if (achieved) "Target Achieved" else "%,d / %,d target".format(punchCount, goalPunch),
+                        size = 9, color = Dojo.Red
+                    )
+                }
             }
         }
 
+        // Activity tiles
         Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-            StatTile("DISTANCE", "5.3 km", Modifier.weight(1f))
-            StatTile("IMPACT", "486 kg", Modifier.weight(1f), valueColor = Dojo.Red)
-            StatTile("ACTIVE", "1h 08m", Modifier.weight(1f))
+            StatTile("DISTANCE", "$distanceKm km",    Modifier.weight(1f))
+            StatTile("IMPACT",   "$impactKg kg",       Modifier.weight(1f), valueColor = Dojo.Red)
+            StatTile("ACTIVE",   activeLabel,           Modifier.weight(1f))
         }
 
+        // Heart rate card
         DojoCard {
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
                 MonoLabel("HEART RATE", size = 9)
-                MonoLabel("86 bpm Avg", size = 9, color = Dojo.Red, bold = true)
+                MonoLabel("$avgHr bpm Avg", size = 9, color = Dojo.Red, bold = true)
             }
             Spacer(Modifier.height(8.dp))
-            LineChart(
-                values = listOf(0.5f, 0.5f, 0.5f, 0.15f, 0.9f, 0.5f, 0.5f, 0.5f, 0.15f, 0.9f, 0.5f, 0.5f),
-                modifier = Modifier.fillMaxWidth().height(60.dp),
-                smooth = false
-            )
+            LineChart(values = hrValues, modifier = Modifier.fillMaxWidth().height(60.dp), smooth = false)
         }
 
+        // Start training button
         val shape = RoundedCornerShape(12.dp)
         Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(52.dp)
-                .clip(shape)
-                .border(1.dp, Dojo.Red, shape)
-                .clickable { onStartTraining() }
-                .padding(horizontal = 16.dp),
+            modifier = Modifier.fillMaxWidth().height(52.dp).clip(shape).border(1.dp, Dojo.Red, shape)
+                .clickable { onStartTraining() }.padding(horizontal = 16.dp),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
