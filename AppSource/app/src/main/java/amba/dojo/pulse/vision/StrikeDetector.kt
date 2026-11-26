@@ -95,8 +95,8 @@ data class StrikeDetectorConfig(
     val crossArmSuppressMs: Long = 90L,         // the other arm cannot count within this window
 
     // --- punch validation ---
-    val minPeakSpeed: Float = 2.6f,
-    val minNetDisplacement: Float = 0.24f,
+    val minPeakSpeed: Float = 1.85f,
+    val minNetDisplacement: Float = 0.18f,
     val minPathEfficiency: Float = 0.58f,
     val zWeight: Float = 0.90f,                  // weight forward depth strongly enough for front-camera jabs
 
@@ -489,17 +489,17 @@ class StrikeDetector(private val cfg: StrikeDetectorConfig = StrikeDetectorConfi
         val vertical = m.rise
         val netV = m.netVertical
 
-        // UPPERCUT: upward-dominant punch from guard/chest toward chin/head height.
+        // UPPERCUT: upward-dominant punch from guard/chest/ribs toward solar plexus, chin, or head height.
         // Works both side-on and front-facing (where the fist also travels inward and toward the camera).
         val upper = if (
-            vertical >= 0.20f &&
-            netV >= 0.14f &&
+            vertical >= 0.13f &&
+            netV >= 0.10f &&
             vertical >= 0.55f * m.lateral &&
             m.startHeight >= -0.45f &&
-            m.apexHeight <= 0.20f &&
+            m.apexHeight <= 0.45f &&
             (!elbowKnown || m.elbowAngleAtEnd <= 165f)
         ) {
-            0.50f + 0.50f * ramp(vertical, 0.20f, 0.55f)
+            0.52f + 0.48f * ramp(vertical, 0.13f, 0.38f)
         } else 0f
 
         // HOOK: horizontal arc across the body toward the opposite side at head/shoulder height.
@@ -521,7 +521,7 @@ class StrikeDetector(private val cfg: StrikeDetectorConfig = StrikeDetectorConfi
         val straightBeatsUpper = upper == 0f || (
                 (elbowKnown && m.elbowAngleAtEnd >= 165f && m.reachMax >= 0.90f) ||
                 (m.startHeight <= -0.22f && m.forwardZ >= 0.50f &&
-                        (m.forwardZ >= 1.4f * vertical || m.apexHeight < -0.80f) &&
+                        (m.forwardZ >= 1.6f * vertical || m.apexHeight < -0.80f) &&
                         (!elbowKnown || m.elbowAngleAtEnd >= 120f))
             )
         val straightBeatsHook = hook == 0f ||
