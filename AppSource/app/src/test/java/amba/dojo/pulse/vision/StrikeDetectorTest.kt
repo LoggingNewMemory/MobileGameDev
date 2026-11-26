@@ -633,4 +633,89 @@ class StrikeDetectorTest {
         assertTrue("Expected >= 4 rolling uppercuts, got ${events.size}: $events", events.size >= 4)
         assertTrue(events.all { it.arm == Arm.LEFT && it.kind == StrikeKind.UPPERCUT })
     }
+
+    @Test
+    fun frontFacingJab_upwardCameraAngleWithExtendedElbow_classifiedAsStraightNotUppercut() {
+        // Jab aimed toward a front camera held slightly below eye level: wrist rises ~0.28 SW
+        // while extending forward with elbow >= 150 deg.
+        val jabApex = ArmPose(-0.20f, -0.63f, -0.95f, 155f)
+        val left = path(leftGuard, 500L to leftGuard, 130L to jabApex, 170L to leftGuard, 800L to leftGuard)
+        val events = run(30, 1800, leftFn = left)
+        assertEquals(events.toString(), 1, events.size)
+        assertEquals(Arm.LEFT, events[0].arm)
+        assertEquals(StrikeKind.STRAIGHT, events[0].kind)
+    }
+
+    @Test
+    fun frontFacingJab_aimedTowardCenterlineWithForeshortenedReach_classifiedAsStraightNotHook() {
+        // Jab toward camera center (across ~0.30 SW) with foreshortened reachMax < 0.75 and 140 deg elbow.
+        val centerJab = ArmPose(0.05f, -0.35f, -0.80f, 140f)
+        val left = path(leftGuard, 500L to leftGuard, 130L to centerJab, 170L to leftGuard, 800L to leftGuard)
+        val events = run(30, 1800, leftFn = left)
+        assertEquals(events.toString(), 1, events.size)
+        assertEquals(Arm.LEFT, events[0].arm)
+        assertEquals(StrikeKind.STRAIGHT, events[0].kind)
+    }
+
+    @Test
+    fun frontFacingJab_highApexNearTopEdge_staysTrackedAndCounted() {
+        val scene = Scene(shoulderY = 0.25f * h, swPx = 280f)
+        // High jab briefly clips slightly above y=0 (-0.03 * h).
+        val highJab = ArmPose(-0.25f, -1.25f, -0.95f, 158f)
+        val left = path(leftGuard, 500L to leftGuard, 140L to highJab, 180L to leftGuard, 700L to leftGuard)
+        val events = run(30, 1800, scene = scene, leftFn = left)
+        assertEquals(events.toString(), 1, events.size)
+        assertEquals(Arm.LEFT, events[0].arm)
+        assertEquals(StrikeKind.STRAIGHT, events[0].kind)
+    }
+
+    @Test
+    fun frontFacingJab_rapidTenJabBurst_allCounted() {
+        val legs = ArrayList<Pair<Long, ArmPose>>()
+        legs.add(500L to leftGuard)
+        repeat(10) {
+            legs.add(130L to leftJabExtended)
+            legs.add(160L to leftGuard)
+            legs.add(80L to leftGuard)
+        }
+        legs.add(500L to leftGuard)
+        val left = path(leftGuard, *legs.toTypedArray())
+        val events = run(30, 4800, leftFn = left)
+        assertEquals(events.toString(), 10, events.size)
+        assertTrue(events.all { it.arm == Arm.LEFT && it.kind == StrikeKind.STRAIGHT })
+    }
+
+    @Test
+    fun frontFacingJab_occludedElbowWithCenterlineDrift_classifiedAsStraightNotHook() {
+        // Punching straight at the lens often occludes the elbow behind the wrist (NaN)
+        // while drifting slightly toward centerline (across ~0.30 SW < forwardZ).
+        val occludedCenterJab = ArmPose(0.05f, -0.35f, -0.75f, Float.NaN)
+        val left = path(leftGuard, 500L to leftGuard, 130L to occludedCenterJab, 170L to leftGuard, 800L to leftGuard)
+        val events = run(30, 1800, leftFn = left)
+        assertEquals(events.toString(), 1, events.size)
+        assertEquals(Arm.LEFT, events[0].arm)
+        assertEquals(StrikeKind.STRAIGHT, events[0].kind)
+    }
+
+    @Test
+    fun frontFacingJab_occludedElbowWithSlightUpwardAngle_classifiedAsStraightNotUppercut() {
+        // Punching from chin guard toward camera lens with occluded elbow (NaN) and forwardZ > 1.4 * rise.
+        val occludedUpJab = ArmPose(-0.20f, -0.60f, -0.85f, Float.NaN)
+        val left = path(leftGuard, 500L to leftGuard, 130L to occludedUpJab, 170L to leftGuard, 800L to leftGuard)
+        val events = run(30, 1800, leftFn = left)
+        assertEquals(events.toString(), 1, events.size)
+        assertEquals(Arm.LEFT, events[0].arm)
+        assertEquals(StrikeKind.STRAIGHT, events[0].kind)
+    }
+
+    @Test
+    fun frontFacingJab_compactForwardDepth_stillCounted() {
+        // Compact/fast jab where ML Kit reports only ~0.35 SW forward depth.
+        val compactJab = ArmPose(-0.25f, -0.35f, -0.55f, 135f)
+        val left = path(leftGuard, 500L to leftGuard, 120L to compactJab, 160L to leftGuard, 800L to leftGuard)
+        val events = run(30, 1800, leftFn = left)
+        assertEquals(events.toString(), 1, events.size)
+        assertEquals(Arm.LEFT, events[0].arm)
+        assertEquals(StrikeKind.STRAIGHT, events[0].kind)
+    }
 }

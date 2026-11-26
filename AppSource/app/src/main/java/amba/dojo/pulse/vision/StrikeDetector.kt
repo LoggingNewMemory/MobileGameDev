@@ -97,7 +97,7 @@ data class StrikeDetectorConfig(
     val minPeakSpeed: Float = 2.6f,
     val minNetDisplacement: Float = 0.24f,
     val minPathEfficiency: Float = 0.58f,
-    val zWeight: Float = 0.6f,                  // ML Kit depth is noisier than x/y; down-weight it
+    val zWeight: Float = 0.90f,                  // weight forward depth strongly enough for front-camera jabs
 
     // --- classification ---
     val minAcceptScore: Float = 0.30f,
@@ -308,8 +308,9 @@ class StrikeDetector(private val cfg: StrikeDetectorConfig = StrikeDetectorConfi
     ): ArmUpdate {
         val wrist = frame.joints[wristIdx]
         val elbow = frame.joints[elbowIdx]
+        val topMargin = if (a.tracked) -0.05f * h else 0f
         val inFrame = wrist != null &&
-                wrist.y >= 0f && wrist.y <= h * (1f - cfg.bottomEdgeMargin) &&
+                wrist.y >= topMargin && wrist.y <= h * (1f - cfg.bottomEdgeMargin) &&
                 wrist.x >= w * cfg.sideEdgeMargin && wrist.x <= w * (1f - cfg.sideEdgeMargin)
         val needed = if (a.tracked) cfg.keepLikelihood else cfg.acquireLikelihood
         val good = inFrame && wrist!!.likelihood >= needed
@@ -507,19 +508,29 @@ class StrikeDetector(private val cfg: StrikeDetectorConfig = StrikeDetectorConfi
         val hook = if (hookBase > 0f && elbowKnown && m.elbowAngleAtEnd > 130f) hookBase * 0.60f else hookBase
 
         // STRAIGHT (jab / cross): forward arm extension (not an uppercut or bent-arm hook).
+        // In front-facing camera mode, the elbow is often occluded or foreshortened when punching
+        // straight at the lens, and a jab from chin guard aimed at the camera has forwardZ > rise/across.
+        val straightBeatsUpper = upper == 0f || (
+                (elbowKnown && m.elbowAngleAtEnd >= 165f && m.reachMax >= 0.90f) ||
+                (m.startHeight <= -0.22f && m.forwardZ >= 0.50f &&
+                        (m.forwardZ >= 1.4f * vertical || m.apexHeight < -0.80f) &&
+                        (!elbowKnown || m.elbowAngleAtEnd >= 120f))
+            )
+        val straightBeatsHook = hook == 0f ||
+                (elbowKnown && m.elbowAngleAtEnd > 130f) ||
+                (m.forwardZ >= m.across && m.forwardZ >= 0.35f && (!elbowKnown || m.elbowAngleAtEnd >= 115f))
         val straight = when {
             m.reachGain >= 0.25f && m.reachMax >= 0.75f && netV >= -0.30f &&
                     (!elbowKnown || m.elbowAngleAtEnd >= 130f) &&
-                    !(upper > 0f && (!elbowKnown || m.elbowAngleAtEnd < 165f || m.reachMax < 0.90f)) &&
-                    !(hook > 0f && (!elbowKnown || m.elbowAngleAtEnd <= 130f)) ->
-                0.50f + 0.50f * ramp(m.reachGain, 0.25f, 0.75f)
-            // Front-camera straight fallback: only when neither uppercut nor hook fits, and there is clear forward drive.
-            upper == 0f && hook == 0f &&
+                    straightBeatsUpper && straightBeatsHook ->
+                0.55f + 0.45f * ramp(max(m.reachGain, m.forwardZ * 0.90f), 0.25f, 0.70f)
+            // Front-camera straight: clear forward drive toward camera even when elbow is occluded/foreshortened.
+            straightBeatsUpper && straightBeatsHook &&
                     (m.forwardZ >= 0.20f || m.reachGain >= 0.15f) &&
-                    netV >= -0.20f && m.across >= -0.20f &&
-                    m.apexHeight in -1.2f..0.45f &&
-                    (!elbowKnown || m.elbowAngleAtEnd >= 120f) ->
-                0.35f + 0.25f * ramp(max(m.forwardZ, m.reachGain), 0.15f, 0.70f)
+                    netV >= -0.25f && m.across >= -0.45f &&
+                    m.apexHeight in -1.6f..0.45f &&
+                    (!elbowKnown || m.elbowAngleAtEnd >= 115f) ->
+                0.55f + 0.45f * ramp(max(m.forwardZ * 0.90f, m.reachGain), 0.20f, 0.70f)
             else -> 0f
         }
         return mapOf(StrikeKind.STRAIGHT to straight, StrikeKind.HOOK to hook, StrikeKind.UPPERCUT to upper)
