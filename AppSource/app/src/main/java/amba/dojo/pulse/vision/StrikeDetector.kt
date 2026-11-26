@@ -84,15 +84,15 @@ data class StrikeDetectorConfig(
 
     // --- stroke segmentation ---
     val startSpeed: Float = 1.6f,
-    val endSpeedFraction: Float = 0.35f,        // stroke ends when speed falls below 35% of its peak ...
+    val endSpeedFraction: Float = 0.50f,        // stroke ends at the apex when speed falls below 50% of its peak ...
     val endSpeedFloor: Float = 0.9f,            // ... or below this absolute speed
-    val reversalFraction: Float = 0.80f,        // or when distance from launch drops below 80% of its max
+    val reversalFraction: Float = 0.97f,        // or as soon as distance from launch peaks (before retraction)
     val maxStrokeMs: Long = 700L,
     val rearmSpeed: Float = 1.2f,
     val rearmFrames: Int = 1,
-    val minRecoveryMs: Long = 100L,
-    val maxRecoveryMs: Long = 450L,
-    val crossArmSuppressMs: Long = 90L,         // the other arm cannot count within this window
+    val minRecoveryMs: Long = 40L,
+    val maxRecoveryMs: Long = 250L,
+    val crossArmSuppressMs: Long = 0L,         // independent arms allow rapid 1-2 combos without lockout
 
     // --- punch validation ---
     val minPeakSpeed: Float = 1.85f,
@@ -178,6 +178,8 @@ class StrikeDetector(private val cfg: StrikeDetectorConfig = StrikeDetectorConfi
         var strokeEndT = 0L
         var lastStrokeDir = Vec3(0f, 0f, 0f)
         var lowSpeedFrames = 0
+        var minSpeedSinceEnd = Float.MAX_VALUE
+        var wasRetracting = false
         val fx = OneEuro(cfg.filterMinCutoffHz)
         val fy = OneEuro(cfg.filterMinCutoffHz)
         val fz = OneEuro(cfg.zFilterMinCutoffHz)
@@ -391,12 +393,18 @@ class StrikeDetector(private val cfg: StrikeDetectorConfig = StrikeDetectorConfi
                 a.stroke.add(s)
                 val anchor = a.stroke.first()
                 val peak = a.stroke.maxOf { it.speed }
-                val maxDist = a.stroke.maxOf { wdist(it.p - anchor.p) }
+                var maxDist = 0f
+                var maxDistT = anchor.t
+                for (sample in a.stroke) {
+                    val d = wdist(sample.p - anchor.p)
+                    if (d > maxDist) { maxDist = d; maxDistT = sample.t }
+                }
                 val curDist = wdist(s.p - anchor.p)
                 val decelerated = s.speed < max(cfg.endSpeedFloor, peak * cfg.endSpeedFraction)
                 val reversed = maxDist > 0.1f && curDist < maxDist * cfg.reversalFraction
+                val stalledAtApex = maxDist >= cfg.minNetDisplacement && peak >= cfg.minPeakSpeed && (s.t - maxDistT >= 120L)
                 val timedOut = s.t - anchor.t > cfg.maxStrokeMs
-                if (decelerated || reversed || timedOut) {
+                if (decelerated || reversed || stalledAtApex || timedOut) {
                     val strokeDir = s.p - anchor.p
                     val metrics = measure(a.stroke)
                     a.stroke.clear()
@@ -411,21 +419,31 @@ class StrikeDetector(private val cfg: StrikeDetectorConfig = StrikeDetectorConfi
                     a.strokeEndT = s.t
                     a.lastStrokeDir = strokeDir
                     a.lowSpeedFrames = 0
+                    a.minSpeedSinceEnd = s.speed
+                    a.wasRetracting = false
                     return event
                 }
                 return null
             }
             Phase.RECOVERY -> {
                 a.lowSpeedFrames = if (s.speed < cfg.rearmSpeed) a.lowSpeedFrames + 1 else 0
-                val elapsed = s.t - a.strokeEndT
-                val resumedForward = if (a.samples.size >= 2) {
-                    val prev = a.samples[a.samples.size - 2]
+                if (s.speed < a.minSpeedSinceEnd) a.minSpeedSinceEnd = s.speed
+                val prev = if (a.samples.size >= 2) a.samples[a.samples.size - 2] else null
+                val dot = if (prev != null) {
                     val d = s.p - prev.p
                     val dir = a.lastStrokeDir
-                    (d.x * dir.x + d.y * dir.y + d.z * dir.z) > 0f
-                } else false
+                    d.x * dir.x + d.y * dir.y + d.z * dir.z
+                } else 0f
+                if (dot < 0f) a.wasRetracting = true
+                val elapsed = s.t - a.strokeEndT
+                val slowed = a.lowSpeedFrames >= cfg.rearmFrames
+                val turnedAround = a.wasRetracting && dot > 0f
+                val newBurst = prev != null &&
+                        s.speed > prev.speed * 1.15f &&
+                        s.speed >= cfg.startSpeed &&
+                        a.minSpeedSinceEnd < s.speed * 0.75f
                 if (elapsed >= cfg.minRecoveryMs &&
-                    (a.lowSpeedFrames >= cfg.rearmFrames || resumedForward || elapsed >= cfg.maxRecoveryMs)
+                    (slowed || turnedAround || newBurst || elapsed >= cfg.maxRecoveryMs)
                 ) {
                     a.phase = Phase.READY
                 }
