@@ -239,9 +239,11 @@ fun WorkoutDetailScreen(
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Box(modifier = Modifier.clickable { onNavigateBack() }) {
-                    IconBadge(Icons.Default.ArrowBackIosNew, size = 34.dp)
-                }
+                IconBadge(
+                    icon = Icons.Default.ArrowBackIosNew,
+                    size = 34.dp,
+                    onClick = onNavigateBack
+                )
                 Text(info.series, color = Dojo.Text, fontSize = 14.sp, fontWeight = FontWeight.Bold)
                 IconBadge(Icons.Default.MoreHoriz, size = 34.dp)
             }
