@@ -65,8 +65,8 @@ data class StrikeDetectorConfig(
     // --- framing ---
     val minShoulderLikelihood: Float = 0.45f,
     val maxShoulderGapFrames: Int = 3,          // tolerate brief shoulder occlusion during rotational punches
-    val tooCloseShoulderY: Float = 0.70f,       // shoulder line in the bottom 30% → bust/selfie framing
-    val tooCloseShoulderWidth: Float = 0.78f,   // shoulders span > 78% of the frame width
+    val tooCloseShoulderY: Float = 0.85f,       // shoulder line in the bottom 15% → bust/selfie framing
+    val tooCloseShoulderWidth: Float = 0.92f,   // shoulders span > 92% of the frame width
 
     // --- wrist visibility (hysteresis) ---
     val acquireLikelihood: Float = 0.60f,       // needed for N frames in a row to start tracking a wrist

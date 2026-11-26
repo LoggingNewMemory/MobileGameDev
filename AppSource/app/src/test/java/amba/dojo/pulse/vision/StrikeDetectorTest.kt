@@ -183,7 +183,7 @@ class StrikeDetectorTest {
     @Test
     fun noShoulders_orTooClose_noStrikes() {
         val det = StrikeDetector()
-        val scene = Scene(shoulderY = 0.75f * h, swPx = 300f)
+        val scene = Scene(shoulderY = 0.88f * h, swPx = 300f)
         val left = path(leftGuard, 500L to leftGuard, 120L to ArmPose(-0.2f, -0.5f, -1.2f, 165f), 400L to leftGuard)
         var count = 0
         var t = 0L

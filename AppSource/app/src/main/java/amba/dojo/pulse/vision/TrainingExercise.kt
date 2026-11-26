@@ -68,9 +68,9 @@ object PresetExercises {
                 title = "Do 15 Left Strikes",
                 targetCount = 15,
                 targetPunchName = "Left Strikes",
-                instruction = "Straight power: drive rear hand straight with full torso rotation.",
+                instruction = "Straight power: drive left hand straight with full torso rotation.",
                 badgeColor = Color(0xFFFFB74D),
-                matches = { it == PunchType.STRIKE }
+                matches = { it == PunchType.LEFT_JAB }
             )
         )
     )

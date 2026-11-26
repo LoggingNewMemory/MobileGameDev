@@ -120,7 +120,7 @@ class AIPoseMovementClassifier(
             1f
         }
 
-        val isFramedTooClose = avgShoulderY > 0.70f
+        val isFramedTooClose = avgShoulderY > 0.85f
 
         // Check if hands are present and elevated (not resting off-screen)
         val isLeftWristInFrame = lWrist != null && lWristLikelihood >= 0.40f && lWrist.position.y < (heightF * 0.97f)
