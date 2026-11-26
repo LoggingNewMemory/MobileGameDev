@@ -27,7 +27,7 @@ object PresetExercises {
      * - Do 20 Uppercuts
      * - Do 15 Left Jabs
      * - Do 10 Left Jabs
-     * - Do 15 Power Strikes
+     * - Do 15 Left Strikes
      */
     val DRILL_PRECISION_COMBO = TrainingExerciseRoutine(
         id = "combo_precision",
@@ -65,9 +65,9 @@ object PresetExercises {
             ),
             ExerciseStep(
                 id = "step_4_strikes",
-                title = "Do 15 Strikes / Cross",
+                title = "Do 15 Left Strikes",
                 targetCount = 15,
-                targetPunchName = "Strikes",
+                targetPunchName = "Left Strikes",
                 instruction = "Straight power: drive rear hand straight with full torso rotation.",
                 badgeColor = Color(0xFFFFB74D),
                 matches = { it == PunchType.STRIKE }
