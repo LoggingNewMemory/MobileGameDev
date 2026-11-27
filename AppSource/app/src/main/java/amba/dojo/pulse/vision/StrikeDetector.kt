@@ -95,14 +95,14 @@ data class StrikeDetectorConfig(
     val crossArmSuppressMs: Long = 0L,         // independent arms allow rapid 1-2 combos without lockout
 
     // --- punch validation ---
-    val minPeakSpeed: Float = 2.50f,
-    val minNetDisplacement: Float = 0.26f,
-    val minPathEfficiency: Float = 0.62f,
-    val zWeight: Float = 0.90f,                  // weight forward depth strongly enough for front-camera jabs
+    val minPeakSpeed: Float = 2.25f,
+    val minNetDisplacement: Float = 0.22f,
+    val minPathEfficiency: Float = 0.60f,
+    val zWeight: Float = 0.60f,                  // balance front-camera z drive against BlazePose z noise
 
     // --- classification ---
     val minAcceptScore: Float = 0.35f,
-    val aiWeight: Float = 0.30f
+    val aiWeight: Float = 0.35f
 )
 
 /** Diagnostics for one candidate stroke, useful for logging and threshold tuning. */
@@ -493,8 +493,10 @@ class StrikeDetector(private val cfg: StrikeDetectorConfig = StrikeDetectorConfi
 
     private fun isBallistic(m: StrokeMetrics): Boolean {
         val dist2d = dist2(m.lateral, m.netVertical)
-        val pureDepthJitter = dist2d < 0.10f && m.forwardZ < 0.25f
+        // Reject pure depth jitter when 2D image travel is negligible, and downward guard-settle drops.
+        val pureDepthJitter = dist2d < 0.12f
         return !pureDepthJitter &&
+                m.netVertical >= -0.15f &&
                 m.peakSpeed >= cfg.minPeakSpeed &&
                 m.netDisplacement >= cfg.minNetDisplacement &&
                 m.pathEfficiency >= cfg.minPathEfficiency &&
@@ -506,17 +508,20 @@ class StrikeDetector(private val cfg: StrikeDetectorConfig = StrikeDetectorConfi
         val elbowKnown = !m.elbowAngleAtEnd.isNaN()
         val vertical = m.rise
         val netV = m.netVertical
+        val zScaled = m.forwardZ * cfg.zWeight
 
-        // UPPERCUT: vertical-dominant punch rising from chest/ribs toward chin/shoulder height with bent elbow.
+        // UPPERCUT: vertical-dominant punch rising from chest/ribs to shoulder/chin height with bent elbow.
+        // forwardZ >= -0.25f rejects straight-punch retractions and guard-raise resets moving backward.
         val upper = if (
-            vertical >= 0.22f &&
-            netV >= 0.18f &&
-            vertical >= 0.85f * m.lateral &&
-            m.startHeight >= -0.15f &&
-            m.apexHeight <= 0.15f &&
-            (!elbowKnown || m.elbowAngleAtEnd <= 145f)
+            vertical >= 0.36f &&
+            netV >= 0.28f &&
+            vertical >= 0.72f * m.lateral &&
+            m.startHeight >= -0.10f &&
+            m.apexHeight <= 0.02f &&
+            m.forwardZ >= -0.25f &&
+            (!elbowKnown || m.elbowAngleAtEnd in 60f..142f)
         ) {
-            0.52f + 0.48f * ramp(vertical, 0.22f, 0.45f)
+            0.52f + 0.48f * ramp(vertical, 0.36f, 0.65f)
         } else 0f
 
         // HOOK: horizontal arc across the body toward the opposite side at head/shoulder height.
@@ -530,33 +535,38 @@ class StrikeDetector(private val cfg: StrikeDetectorConfig = StrikeDetectorConfi
             0.50f + 0.50f * ramp(m.across, 0.25f, 0.75f)
         } else 0f
         // An extended arm (> 130°) is more likely a cross aimed at the centerline than a bent-arm hook.
-        val hook = if (hookBase > 0f && elbowKnown && m.elbowAngleAtEnd > 130f) hookBase * 0.60f else hookBase
+        val hookAdj = if (hookBase > 0f && elbowKnown && m.elbowAngleAtEnd > 130f) hookBase * 0.60f else hookBase
+        // A deep low-to-high upward scoop (rise >= 0.55 from chest/ribs) is an uppercut rather than a hook.
+        val hook = if (hookAdj > 0f && upper > 0f && vertical >= 0.55f && m.startHeight >= 0.35f) hookAdj * 0.75f else hookAdj
 
         // STRAIGHT (jab / cross): forward arm extension (not an uppercut or bent-arm hook).
         // In front-facing camera mode, the elbow is often occluded or foreshortened when punching
-        // straight at the lens, and a jab from chin guard aimed at the camera has forwardZ > rise/across.
-        val straightBeatsUpper = upper == 0f || (
+        // straight at the lens, and a jab from chin guard aimed at the camera has zScaled > rise/across.
+        val clearUpperScoop = upper > 0f && m.startHeight >= 0.15f && vertical >= 0.42f && (!elbowKnown || m.elbowAngleAtEnd < 145f)
+        val straightBeatsUpper = upper == 0f || (!clearUpperScoop && (
                 (elbowKnown && m.elbowAngleAtEnd >= 145f && m.reachMax >= 0.85f) ||
-                (m.forwardZ >= 1.25f * vertical && m.forwardZ >= 0.35f && (!elbowKnown || m.elbowAngleAtEnd >= 120f)) ||
-                (m.startHeight <= -0.22f && m.forwardZ >= 0.40f &&
-                        (m.forwardZ >= 1.4f * vertical || m.apexHeight < -0.80f) &&
+                (zScaled >= 1.05f * vertical && m.forwardZ >= 0.45f && (!elbowKnown || m.elbowAngleAtEnd >= 120f)) ||
+                (m.startHeight <= -0.22f && m.forwardZ >= 0.45f &&
+                        (zScaled >= 1.2f * vertical || m.apexHeight < -0.80f) &&
                         (!elbowKnown || m.elbowAngleAtEnd >= 120f))
-            )
+            ))
         val straightBeatsHook = hook == 0f ||
                 (elbowKnown && m.elbowAngleAtEnd > 130f) ||
-                (m.forwardZ >= m.across && m.forwardZ >= 0.35f && (!elbowKnown || m.elbowAngleAtEnd >= 115f))
+                (m.reachGain >= 0.35f && m.reachMax >= 1.10f && (!elbowKnown || m.elbowAngleAtEnd >= 120f)) ||
+                (zScaled >= m.across && m.forwardZ >= 0.45f && (!elbowKnown || m.elbowAngleAtEnd >= 115f))
         val straight = when {
             m.reachGain >= 0.25f && m.reachMax >= 0.75f && netV >= -0.30f &&
+                    m.apexHeight in -1.6f..0.45f &&
                     (!elbowKnown || m.elbowAngleAtEnd >= 130f) &&
                     straightBeatsUpper && straightBeatsHook ->
-                0.55f + 0.45f * ramp(max(m.reachGain, m.forwardZ * 0.90f), 0.25f, 0.70f)
+                0.55f + 0.45f * ramp(max(m.reachGain, zScaled), 0.25f, 0.70f)
             // Front-camera straight: clear forward drive toward camera even when elbow is occluded/foreshortened.
             straightBeatsUpper && straightBeatsHook &&
-                    (m.forwardZ >= 0.20f || m.reachGain >= 0.15f) &&
+                    (zScaled >= 0.18f || (m.reachGain >= 0.20f && m.forwardZ >= -0.20f)) &&
                     netV >= -0.25f && m.across >= -0.45f &&
                     m.apexHeight in -1.6f..0.45f &&
                     (!elbowKnown || m.elbowAngleAtEnd >= 115f) ->
-                0.55f + 0.45f * ramp(max(m.forwardZ * 0.90f, m.reachGain), 0.20f, 0.70f)
+                0.55f + 0.45f * ramp(max(zScaled, m.reachGain), 0.18f, 0.70f)
             else -> 0f
         }
         return mapOf(StrikeKind.STRAIGHT to straight, StrikeKind.HOOK to hook, StrikeKind.UPPERCUT to upper)

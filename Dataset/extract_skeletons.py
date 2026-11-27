@@ -81,6 +81,8 @@ def make_landmarker(model_path, min_conf):
 def extract_video(path, model_path, max_side, min_conf, preview_path=None):
     mp, landmarker = make_landmarker(model_path, min_conf)  # new instance per video: VIDEO mode needs monotonic ts
     cap = cv2.VideoCapture(path)
+    cap.set(cv2.CAP_PROP_ORIENTATION_AUTO, 0)
+    ori = int(round(cap.get(cv2.CAP_PROP_ORIENTATION_META) or 0))
     fps = cap.get(cv2.CAP_PROP_FPS) or 30.0
     writer = None
     t_list, lm_list, pr_list, wl_list = [], [], [], []
@@ -90,6 +92,12 @@ def extract_video(path, model_path, max_side, min_conf, preview_path=None):
         ok, frame = cap.read()
         if not ok:
             break
+        if ori == 90:
+            frame = cv2.rotate(frame, cv2.ROTATE_90_CLOCKWISE)
+        elif ori == 180:
+            frame = cv2.rotate(frame, cv2.ROTATE_180)
+        elif ori == 270:
+            frame = cv2.rotate(frame, cv2.ROTATE_90_COUNTERCLOCKWISE)
         pos_ms = cap.get(cv2.CAP_PROP_POS_MSEC)
         ts = int(round(pos_ms)) if pos_ms and pos_ms > 0 else int(round(frame_idx * 1000.0 / fps))
         if ts <= last_ts:

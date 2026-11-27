@@ -43,7 +43,7 @@ class PunchClassifier(
     private var currentPunch = PunchType.IDLE
     private var currentConfidence = 0f
     private var feedback = "Stance ready. Guard up!"
-    private var lastAi: MovementPrediction? = null
+    private val aiRecentWindow = ArrayDeque<Map<String, Float>>(3)
 
     fun processPose(
         pose: Pose,
@@ -63,12 +63,26 @@ class PunchClassifier(
             joints[lm.landmarkType] = Joint(lm.position.x, lm.position.y, lm.position3D.z, lm.inFrameLikelihood)
         }
 
-        // Feed the sequence model every frame; keep its latest output for fusion.
+        // Feed the sequence model on every frame and keep a 3-frame (~100ms) peak probability window
+        // when in-distribution so StrikeDetector at deceleration sees the apex AI class probability.
         val ai = aiClassifier?.processPose(pose, imageWidth, imageHeight, timestampMs)
-        if (ai != null) lastAi = ai
-        val aiProbs = lastAi?.takeIf { it.inDistribution && it.allProbabilities.isNotEmpty() }?.let { pred ->
-            AiStrikeProbabilities { arm, kind -> pred.allProbabilities[aiLabelFor(arm, kind)] ?: 0f }
+        if (ai != null && ai.inDistribution && ai.allProbabilities.isNotEmpty()) {
+            if (aiRecentWindow.size >= 3) aiRecentWindow.removeFirst()
+            aiRecentWindow.addLast(ai.allProbabilities)
+        } else {
+            aiRecentWindow.clear()
         }
+        val aiProbs = if (aiRecentWindow.isNotEmpty()) {
+            AiStrikeProbabilities { arm, kind ->
+                val label = aiLabelFor(arm, kind)
+                var best = 0f
+                for (probs in aiRecentWindow) {
+                    val p = probs[label] ?: 0f
+                    if (p > best) best = p
+                }
+                best
+            }
+        } else null
 
         val result = detector.process(PoseFrame(timestampMs, imageWidth, imageHeight, joints), aiProbs)
 
@@ -166,7 +180,7 @@ class PunchClassifier(
     /** Resets tracking/motion buffers (e.g. on camera switch) without clearing session strike counts. */
     fun resetTrackingState() {
         pendingGuardReturn = null
-        lastAi = null
+        aiRecentWindow.clear()
         detector.reset()
         aiClassifier?.reset()
     }
@@ -180,7 +194,7 @@ class PunchClassifier(
         feedback = "Stance ready. Guard up!"
         lastStrikeTimestamp = Long.MIN_VALUE / 2
         pendingGuardReturn = null
-        lastAi = null
+        aiRecentWindow.clear()
         detector.reset()
         aiClassifier?.reset()
     }

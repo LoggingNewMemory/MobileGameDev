@@ -33,6 +33,8 @@ class AIPoseMovementClassifier(
         const val FEATURE_DIM = 68
         /** Velocity features are expressed per 1/30 s so they match training regardless of camera FPS. */
         const val REFERENCE_FRAME_MS = 1000f / 30f
+        /** Minimum interval between buffered sequence steps so 60 FPS cameras stay aligned to the ~30 FPS window. */
+        private const val MIN_BUFFER_STEP_MS = 25L
 
         private val KEY_LANDMARKS = intArrayOf(
             PoseLandmark.NOSE,            // 0
@@ -61,6 +63,7 @@ class AIPoseMovementClassifier(
     private val prevWristL = FloatArray(3)
     private val prevWristR = FloatArray(3)
     private var prevTimestampMs = 0L
+    private var lastPrediction: MovementPrediction? = null
 
     init {
         try {
@@ -158,6 +161,19 @@ class AIPoseMovementClassifier(
         val kneesVisible = inBounds(lKnee) || inBounds(rKnee)
         val fullBodyVisible = hipsVisible && kneesVisible
 
+        if (hasPrevLandmarks) {
+            val dt = timestampMs - prevTimestampMs
+            if (dt < 0L) {
+                reset()
+            } else if (dt > 250L) {
+                // Discontinuity (app pause / camera drop): restart a clean contiguous 16-frame window.
+                reset()
+            } else if (dt < MIN_BUFFER_STEP_MS) {
+                // On 60 FPS cameras, throttle sequence buffer pushes so 16 frames still span ~0.53 s.
+                return lastPrediction
+            }
+        }
+
         val features = extractFeatures(pose, imageWidth, imageHeight, timestampMs)
         if (sequenceBuffer.size >= WINDOW_SIZE) {
             sequenceBuffer.removeFirst()
@@ -191,12 +207,14 @@ class AIPoseMovementClassifier(
             }
         }
 
-        return MovementPrediction(
+        val pred = MovementPrediction(
             label = labels[maxIndex],
             confidence = maxConf,
             allProbabilities = probMap,
             inDistribution = fullBodyVisible
         )
+        lastPrediction = pred
+        return pred
     }
 
     private fun extractFeatures(pose: Pose, imageWidth: Int, imageHeight: Int, timestampMs: Long): FloatArray {
@@ -205,13 +223,14 @@ class AIPoseMovementClassifier(
         val widthF = if (imageWidth > 0) imageWidth.toFloat() else 1f
         val heightF = if (imageHeight > 0) imageHeight.toFloat() else 1f
 
-        // Convert 33 landmarks to normalized [0, 1] coordinate space matching MediaPipe Python
+        // Convert 33 landmarks to isotropic width-normalized coordinates matching to_isotropic() in Python
+        // so 3D angles, torso scale, and velocities are aspect-ratio invariant (4:3 CameraX vs 9:16 video).
         val pts = Array(33) { FloatArray(3) }
         for (idx in 0 until 33) {
             val lm = pose.getPoseLandmark(idx)
             if (lm != null) {
                 pts[idx][0] = lm.position.x / widthF
-                pts[idx][1] = lm.position.y / heightF
+                pts[idx][1] = lm.position.y / widthF
                 pts[idx][2] = lm.position3D.z / widthF
             }
         }
@@ -347,6 +366,7 @@ class AIPoseMovementClassifier(
     fun reset() {
         sequenceBuffer.clear()
         hasPrevLandmarks = false
+        lastPrediction = null
     }
 
     fun close() {

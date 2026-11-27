@@ -94,8 +94,8 @@ class StrikeDetectorTest {
         val ev = runLeftStroke(
             detector,
             ai = null,
-            dxPerStep = 0f,
-            dyPerStep = -2f,
+            dxPerStep = -4f,
+            dyPerStep = -3f,
             dzPerStep = -22f,
             elbowX = 255f,
             elbowY = 165f,
@@ -109,19 +109,19 @@ class StrikeDetectorTest {
     @Test
     fun `detects true uppercut from chest height to chin`() {
         val detector = StrikeDetector()
-        // Starts below shoulder (y=210 => startHeight=+0.42 SW), rises steeply to y=135 (apexHeight=-0.21 SW), bent elbow
+        // Starts below shoulder (y=215 => startHeight=+0.46 SW), rises steeply to y=135 (apexHeight=-0.21 SW), elbow ~100 deg
         val ev = runLeftStroke(
             detector,
             ai = null,
             startX = 250f,
-            startY = 210f,
+            startY = 215f,
             startZ = -20f,
             dxPerStep = -2f,
             dyPerStep = -13f,
-            dzPerStep = -4f,
-            elbowX = 265f,
-            elbowY = 220f,
-            elbowZ = -10f
+            dzPerStep = -12f,
+            elbowX = 250f,
+            elbowY = 205f,
+            elbowZ = -65f
         )
         assertNotNull(ev)
         assertEquals(StrikeKind.UPPERCUT, ev!!.kind)
@@ -137,9 +137,9 @@ class StrikeDetectorTest {
             startX = 250f,
             startY = 120f,
             startZ = -20f,
-            dxPerStep = 0f,
+            dxPerStep = -3f,
             dyPerStep = -4f,
-            dzPerStep = -20f,
+            dzPerStep = -22f,
             elbowX = 255f,
             elbowY = 135f,
             elbowZ = -80f

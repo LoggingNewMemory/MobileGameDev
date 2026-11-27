@@ -43,11 +43,7 @@ LABEL_ARM = {
 
 
 def resolve_video_label(category, filename):
-    """Known mislabelled legacy recordings (kept from train.py)."""
-    if filename.startswith(("IMG_3668", "IMG_3669", "IMG_3673")):
-        return "Left Uppercut"
-    if filename.startswith(("IMG_3675", "IMG_3677", "IMG_3678")):
-        return "Left Jab"
+    """Folder names match the actual movement recorded in each video."""
     return category
 
 
@@ -95,6 +91,15 @@ def frame_features(pts, prev_pts=None, dt_s=None):
         f += [0.0] * 6
     out = np.asarray(f, dtype=np.float32)
     assert out.shape[0] == FEATURE_DIM, out.shape
+    return out
+
+
+def to_isotropic(seq, width, height):
+    """Scale y by height/width so x, y, z share uniform square-pixel proportions (matching Kotlin)."""
+    if width <= 0 or height <= 0 or width == height:
+        return seq
+    out = seq.copy()
+    out[..., 1] *= float(height) / float(width)
     return out
 
 

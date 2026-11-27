@@ -39,8 +39,9 @@ import numpy as np
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from pose_features import (BOXING_LABELS, FEATURE_DIM, IDLE_LABEL, LABEL_ARM, LANDMARK_INDICES,  # noqa: E402
-                           MIRROR_LABEL, REFERENCE_FPS, WINDOW_SIZE, L_WRI, R_WRI, mirror_sequence,
-                           resample_uniform, sequence_features, wrist_speed_sw)
+                           MIRROR_LABEL, REFERENCE_FPS, WINDOW_SIZE, L_SHO, R_SHO, L_WRI, R_WRI,
+                           mirror_sequence, resample_uniform, sequence_features, to_isotropic,
+                           wrist_speed_sw)
 
 PEAK_SPEED_SW = 3.0        # same order as StrikeDetectorConfig.minPeakSpeed
 IDLE_MAX_SPEED_SW = 1.2    # both wrists slower than this for the whole window → guard / idle
@@ -51,7 +52,7 @@ END_OFFSETS = (1, 2, 3, 4, 5)
 # Data loading
 # ----------------------------------------------------------------------------------------------------------
 
-def load_tracks(skeleton_root):
+def load_tracks(skeleton_root, min_arm_vis=0.35):
     tracks = []
     for path in sorted(glob.glob(os.path.join(skeleton_root, "**", "*.npz"), recursive=True)):
         if os.path.basename(os.path.dirname(path)) == "_models":
@@ -61,8 +62,16 @@ def load_tracks(skeleton_root):
         if label not in BOXING_LABELS:
             print(f"[WARN] {path}: unknown label '{label}', skipped")
             continue
-        segs = resample_uniform(d["t_ms"], d["landmarks"], REFERENCE_FPS)
-        segs = [s for s in segs if len(s) >= WINDOW_SIZE + 6]
+        lm = d["landmarks"]
+        if label in LABEL_ARM:
+            arm_vis = float(np.nanmean(lm[:, LABEL_ARM[label], 3]))
+            if arm_vis < min_arm_vis:
+                print(f"[SKIP] {d['source']} ({label}): punching wrist visibility {arm_vis:.2f} < {min_arm_vis}")
+                continue
+        w = int(d["width"]) if "width" in d else 0
+        h = int(d["height"]) if "height" in d else 0
+        segs = resample_uniform(d["t_ms"], lm, REFERENCE_FPS)
+        segs = [to_isotropic(s, w, h) for s in segs if len(s) >= WINDOW_SIZE + 6]
         if segs:
             tracks.append(dict(path=path, video=str(d["source"]), label=label, segments=segs))
     return tracks
@@ -74,6 +83,14 @@ def load_tracks(skeleton_root):
 
 def augment(seq, rng):
     s = seq.copy()
+    # 3D yaw around torso vertical Y-axis (±45°) to cover oblique stances (MediaPipe z ~2.2x x scale)
+    yaw = np.deg2rad(rng.uniform(-45, 45))
+    cy, sy = np.cos(yaw), np.sin(yaw)
+    cxz = np.array([((s[:, 11, 0] + s[:, 12, 0]) / 2).mean(), ((s[:, 11, 2] + s[:, 12, 2]) / 2).mean()], dtype=np.float32)
+    dx = s[..., 0] - cxz[0]
+    dz = (s[..., 2] - cxz[1]) * 0.45
+    s[..., 0] = cxz[0] + cy * dx - sy * dz
+    s[..., 2] = cxz[1] + (sy * dx + cy * dz) * (1.0 / 0.45)
     # in-plane rotation (camera roll) about the shoulder midpoint, ±10°
     ang = np.deg2rad(rng.uniform(-10, 10))
     c, si = np.cos(ang), np.sin(ang)
@@ -85,8 +102,8 @@ def augment(seq, rng):
     k = rng.uniform(0.8, 1.2)
     s[..., :3] = (s[..., :3] - np.r_[centre, 0]) * k + np.r_[centre, 0]
     # landmark jitter: ML Kit is noisier than MediaPipe-heavy; z noisier than x/y
-    s[..., 0:2] += rng.normal(0, 0.006, s[..., 0:2].shape)
-    s[..., 2] += rng.normal(0, 0.015, s[..., 2].shape)
+    s[..., 0:2] += rng.normal(0, 0.008, s[..., 0:2].shape)
+    s[..., 2] += rng.normal(0, 0.018, s[..., 2].shape)
     # time warp (punch speed variation) 0.8×–1.25×
     warp = rng.uniform(0.8, 1.25)
     t_src = np.arange(len(s))
@@ -100,6 +117,37 @@ def augment(seq, rng):
         for i in np.where(drop)[0]:
             s[i] = s[i - 1]
     return s.astype(np.float32)
+
+
+def is_outbound_punch(s, pk, lab):
+    """True if the peak corresponds to an outbound strike rather than a retraction or wind-up dip."""
+    w_idx = LABEL_ARM[lab]
+    s_idx = L_SHO if w_idx == L_WRI else R_SHO
+    o_idx = R_SHO if w_idx == L_WRI else L_SHO
+    v = wrist_speed_sw(s, w_idx)
+    a = pk
+    while a > 0 and v[a - 1] < v[a] and pk - a < 10:
+        a -= 1
+    b = pk
+    while b < len(v) - 1 and v[b + 1] < v[b] and b - pk < 8:
+        b += 1
+    if b - a < 2:
+        return False
+    sw = float(np.linalg.norm(s[a, L_SHO, :2] - s[a, R_SHO, :2])) + 1e-6
+    disp = float(np.linalg.norm(s[b, w_idx, :3] - s[a, w_idx, :3])) / sw
+    if disp < 0.20:
+        return False
+    rise = float(s[a, w_idx, 1] - s[b, w_idx, 1]) / sw
+    reach_a = float(np.linalg.norm(s[a, w_idx, :3] - s[a, s_idx, :3])) / sw
+    reach_b = float(np.linalg.norm(s[b, w_idx, :3] - s[b, s_idx, :3])) / sw
+    dz = float(s[a, w_idx, 2] - s[b, w_idx, 2]) / sw
+    dx_sign = 1.0 if s[a, o_idx, 0] >= s[a, s_idx, 0] else -1.0
+    across = float(s[b, w_idx, 0] - s[a, w_idx, 0]) * dx_sign / sw
+    if "Upper" in lab:
+        return rise > 0.20
+    if "Hook" in lab:
+        return across > 0.15 or (rise > -0.25 and reach_b >= reach_a - 0.1)
+    return (reach_b - reach_a > 0.10) or (dz > 0.25) or (abs(s[b, w_idx, 0] - s[a, w_idx, 0]) / sw > 0.35 and rise > -0.35)
 
 
 # ----------------------------------------------------------------------------------------------------------
@@ -128,12 +176,19 @@ def windows_from_segment(seg, label, rng, n_aug, use_mirror):
 
             v_arm = vl if LABEL_ARM[lab] == L_WRI else vr
             peaks = find_peaks(v_arm, PEAK_SPEED_SW, min_distance=8)
-            # positives: windows ending just after each peak of the punching arm
             for p in peaks:
-                for off in END_OFFSETS:
-                    end = p + off
+                if p < 6:
+                    continue
+                if is_outbound_punch(s, p, lab):
+                    for off in END_OFFSETS:
+                        end = p + off
+                        if WINDOW_SIZE <= end <= len(s):
+                            out.append((feats[end - WINDOW_SIZE:end], lab))
+                else:
+                    # Retractions and wind-up dips become hard negatives
+                    end = p + 3
                     if WINDOW_SIZE <= end <= len(s):
-                        out.append((feats[end - WINDOW_SIZE:end], lab))
+                        out.append((feats[end - WINDOW_SIZE:end], IDLE_LABEL))
             # negatives from the same clip: calm stretches (guard between reps)
             for end in range(WINDOW_SIZE, len(s) + 1, 6):
                 if vmax[end - WINDOW_SIZE:end].max() < IDLE_MAX_SPEED_SW:
@@ -190,29 +245,36 @@ def pick_val_videos(tracks, rng, fold=None):
 
 def build_model(num_classes, arch="tcn"):
     import tensorflow as tf
-    from tensorflow.keras import layers
+    from tensorflow.keras import layers, regularizers
 
     inp = layers.Input(shape=(WINDOW_SIZE, FEATURE_DIM), name="pose_sequence_input")
-    x = layers.LayerNormalization()(inp)
     if arch == "lstm":
-        x = layers.LSTM(96, return_sequences=True, unroll=True)(x)
-        x = layers.LSTM(64, unroll=True)(x)
+        x = layers.GaussianNoise(0.03)(inp)
+        x = layers.LSTM(64, return_sequences=True, unroll=True)(x)
+        x = layers.LSTM(48, unroll=True)(x)
     else:
-        x = layers.Conv1D(64, 1, padding="same")(x)
-        for d in (1, 2, 4, 8):  # receptive field covers all 16 frames
-            y = layers.Conv1D(64, 3, padding="causal", dilation_rate=d, activation="relu")(x)
-            y = layers.BatchNormalization()(y)
-            y = layers.Dropout(0.15)(y)
-            y = layers.Conv1D(64, 3, padding="causal", dilation_rate=d, activation="relu")(y)
+        x = layers.GaussianNoise(0.03)(inp)
+        x = layers.Conv1D(48, 3, padding="causal", activation="relu",
+                          kernel_regularizer=regularizers.l2(1e-3))(x)
+        x = layers.SpatialDropout1D(0.2)(x)
+        for d in (2, 4):  # receptive field covers the 16-frame window without BatchNorm overfitting
+            y = layers.Conv1D(48, 3, padding="causal", dilation_rate=d, activation="relu",
+                              kernel_regularizer=regularizers.l2(1e-3))(x)
+            y = layers.SpatialDropout1D(0.2)(y)
             x = layers.Add()([x, y])
-        last = layers.Lambda(lambda t: t[:, -1, :], name="last_step")(x)   # state at the end of the stroke
-        pooled = layers.GlobalMaxPooling1D()(x)                            # strongest moment in the window
-        x = layers.Concatenate()([last, pooled])
-    x = layers.Dense(64, activation="relu")(x)
-    x = layers.Dropout(0.3)(x)
+        last = layers.Lambda(lambda t: t[:, -1, :], name="last_step")(x)
+        avg_p = layers.GlobalAveragePooling1D()(x)
+        max_p = layers.GlobalMaxPooling1D()(x)
+        x = layers.Concatenate()([last, avg_p, max_p])
+    x = layers.Dense(48, activation="relu", kernel_regularizer=regularizers.l2(1e-3))(x)
+    x = layers.Dropout(0.4)(x)
     out = layers.Dense(num_classes, activation="softmax", name="action_probabilities")(x)
     model = tf.keras.Model(inp, out)
-    model.compile(optimizer=tf.keras.optimizers.Adam(1e-3), loss="sparse_categorical_crossentropy", metrics=["accuracy"])
+    model.compile(
+        optimizer=tf.keras.optimizers.Adam(8e-4),
+        loss=tf.keras.losses.CategoricalCrossentropy(label_smoothing=0.05),
+        metrics=["accuracy"],
+    )
     return model
 
 
@@ -220,15 +282,25 @@ def train_once(Xtr, ytr, Xva, yva, arch, epochs, seed):
     import tensorflow as tf
     tf.keras.utils.set_random_seed(seed)
     n = len(BOXING_LABELS)
+    Ytr = tf.keras.utils.to_categorical(ytr, n)
     counts = np.bincount(ytr, minlength=n).astype(np.float32)
     class_weight = {i: float(len(ytr) / (n * c)) if c > 0 else 0.0 for i, c in enumerate(counts)}
     model = build_model(n, arch)
-    cb = [tf.keras.callbacks.EarlyStopping(monitor="val_loss", patience=10, restore_best_weights=True),
-          tf.keras.callbacks.ReduceLROnPlateau(monitor="val_loss", factor=0.5, patience=4, min_lr=1e-5)]
-    val = (Xva, yva) if len(Xva) else None
-    model.fit(Xtr, ytr, validation_data=val, epochs=epochs, batch_size=64, class_weight=class_weight,
-              callbacks=cb if val else [], verbose=2)
-    return model
+    if len(Xva):
+        Yva = tf.keras.utils.to_categorical(yva, n)
+        cb = [tf.keras.callbacks.EarlyStopping(monitor="val_loss", patience=12, restore_best_weights=True),
+              tf.keras.callbacks.ReduceLROnPlateau(monitor="val_loss", factor=0.5, patience=4, min_lr=1e-5)]
+        hist = model.fit(Xtr, Ytr, validation_data=(Xva, Yva), epochs=epochs, batch_size=64,
+                         class_weight=class_weight, callbacks=cb, verbose=2)
+        best_ep = int(np.argmin(hist.history["val_loss"])) + 1
+    else:
+        lr_cb = tf.keras.callbacks.LearningRateScheduler(
+            lambda ep, lr: float(8e-4 * 0.5 * (1.0 + np.cos(np.pi * ep / max(epochs, 1))))
+        )
+        model.fit(Xtr, Ytr, epochs=epochs, batch_size=64, class_weight=class_weight,
+                  callbacks=[lr_cb], verbose=2)
+        best_ep = epochs
+    return model, best_ep
 
 
 def evaluate(model, Xva, yva):
@@ -285,6 +357,7 @@ def main():
     ap.add_argument("--epochs", type=int, default=60)
     ap.add_argument("--seed", type=int, default=42)
     ap.add_argument("--cv", action="store_true", help="leave-one-video-out per class cross-validation report")
+    ap.add_argument("--final-all", action="store_true", help="train final exported model on all visible tracks using CV-calibrated epochs")
     ap.add_argument("--install-to", default=None, help="copy artefacts into this Android assets folder")
     args = ap.parse_args()
 
@@ -294,25 +367,45 @@ def main():
         sys.exit(f"No skeleton files under {args.skeletons}. Run extract_skeletons.py first.")
     print(f"[*] {len(tracks)} videos: " + ", ".join(f"{l}={sum(t['label'] == l for t in tracks)}" for l in BOXING_LABELS))
 
+    cv_accs, cv_epochs = [], []
     if args.cv:
-        max_videos = max(sum(t["label"] == l for t in tracks) for l in BOXING_LABELS)
-        accs = []
-        for fold in range(max_videos):
+        n_folds = max(sum(t["label"] == l for t in tracks) for l in BOXING_LABELS if l != IDLE_LABEL)
+        for fold in range(n_folds):
             val = pick_val_videos(tracks, rng, fold)
             Xtr, ytr, Xva, yva = build_split(tracks, val, rng, args.aug)
             print(f"\n=== fold {fold}: train {len(Xtr)} / val {len(Xva)} windows ===")
-            m = train_once(Xtr, ytr, Xva, yva, args.arch, args.epochs, args.seed + fold)
-            accs.append(evaluate(m, Xva, yva).get("accuracy", float("nan")))
-        print(f"\n[CV] held-out-video accuracy per fold: {np.round(accs, 3).tolist()}  mean={np.nanmean(accs):.3f}")
+            m, best_ep = train_once(Xtr, ytr, Xva, yva, args.arch, args.epochs, args.seed + fold)
+            cv_accs.append(evaluate(m, Xva, yva).get("accuracy", float("nan")))
+            cv_epochs.append(best_ep)
+        print(f"\n[CV] held-out-video accuracy per fold: {np.round(cv_accs, 3).tolist()}  mean={np.nanmean(cv_accs):.3f}  best_epochs={cv_epochs}")
 
-    val = pick_val_videos(tracks, rng)
-    Xtr, ytr, Xva, yva = build_split(tracks, val, rng, args.aug)
-    print(f"[*] Train windows {len(Xtr)}, validation windows {len(Xva)} (held-out videos: {sorted(val)})")
-    print("    train per class: " + ", ".join(f"{l}={int((ytr == i).sum())}" for i, l in enumerate(BOXING_LABELS)))
-    model = train_once(Xtr, ytr, Xva, yva, args.arch, args.epochs, args.seed)
-    metrics = evaluate(model, Xva, yva)
-    files = export(model, args.out, metrics, dict(arch=args.arch, held_out_videos=sorted(val),
-                                                  confusion_matrix=metrics.get("confusion_matrix")))
+    if args.final_all:
+        val = set()
+        final_epochs = int(np.clip(np.median(cv_epochs) if cv_epochs else 16, 8, 22))
+        Xtr, ytr, Xva, yva = build_split(tracks, val, rng, args.aug)
+        print(f"[*] Final full-dataset training on all {len(tracks)} videos ({len(Xtr)} windows, {final_epochs} epochs)")
+        print("    train per class: " + ", ".join(f"{l}={int((ytr == i).sum())}" for i, l in enumerate(BOXING_LABELS)))
+        model, _ = train_once(Xtr, ytr, Xva, yva, args.arch, final_epochs, args.seed)
+        metrics = {"accuracy": float(np.nanmean(cv_accs)) if cv_accs else None}
+        extra = dict(
+            arch=args.arch,
+            feature_space="isotropic_width_normalized",
+            yaw_aug_deg=45,
+            final_train_videos=len(tracks),
+            final_epochs=final_epochs,
+            cv_fold_accuracies=cv_accs,
+            cv_mean_accuracy=float(np.nanmean(cv_accs)) if cv_accs else None,
+        )
+    else:
+        val = pick_val_videos(tracks, rng, fold=0)
+        Xtr, ytr, Xva, yva = build_split(tracks, val, rng, args.aug)
+        print(f"[*] Train windows {len(Xtr)}, validation windows {len(Xva)} (held-out videos: {sorted(val)})")
+        print("    train per class: " + ", ".join(f"{l}={int((ytr == i).sum())}" for i, l in enumerate(BOXING_LABELS)))
+        model, _ = train_once(Xtr, ytr, Xva, yva, args.arch, args.epochs, args.seed)
+        metrics = evaluate(model, Xva, yva)
+        extra = dict(arch=args.arch, held_out_videos=sorted(val), confusion_matrix=metrics.get("confusion_matrix"),
+                     cv_fold_accuracies=cv_accs or None)
+    files = export(model, args.out, metrics, extra)
     if args.install_to:
         os.makedirs(args.install_to, exist_ok=True)
         for f in files:
