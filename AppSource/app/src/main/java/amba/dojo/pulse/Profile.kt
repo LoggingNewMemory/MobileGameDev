@@ -458,27 +458,6 @@ private fun PfIdentityCard(
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis
                     )
-                    Spacer(Modifier.height(6.dp))
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(6.dp)
-                    ) {
-                        Box(
-                            Modifier
-                                .size(6.dp)
-                                .clip(CircleShape)
-                                .background(AccentCoral)
-                        )
-                        Text(
-                            "DOJO MUAY THAI HQ",
-                            color = TextSecondary,
-                            fontSize = 10.sp,
-                            fontWeight = FontWeight.SemiBold,
-                            letterSpacing = 0.4.sp,
-                            maxLines = 1,
-                            softWrap = false
-                        )
-                    }
                 }
             }
 
@@ -567,7 +546,7 @@ private fun PfPointsCard(
     ) {
         Column(Modifier.padding(14.dp)) {
 
-            // Card Top Info: REWARD HUB  |  • TIER: ELITE
+            // Card Top Info: REWARD HUB  |  TIER: ELITE
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
@@ -586,18 +565,11 @@ private fun PfPointsCard(
                 // Single-line capsule pill for TIER: ELITE
                 Row(
                     modifier = Modifier
-                        .background(Color(0xFF241D24), CircleShape)
-                        .border(1.dp, Color(0xFF3E2329), CircleShape)
+                        .background(Color(0xFF0A2A3B), CircleShape)
+                        .border(1.dp, Color(0xFF164E63), CircleShape)
                         .padding(horizontal = 8.dp, vertical = 3.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(4.dp)
+                    verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Box(
-                        Modifier
-                            .size(5.dp)
-                            .clip(CircleShape)
-                            .background(AccentCoral)
-                    )
                     Text(
                         "TIER: ELITE",
                         color = TextPrimary,
