@@ -78,16 +78,16 @@ fun loadAvatarBitmap(context: Context, userId: String): Bitmap? {
 
 // ─── Colour tokens (Matching code_2.html) ────────────────────────────────────
 
-private val BgDark        = Color(0xFF0F0F11)
-private val BgCard        = Color(0xFF141419)
-private val BgCardBorder  = Color(0xFF23232C)
-private val BgDeep        = Color(0xFF0F0F13)
-private val AccentRed     = Color(0xFFE63946)
-private val AccentCoral   = Color(0xFFFF4D4F)
-private val TextPrimary   = Color.White
-private val TextSecondary = Color(0xFFD4D4D8)
-private val TextMuted     = Color(0xFFA1A1AA)
-private val TextDim       = Color(0xFF71717A)
+private val BgDark        = Color(0xFF060A12)
+private val BgCard        = Color(0xFF0D1524)
+private val BgCardBorder  = Color(0xFF1D2D4A)
+private val BgDeep        = Color(0xFF080E1A)
+private val AccentRed     = Color(0xFF00B8D4)
+private val AccentCoral   = Color(0xFF22D3EE)
+private val TextPrimary   = Color(0xFFF1F5F9)
+private val TextSecondary = Color(0xFFCBD5E1)
+private val TextMuted     = Color(0xFF94A3B8)
+private val TextDim       = Color(0xFF64748B)
 private val EmeraldGreen  = Color(0xFF34D399)
 private val AmberYellow   = Color(0xFFFBBF24)
 private val SkyBlue       = Color(0xFF38BDF8)
@@ -823,7 +823,7 @@ private fun PfRedeemSection(
 @Composable
 private fun PfRedeemCard(item: RedeemItem, canAfford: Boolean, onRedeem: () -> Unit) {
     val (iconBg, iconBorder, iconTint) = when (item.iconType) {
-        "voucher"  -> Triple(Color(0xFF1E1720), Color(0xFF3D232C), AccentCoral)
+        "voucher"  -> Triple(Color(0xFF0A2A3B), Color(0xFF164E63), AccentCoral)
         "vr"       -> Triple(Color(0xFF171C26), Color(0xFF23324A), SkyBlue)
         "hardware" -> Triple(Color(0xFF101014), Color(0xFF2C2C36), TextSecondary)
         else       -> Triple(Color(0xFF241D14), Color(0xFF3E2E18), AmberYellow)
@@ -902,7 +902,7 @@ private fun PfRedeemCard(item: RedeemItem, canAfford: Boolean, onRedeem: () -> U
                 modifier = Modifier.height(28.dp),
                 shape = RoundedCornerShape(8.dp),
                 colors = ButtonDefaults.buttonColors(
-                    containerColor = if (canAfford) AccentRed else Color(0xFF2A1A1A),
+                    containerColor = if (canAfford) AccentRed else Color(0xFF131E33),
                     contentColor = TextPrimary
                 )
             ) {
@@ -996,8 +996,8 @@ private fun PfVoucherActive(code: String, title: String, expiry: String, onCopy:
         ) {
             Box(
                 Modifier
-                    .background(Color(0xFF291419), RoundedCornerShape(4.dp))
-                    .border(1.dp, Color(0xFF4B2029), RoundedCornerShape(4.dp))
+                    .background(Color(0xFF0A2A3B), RoundedCornerShape(4.dp))
+                    .border(1.dp, Color(0xFF164E63), RoundedCornerShape(4.dp))
                     .padding(horizontal = 8.dp, vertical = 3.dp)
             ) {
                 Text(
@@ -1325,11 +1325,11 @@ private fun PfEditDialog(
                         Modifier
                             .size(32.dp)
                             .clip(CircleShape)
-                            .background(Color(0xFFfab4b8))
+                            .background(Color(0xFF22D3EE))
                             .clickable { onPickImage() },
                         contentAlignment = Alignment.Center
                     ) {
-                        Icon(Icons.Default.CameraAlt, null, tint = Color(0xFF4A1525), modifier = Modifier.size(18.dp))
+                        Icon(Icons.Default.CameraAlt, null, tint = Color(0xFF060A12), modifier = Modifier.size(18.dp))
                     }
                 }
 
@@ -1351,11 +1351,11 @@ private fun PfEditDialog(
                             modifier = Modifier.fillMaxWidth(),
                             singleLine = true,
                             colors = OutlinedTextFieldDefaults.colors(
-                                focusedBorderColor = Color(0xFFfab4b8),
+                                focusedBorderColor = Color(0xFF22D3EE),
                                 unfocusedBorderColor = Color(0xFF333333),
                                 focusedTextColor = TextPrimary,
                                 unfocusedTextColor = TextPrimary,
-                                cursorColor = Color(0xFFfab4b8)
+                                cursorColor = Color(0xFF22D3EE)
                             )
                         )
                         Spacer(Modifier.height(16.dp))
@@ -1382,13 +1382,13 @@ private fun PfEditDialog(
                         .fillMaxWidth()
                         .height(50.dp),
                     shape = RoundedCornerShape(10.dp),
-                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFfab4b8)),
+                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF22D3EE)),
                     enabled = !isSaving && displayName.isNotBlank()
                 ) {
                     if (isSaving) {
-                        CircularProgressIndicator(Modifier.size(20.dp), color = Color(0xFF4A1525), strokeWidth = 2.dp)
+                        CircularProgressIndicator(Modifier.size(20.dp), color = Color(0xFF060A12), strokeWidth = 2.dp)
                     } else {
-                        Text("SAVE CHANGES", color = Color(0xFF4A1525), fontWeight = FontWeight.Bold, letterSpacing = 1.sp)
+                        Text("SAVE CHANGES", color = Color(0xFF060A12), fontWeight = FontWeight.Bold, letterSpacing = 1.sp)
                     }
                 }
             }
@@ -1420,7 +1420,7 @@ fun CropImageDialog(bitmap: Bitmap, onDismiss: () -> Unit, onCropConfirmed: (Bit
                     TextButton(onClick = onDismiss) { Text("Cancel", color = Color.White, fontSize = 16.sp) }
                     Text("ADJUST (1:1)", color = Color.White, fontWeight = FontWeight.Bold, fontSize = 16.sp)
                     TextButton(onClick = { onCropConfirmed(cropSquareBitmap(bitmap, scale, offsetX, offsetY)) }) {
-                        Text("Choose", color = Color(0xFFfab4b8), fontWeight = FontWeight.Bold, fontSize = 16.sp)
+                        Text("Choose", color = Color(0xFF22D3EE), fontWeight = FontWeight.Bold, fontSize = 16.sp)
                     }
                 }
                 Spacer(Modifier.weight(1f))
@@ -1434,7 +1434,7 @@ fun CropImageDialog(bitmap: Bitmap, onDismiss: () -> Unit, onCropConfirmed: (Bit
                     Modifier
                         .size(280.dp)
                         .clipToBounds()
-                        .border(2.dp, Color(0xFFfab4b8), RoundedCornerShape(8.dp))
+                        .border(2.dp, Color(0xFF22D3EE), RoundedCornerShape(8.dp))
                         .background(Color(0xFF1E1E1E))
                         .pointerInput(Unit) {
                             detectTransformGestures { _, pan, zoom, _ ->

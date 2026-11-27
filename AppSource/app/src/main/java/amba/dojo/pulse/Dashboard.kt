@@ -61,7 +61,7 @@ fun DashboardPage(
                         title = "Muay Thai Sparring",
                         meta = "35 min • High Intensity",
                         tag = "Muay Thai",
-                        colors = listOf(Color(0xFF3A1217), Color(0xFF0B0B0F)),
+                        colors = listOf(Color(0xFF0A2A3B), Color(0xFF060A12)),
                         modifier = Modifier.weight(1f),
                         onClick = { onOpenWorkout("striking") }
                     )
@@ -69,7 +69,7 @@ fun DashboardPage(
                         title = "Shadow Combinations",
                         meta = "20 min • Footwork Focus",
                         tag = "Drills",
-                        colors = listOf(Color(0xFF2A2314), Color(0xFF0B0B0F)),
+                        colors = listOf(Color(0xFF1D132B), Color(0xFF060A12)),
                         modifier = Modifier.weight(1f),
                         onClick = { onOpenWorkout("shadow") }
                     )

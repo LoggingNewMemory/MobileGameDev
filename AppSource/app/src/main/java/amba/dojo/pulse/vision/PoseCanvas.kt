@@ -57,10 +57,10 @@ fun PoseCanvas(
             }
         }
 
-        val boneColor = Color(0xAAFFB3BA)
-        val torsoColor = Color(0x888B4A5B)
-        val accentColor = Color(0xFFFF4081)
-        val jointColor = Color.White
+        val boneColor = Color(0xCC22D3EE)
+        val torsoColor = Color(0x880891B2)
+        val accentColor = Color(0xFF00E5FF)
+        val jointColor = Color(0xFFF1F5F9)
 
         // Shoulders & Torso
         drawBone(PoseLandmark.LEFT_SHOULDER, PoseLandmark.RIGHT_SHOULDER, torsoColor, 8f)

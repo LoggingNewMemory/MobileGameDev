@@ -28,10 +28,10 @@ fun BoxingTutorialScreen(
     onNavigateBack: () -> Unit,
     onStartDrill: () -> Unit
 ) {
-    val backgroundColor = Color(0xFF0B0B0F)
-    val surfaceColor = Color(0xFF141418)
-    val accentRed = Color(0xFFE23A3A)
-    val accentPink = Color(0xFFFFB3BA)
+    val backgroundColor = Color(0xFF060A12)
+    val surfaceColor = Color(0xFF0D1524)
+    val accentRed = Color(0xFF00B8D4)
+    val accentPink = Color(0xFF22D3EE)
     val textPrimary = Color.White
     val textSecondary = Color.LightGray
 
@@ -211,7 +211,7 @@ fun StanceAndGuardSection(
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .background(Color(0xFF25161C), RoundedCornerShape(8.dp))
+                        .background(Color(0xFF0A2A3B), RoundedCornerShape(8.dp))
                         .padding(12.dp)
                 ) {
                     Text(
@@ -395,7 +395,7 @@ fun PunchTutorialCard(
 
                 Box(
                     modifier = Modifier
-                        .background(Color(0xFF25161C), RoundedCornerShape(4.dp))
+                        .background(Color(0xFF0A2A3B), RoundedCornerShape(4.dp))
                         .padding(horizontal = 8.dp, vertical = 4.dp)
                 ) {
                     Text("PUNCH $number", color = accentPink, fontSize = 10.sp, fontWeight = FontWeight.Bold)

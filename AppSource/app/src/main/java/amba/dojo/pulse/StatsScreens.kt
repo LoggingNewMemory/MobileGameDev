@@ -316,15 +316,15 @@ fun ProfilScreen(onNavigate: (String) -> Unit = {}, onLogout: () -> Unit = {}) {
     }
 
     // ── Colour tokens (local) ──
-    val BgDark       = Color(0xFF0F0F11)
-    val BgCard       = Color(0xFF141419)
-    val BgCardBorder = Color(0xFF23232C)
-    val BgDeep       = Color(0xFF0F0F13)
-    val AccentRed    = Color(0xFFE63946)
-    val AccentCoral  = Color(0xFFFF4D4F)
-    val TextPrim     = Color.White
-    val TextSec      = Color(0xFFA0A0B0)
-    val TextMut      = Color(0xFF7E7E8C)
+    val BgDark       = Color(0xFF060A12)
+    val BgCard       = Color(0xFF0D1524)
+    val BgCardBorder = Color(0xFF1D2D4A)
+    val BgDeep       = Color(0xFF080E1A)
+    val AccentRed    = Color(0xFF00B8D4)
+    val AccentCoral  = Color(0xFF22D3EE)
+    val TextPrim     = Color(0xFFF1F5F9)
+    val TextSec      = Color(0xFF94A3B8)
+    val TextMut      = Color(0xFF64748B)
     val Emerald      = Color(0xFF34D399)
     val Amber        = Color(0xFFFBBF24)
     val Sky          = Color(0xFF38BDF8)

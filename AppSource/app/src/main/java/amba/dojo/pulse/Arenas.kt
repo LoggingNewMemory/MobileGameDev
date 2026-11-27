@@ -25,18 +25,18 @@ import androidx.compose.ui.unit.sp
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
-val BgSurface = Color(0xFF0B0B0F)
-val SurfaceLow = Color(0xFF141418)
-val SurfaceContainer = Color(0xFF1A1A20)
-val SurfaceHigh = Color(0xFF26262E)
-val Primary = Color(0xFFFF6B6B)
-val PrimaryContainer = Color(0xFF3A1217)
-val Secondary = Color(0xFFf5b6be)
-val SecondaryContainer = Color(0xFF693c43)
-val OnSurface = Color(0xFFe4e2e2)
-val OnSurfaceVar = Color(0xFFd6c2c2)
-val ErrorColor = Color(0xFFffb4ab)
-val OutlineVar = Color(0xFF524344)
+val BgSurface = Color(0xFF060A12)
+val SurfaceLow = Color(0xFF0D1524)
+val SurfaceContainer = Color(0xFF131E33)
+val SurfaceHigh = Color(0xFF1D2D4A)
+val Primary = Color(0xFF22D3EE)
+val PrimaryContainer = Color(0xFF0A2A3B)
+val Secondary = Color(0xFF67E8F9)
+val SecondaryContainer = Color(0xFF164E63)
+val OnSurface = Color(0xFFF1F5F9)
+val OnSurfaceVar = Color(0xFF94A3B8)
+val ErrorColor = Color(0xFFF43F5E)
+val OutlineVar = Color(0xFF1D2D4A)
 
 @Composable
 fun ArenasScreen(
@@ -79,7 +79,7 @@ fun ARTrainingFlowManager(stage: Int, onNext: () -> Unit, onClose: () -> Unit) {
                         )
                     }
                     Box(modifier = Modifier.size(32.dp).background(Primary, CircleShape), contentAlignment = Alignment.Center) {
-                        Icon(Icons.Default.Person, contentDescription = null, tint = Color(0xFF4f2227), modifier = Modifier.size(18.dp))
+                        Icon(Icons.Default.Person, contentDescription = null, tint = Color(0xFF060A12), modifier = Modifier.size(18.dp))
                     }
                 }
             }

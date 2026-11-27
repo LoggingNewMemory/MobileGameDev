@@ -53,7 +53,7 @@ private val Disciplines = listOf(
     Discipline(
         "boxing", "Boxing", "Boxing",
         "Combat stance, guard and punch trajectories with AI form validation.",
-        listOf(Color(0xFF5A1A1F), Color(0xFF14080A))
+        listOf(Color(0xFF0A2A3B), Color(0xFF060A12))
     ),
     Discipline(
         "swim", "Swim", "Swim",
@@ -273,7 +273,7 @@ fun WorkoutDetailScreen(
                         .fillMaxWidth()
                         .height(150.dp)
                         .clip(shape)
-                        .background(Brush.verticalGradient(listOf(Color(0xFF5A1A1F), Color(0xFF0B0B0F))))
+                        .background(Brush.verticalGradient(listOf(Color(0xFF0A2A3B), Color(0xFF060A12))))
                 ) {
                     Column(modifier = Modifier.align(Alignment.BottomStart).padding(14.dp)) {
                         Row(verticalAlignment = Alignment.CenterVertically) {

@@ -251,7 +251,7 @@ fun TrainingScreen(
                     Icon(
                         Icons.Default.Videocam,
                         contentDescription = null,
-                        tint = Color(0xFFFFB3BA),
+                        tint = Color(0xFF22D3EE),
                         modifier = Modifier.size(64.dp)
                     )
                     Spacer(modifier = Modifier.height(16.dp))
@@ -263,7 +263,7 @@ fun TrainingScreen(
                     Spacer(modifier = Modifier.height(16.dp))
                     Button(
                         onClick = { permissionLauncher.launch(Manifest.permission.CAMERA) },
-                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF4A1525))
+                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF00B8D4))
                     ) {
                         Text("Grant Permission", color = Color.White)
                     }
@@ -319,8 +319,8 @@ fun TrainingHudOverlay(
     onBack: () -> Unit,
     onOpenTutorial: () -> Unit = {}
 ) {
-    val accentRed = Color(0xFF4A1525)
-    val accentPink = Color(0xFFFFB3BA)
+    val accentRed = Color(0xFF0A2A3B)
+    val accentPink = Color(0xFF22D3EE)
     val minutes = timeLeftSeconds / 60
     val seconds = timeLeftSeconds % 60
     val timerString = String.format("%02d:%02d", minutes, seconds)
@@ -453,7 +453,7 @@ fun TrainingHudOverlay(
                     .fillMaxWidth()
                     .padding(top = 10.dp),
                 shape = RoundedCornerShape(10.dp),
-                colors = CardDefaults.cardColors(containerColor = Color(0xDD161622)),
+                colors = CardDefaults.cardColors(containerColor = Color(0xDD0D1524)),
                 border = androidx.compose.foundation.BorderStroke(
                     1.dp,
                     if (isRoutineFinished) Color(0xFF81C784) else accentPink.copy(alpha = 0.6f)
@@ -562,7 +562,7 @@ fun TrainingHudOverlay(
                                 .height(6.dp)
                                 .clip(RoundedCornerShape(3.dp)),
                             color = currentStep.badgeColor,
-                            trackColor = Color(0xFF2A2A38)
+                            trackColor = Color(0xFF1D2D4A)
                         )
 
                         Spacer(modifier = Modifier.height(6.dp))

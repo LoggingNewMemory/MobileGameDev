@@ -33,19 +33,19 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import kotlinx.coroutines.delay
 
-private val QrSurface        = Color(0xFF131314)
-private val QrContainerLow   = Color(0xFF1B1B1C)
-private val QrContainer      = Color(0xFF1F2020)
-private val QrContainerHigh  = Color(0xFF2A2A2A)
-private val QrContainerLowest= Color(0xFF0E0E0F)
-private val QrPrimary        = Color(0xFFFAB4B8)
-private val QrOnPrimary      = Color(0xFF4F2227)
-private val QrPrimaryCont    = Color(0xFF381015)
-private val QrOnPrimaryCont  = Color(0xFFB27579)
-private val QrSecondary      = Color(0xFFF5B6BE)
-private val QrOnSurface      = Color(0xFFE4E2E2)
-private val QrOnSurfaceVar   = Color(0xFFD6C2C2)
-private val QrSegInactive    = Color(0xFF353535)
+private val QrSurface        = Color(0xFF060A12)
+private val QrContainerLow   = Color(0xFF0D1524)
+private val QrContainer      = Color(0xFF131E33)
+private val QrContainerHigh  = Color(0xFF1D2D4A)
+private val QrContainerLowest= Color(0xFF04070D)
+private val QrPrimary        = Color(0xFF22D3EE)
+private val QrOnPrimary      = Color(0xFF041A24)
+private val QrPrimaryCont    = Color(0xFF0A2A3B)
+private val QrOnPrimaryCont  = Color(0xFF67E8F9)
+private val QrSecondary      = Color(0xFF38BDF8)
+private val QrOnSurface      = Color(0xFFF1F5F9)
+private val QrOnSurfaceVar   = Color(0xFF94A3B8)
+private val QrSegInactive    = Color(0xFF1E293B)
 
 @Composable
 fun QrisPaymentScreen(
@@ -618,7 +618,7 @@ fun QrisPaymentScreen(
                         .height(44.dp),
                     shape = RoundedCornerShape(10.dp),
                     colors = ButtonDefaults.buttonColors(
-                        containerColor = Color(0xFFE63946),
+                        containerColor = Color(0xFF00B8D4),
                         contentColor = Color.White
                     )
                 ) {

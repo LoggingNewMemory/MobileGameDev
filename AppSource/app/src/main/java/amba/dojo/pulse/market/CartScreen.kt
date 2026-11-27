@@ -21,13 +21,13 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 
-private val CkBgDark       = Color(0xFF0F0F11)
-private val CkBgCard       = Color(0xFF141419)
-private val CkBorder       = Color(0xFF23232C)
-private val CkRed          = Color(0xFFE63946)
-private val CkTextPrimary  = Color.White
-private val CkTextSec      = Color(0xFFD4D4D8)
-private val CkTextMuted    = Color(0xFFA1A1AA)
+private val CkBgDark       = Color(0xFF060A12)
+private val CkBgCard       = Color(0xFF0D1524)
+private val CkBorder       = Color(0xFF1D2D4A)
+private val CkRed          = Color(0xFF00B8D4)
+private val CkTextPrimary  = Color(0xFFF1F5F9)
+private val CkTextSec      = Color(0xFFCBD5E1)
+private val CkTextMuted    = Color(0xFF94A3B8)
 private val CkAmber        = Color(0xFFFBBF24)
 
 data class CartItem(

@@ -145,7 +145,7 @@ fun PromoBanner() {
         modifier = Modifier
             .fillMaxWidth()
             .clip(shape)
-            .background(Brush.horizontalGradient(listOf(Color(0xFF3A1217), Color(0xFF14080A))))
+            .background(Brush.horizontalGradient(listOf(Color(0xFF0A2A3B), Color(0xFF060A12))))
             .border(1.dp, Dojo.Red.copy(alpha = 0.5f), shape)
             .padding(16.dp)
     ) {

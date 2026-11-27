@@ -33,18 +33,24 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 
-/** DojoPulse "tactical telemetry" design tokens. */
+/** DojoPulse "AR cyber-dojo" design tokens matching the poster palette. */
 object Dojo {
-    val Bg = Color(0xFF0B0B0F)
-    val Surface = Color(0xFF141418)
-    val SurfaceAlt = Color(0xFF1A1A20)
-    val Border = Color(0xFF26262E)
-    val Red = Color(0xFFE23A3A)
-    val RedSoft = Color(0xFFFF6B6B)
-    val RedDeep = Color(0xFF3A1217)
-    val Text = Color(0xFFF2F2F4)
-    val Muted = Color(0xFF8A8A94)
-    val Dim = Color(0xFF5C5C66)
+    val Bg = Color(0xFF060A12)
+    val Surface = Color(0xFF0D1524)
+    val SurfaceAlt = Color(0xFF131E33)
+    val Border = Color(0xFF1D2D4A)
+    val Cyan = Color(0xFF00B8D4)
+    val CyanSoft = Color(0xFF22D3EE)
+    val CyanDeep = Color(0xFF0A2A3B)
+    val Magenta = Color(0xFFE11D48)
+    val MagentaDeep = Color(0xFF2B1222)
+    // Primary accent aliases (kept for compatibility across screens)
+    val Red = Cyan
+    val RedSoft = CyanSoft
+    val RedDeep = CyanDeep
+    val Text = Color(0xFFF1F5F9)
+    val Muted = Color(0xFF94A3B8)
+    val Dim = Color(0xFF64748B)
     val Amber = Color(0xFFFFB74D)
     val Mono = GoogleSans
     val Sans = GoogleSans
@@ -311,9 +317,9 @@ fun DojoBottomBar(
         contentAlignment = Alignment.Center
     ) {
         Surface(
-            color = Color(0xF216161E),
+            color = Color(0xF20D1524),
             shape = RoundedCornerShape(28.dp),
-            border = BorderStroke(1.dp, Color(0xFF2C2C38)),
+            border = BorderStroke(1.dp, Color(0xFF1D2D4A)),
             shadowElevation = 12.dp,
             modifier = Modifier.fillMaxWidth()
         ) {
@@ -326,9 +332,9 @@ fun DojoBottomBar(
             ) {
                 items.forEach { item ->
                     val isSelected = currentRoute == item.route || (item.route == "progres" && currentRoute == "aktivitas")
-                    val activeBg = if (isSelected) Color(0xFF2E151A) else Color.Transparent
-                    val activeBorder = if (isSelected) BorderStroke(1.dp, Dojo.Red.copy(alpha = 0.35f)) else null
-                    val contentColor = if (isSelected) Dojo.RedSoft else Color(0xFF8A8A96)
+                    val activeBg = if (isSelected) Dojo.CyanDeep else Color.Transparent
+                    val activeBorder = if (isSelected) BorderStroke(1.dp, Dojo.CyanSoft.copy(alpha = 0.45f)) else null
+                    val contentColor = if (isSelected) Dojo.CyanSoft else Dojo.Muted
 
                     Box(
                         modifier = Modifier

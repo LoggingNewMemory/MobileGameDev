@@ -8,7 +8,7 @@ data class ExerciseStep(
     val targetCount: Int,
     val targetPunchName: String,
     val instruction: String,
-    val badgeColor: Color = Color(0xFFFFB3BA),
+    val badgeColor: Color = Color(0xFF22D3EE),
     val matches: (PunchType) -> Boolean
 )
 
