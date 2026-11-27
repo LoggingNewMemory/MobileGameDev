@@ -83,27 +83,26 @@ data class StrikeDetectorConfig(
     val filterBeta: Float = 0.5f,
 
     // --- stroke segmentation ---
-    val startSpeed: Float = 1.6f,
+    val startSpeed: Float = 1.9f,
     val endSpeedFraction: Float = 0.50f,        // stroke ends at the apex when speed falls below 50% of its peak ...
     val endSpeedFloor: Float = 0.9f,            // ... or below this absolute speed
     val reversalFraction: Float = 0.97f,        // or as soon as distance from launch peaks (before retraction)
     val maxStrokeMs: Long = 700L,
     val rearmSpeed: Float = 1.2f,
-    val rearmFrames: Int = 1,
-    val minRecoveryMs: Long = 40L,
+    val rearmFrames: Int = 2,
+    val minRecoveryMs: Long = 80L,
     val maxRecoveryMs: Long = 250L,
     val crossArmSuppressMs: Long = 0L,         // independent arms allow rapid 1-2 combos without lockout
 
     // --- punch validation ---
-    val minPeakSpeed: Float = 1.85f,
-    val minNetDisplacement: Float = 0.18f,
-    val minPathEfficiency: Float = 0.58f,
+    val minPeakSpeed: Float = 2.50f,
+    val minNetDisplacement: Float = 0.26f,
+    val minPathEfficiency: Float = 0.62f,
     val zWeight: Float = 0.90f,                  // weight forward depth strongly enough for front-camera jabs
 
     // --- classification ---
-    val minAcceptScore: Float = 0.30f,
-    val aiWeight: Float = 0.45f,
-    val aiFallbackMinProb: Float = 0.55f
+    val minAcceptScore: Float = 0.35f,
+    val aiWeight: Float = 0.30f
 )
 
 /** Diagnostics for one candidate stroke, useful for logging and threshold tuning. */
@@ -508,17 +507,16 @@ class StrikeDetector(private val cfg: StrikeDetectorConfig = StrikeDetectorConfi
         val vertical = m.rise
         val netV = m.netVertical
 
-        // UPPERCUT: upward-dominant punch from guard/chest/ribs toward solar plexus, chin, or head height.
-        // Works both side-on and front-facing (where the fist also travels inward and toward the camera).
+        // UPPERCUT: vertical-dominant punch rising from chest/ribs toward chin/shoulder height with bent elbow.
         val upper = if (
-            vertical >= 0.13f &&
-            netV >= 0.10f &&
-            vertical >= 0.55f * m.lateral &&
-            m.startHeight >= -0.45f &&
-            m.apexHeight <= 0.45f &&
-            (!elbowKnown || m.elbowAngleAtEnd <= 165f)
+            vertical >= 0.22f &&
+            netV >= 0.18f &&
+            vertical >= 0.85f * m.lateral &&
+            m.startHeight >= -0.15f &&
+            m.apexHeight <= 0.15f &&
+            (!elbowKnown || m.elbowAngleAtEnd <= 145f)
         ) {
-            0.52f + 0.48f * ramp(vertical, 0.13f, 0.38f)
+            0.52f + 0.48f * ramp(vertical, 0.22f, 0.45f)
         } else 0f
 
         // HOOK: horizontal arc across the body toward the opposite side at head/shoulder height.
@@ -538,9 +536,10 @@ class StrikeDetector(private val cfg: StrikeDetectorConfig = StrikeDetectorConfi
         // In front-facing camera mode, the elbow is often occluded or foreshortened when punching
         // straight at the lens, and a jab from chin guard aimed at the camera has forwardZ > rise/across.
         val straightBeatsUpper = upper == 0f || (
-                (elbowKnown && m.elbowAngleAtEnd >= 165f && m.reachMax >= 0.90f) ||
-                (m.startHeight <= -0.22f && m.forwardZ >= 0.50f &&
-                        (m.forwardZ >= 1.6f * vertical || m.apexHeight < -0.80f) &&
+                (elbowKnown && m.elbowAngleAtEnd >= 145f && m.reachMax >= 0.85f) ||
+                (m.forwardZ >= 1.25f * vertical && m.forwardZ >= 0.35f && (!elbowKnown || m.elbowAngleAtEnd >= 120f)) ||
+                (m.startHeight <= -0.22f && m.forwardZ >= 0.40f &&
+                        (m.forwardZ >= 1.4f * vertical || m.apexHeight < -0.80f) &&
                         (!elbowKnown || m.elbowAngleAtEnd >= 120f))
             )
         val straightBeatsHook = hook == 0f ||
@@ -576,23 +575,8 @@ class StrikeDetector(private val cfg: StrikeDetectorConfig = StrikeDetectorConfi
             } else g
             if (fused > bestScore) { bestScore = fused; bestKind = kind }
         }
-        if (bestKind != null && bestScore >= cfg.minAcceptScore) {
-            return StrikeEvent(arm, bestKind, bestScore, t, m)
-        }
-        // Fallback: stroke already passed isBallistic(m); if geometric thresholds missed (e.g. front-camera
-        // foreshortening), let a high-confidence AI prediction classify the arm's strike.
-        if (ai != null) {
-            var aiBestKind: StrikeKind? = null
-            var aiBestProb = 0f
-            for (kind in StrikeKind.entries) {
-                val p = ai.probability(arm, kind).coerceIn(0f, 1f)
-                if (p > aiBestProb) { aiBestProb = p; aiBestKind = kind }
-            }
-            if (aiBestKind != null && aiBestProb >= cfg.aiFallbackMinProb) {
-                return StrikeEvent(arm, aiBestKind, aiBestProb, t, m)
-            }
-        }
-        return null
+        if (bestKind == null || bestScore < cfg.minAcceptScore) return null
+        return StrikeEvent(arm, bestKind, bestScore, t, m)
     }
 
     private fun inGuard(p: Vec3, ownShoulder: Vec3): Boolean =

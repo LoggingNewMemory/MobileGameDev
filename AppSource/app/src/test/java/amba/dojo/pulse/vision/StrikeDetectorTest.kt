@@ -34,28 +34,32 @@ class StrikeDetectorTest {
     private fun runLeftStroke(
         detector: StrikeDetector,
         ai: AiStrikeProbabilities?,
+        startX: Float = 250f,
+        startY: Float = 170f,
+        startZ: Float = -20f,
         dxPerStep: Float,
         dyPerStep: Float,
         dzPerStep: Float,
+        steps: Int = 6,
+        dtMs: Long = 33L,
         elbowX: Float = 260f,
         elbowY: Float = 200f,
         elbowZ: Float = -40f
     ): StrikeEvent? {
         var t = 0L
-        // Settle track in guard for 300ms (acquireFrames=3, minTrackAgeMs=150)
+        // Settle track in guard for ~330ms (acquireFrames=3, minTrackAgeMs=150)
         repeat(10) {
-            detector.process(buildFrame(t, 250f, 170f, -20f, elbowX, elbowY, elbowZ), ai)
-            t += 33L
+            detector.process(buildFrame(t, startX, startY, startZ, elbowX, elbowY, elbowZ), ai)
+            t += dtMs
         }
-        // Ballistic extension
         var event: StrikeEvent? = null
-        for (step in 1..6) {
+        for (step in 1..steps) {
             val res = detector.process(
                 buildFrame(
                     t,
-                    250f + dxPerStep * step,
-                    170f + dyPerStep * step,
-                    -20f + dzPerStep * step,
+                    startX + dxPerStep * step,
+                    startY + dyPerStep * step,
+                    startZ + dzPerStep * step,
                     elbowX,
                     elbowY,
                     elbowZ
@@ -63,16 +67,15 @@ class StrikeDetectorTest {
                 ai
             )
             if (res.event != null) event = res.event
-            t += 33L
+            t += dtMs
         }
-        // Decelerate at apex so stroke ends
         repeat(4) {
             val res = detector.process(
                 buildFrame(
                     t,
-                    250f + dxPerStep * 6,
-                    170f + dyPerStep * 6,
-                    -20f + dzPerStep * 6,
+                    startX + dxPerStep * steps,
+                    startY + dyPerStep * steps,
+                    startZ + dzPerStep * steps,
                     elbowX,
                     elbowY,
                     elbowZ
@@ -80,7 +83,7 @@ class StrikeDetectorTest {
                 ai
             )
             if (res.event != null) event = res.event
-            t += 33L
+            t += dtMs
         }
         return event
     }
@@ -104,39 +107,101 @@ class StrikeDetectorTest {
     }
 
     @Test
-    fun `AI re-ranks kinematically plausible kinds`() {
+    fun `detects true uppercut from chest height to chin`() {
         val detector = StrikeDetector()
-        // Diagonal upward + across motion where both HOOK and UPPERCUT can be geometrically plausible
+        // Starts below shoulder (y=210 => startHeight=+0.42 SW), rises steeply to y=135 (apexHeight=-0.21 SW), bent elbow
+        val ev = runLeftStroke(
+            detector,
+            ai = null,
+            startX = 250f,
+            startY = 210f,
+            startZ = -20f,
+            dxPerStep = -2f,
+            dyPerStep = -13f,
+            dzPerStep = -4f,
+            elbowX = 265f,
+            elbowY = 220f,
+            elbowZ = -10f
+        )
+        assertNotNull(ev)
+        assertEquals(StrikeKind.UPPERCUT, ev!!.kind)
+    }
+
+    @Test
+    fun `chin-level jab with slight upward drift is not misclassified as uppercut`() {
+        val detector = StrikeDetector()
+        // Starts at chin guard (y=120 => startHeight=-0.33 SW), drives forward with slight upward drift
+        val ev = runLeftStroke(
+            detector,
+            ai = null,
+            startX = 250f,
+            startY = 120f,
+            startZ = -20f,
+            dxPerStep = 0f,
+            dyPerStep = -4f,
+            dzPerStep = -20f,
+            elbowX = 255f,
+            elbowY = 135f,
+            elbowZ = -80f
+        )
+        assertNotNull(ev)
+        assertEquals(StrikeKind.STRAIGHT, ev!!.kind)
+    }
+
+    @Test
+    fun `rejects slow raise and small twitch false positives`() {
+        val detector = StrikeDetector()
+        // Small twitch (< 0.26 SW net displacement)
+        val twitch = runLeftStroke(
+            detector,
+            ai = null,
+            dxPerStep = 0f,
+            dyPerStep = -3f,
+            dzPerStep = -2f
+        )
+        assertNull(twitch)
+
+        detector.reset()
+        // Slow hand raise (dtMs = 120ms -> speed < minPeakSpeed 2.5 SW/s)
+        val slowRaise = runLeftStroke(
+            detector,
+            ai = null,
+            startY = 210f,
+            dxPerStep = 0f,
+            dyPerStep = -12f,
+            dzPerStep = 0f,
+            dtMs = 120L
+        )
+        assertNull(slowRaise)
+    }
+
+    @Test
+    fun `AI re-ranks plausible kinds but never creates a punch when geometry scores zero`() {
+        val detector = StrikeDetector()
+        // Shovel-hook trajectory: starts below shoulder, moves across AND up -> both HOOK and UPPERCUT plausible
         val aiHook = AiStrikeProbabilities { arm, kind ->
             if (arm == Arm.LEFT && kind == StrikeKind.HOOK) 0.95f else 0.02f
         }
         val ev = runLeftStroke(
             detector,
             ai = aiHook,
-            dxPerStep = -14f,
+            startY = 200f,
+            dxPerStep = -11f,
             dyPerStep = -10f,
-            dzPerStep = -6f,
+            dzPerStep = -4f,
             elbowX = 270f,
-            elbowY = 170f,
+            elbowY = 190f,
             elbowZ = -10f
         )
         assertNotNull(ev)
         assertEquals(StrikeKind.HOOK, ev!!.kind)
-    }
 
-    @Test
-    fun `AI fallback rescues ballistic stroke when geometric rules score zero`() {
-        val detector = StrikeDetector()
-        // Downward-diagonal ballistic motion (netV < -0.30 so geo scores 0 for straight/hook/uppercut)
-        val noEvent = runLeftStroke(detector, ai = null, dxPerStep = -6f, dyPerStep = 14f, dzPerStep = -8f)
-        assertNull(noEvent)
-
+        // Downward drop (not a punch): even with high AI uppercut probability, AI cannot create a punch
         detector.reset()
-        val highAi = AiStrikeProbabilities { arm, kind ->
-            if (arm == Arm.LEFT && kind == StrikeKind.UPPERCUT) 0.85f else 0.05f
+        val aiUpper = AiStrikeProbabilities { arm, kind ->
+            if (arm == Arm.LEFT && kind == StrikeKind.UPPERCUT) 0.99f else 0.0f
         }
-        val rescued = runLeftStroke(detector, ai = highAi, dxPerStep = -6f, dyPerStep = 14f, dzPerStep = -8f)
-        assertNotNull(rescued)
-        assertEquals(StrikeKind.UPPERCUT, rescued!!.kind)
+        val drop = runLeftStroke(detector, ai = aiUpper, dxPerStep = -4f, dyPerStep = 14f, dzPerStep = -4f)
+        assertNull(drop)
     }
 }
