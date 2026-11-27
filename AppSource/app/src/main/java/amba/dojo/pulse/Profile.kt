@@ -340,9 +340,6 @@ private fun PfTopBar() {
             maxLines = 1,
             softWrap = false
         )
-        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            PfNavIcon(Icons.Default.Settings, "Settings")
-        }
     }
 }
 

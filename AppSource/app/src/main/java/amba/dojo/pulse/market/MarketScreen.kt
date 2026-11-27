@@ -1,5 +1,6 @@
 package amba.dojo.pulse.market
 
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -9,8 +10,10 @@ import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AddShoppingCart
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.LocalShipping
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Shield
@@ -22,9 +25,12 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
@@ -41,10 +47,20 @@ fun MarketScreen(
 ) {
     val products by viewModel.products.collectAsState()
     var selectedCategory by remember { mutableStateOf("All") }
+    var isSearchVisible by remember { mutableStateOf(false) }
+    var searchQuery by remember { mutableStateOf("") }
 
-    val filteredProducts = remember(products, selectedCategory) {
-        if (selectedCategory == "All") products
-        else products.filter { it.category.equals(selectedCategory, ignoreCase = true) }
+    val filteredProducts = remember(products, selectedCategory, searchQuery) {
+        val q = searchQuery.trim()
+        products.filter { product ->
+            val matchesCategory = selectedCategory == "All" ||
+                product.category.equals(selectedCategory, ignoreCase = true)
+            val matchesQuery = q.isEmpty() ||
+                product.name.contains(q, ignoreCase = true) ||
+                product.category.contains(q, ignoreCase = true) ||
+                product.badge?.contains(q, ignoreCase = true) == true
+            matchesCategory && matchesQuery
+        }
     }
 
     Scaffold(
@@ -61,7 +77,31 @@ fun MarketScreen(
                 contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 12.dp, bottom = 80.dp),
                 verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
-                item { TopSection() }
+                item {
+                    TopSection(
+                        isSearchActive = isSearchVisible,
+                        onToggleSearch = {
+                            isSearchVisible = !isSearchVisible
+                            if (!isSearchVisible) searchQuery = ""
+                        }
+                    )
+                }
+
+                item {
+                    AnimatedVisibility(visible = isSearchVisible) {
+                        MarketSearchBar(
+                            query = searchQuery,
+                            onQueryChange = { searchQuery = it },
+                            onClear = {
+                                if (searchQuery.isNotEmpty()) {
+                                    searchQuery = ""
+                                } else {
+                                    isSearchVisible = false
+                                }
+                            }
+                        )
+                    }
+                }
 
                 item {
                     CategoryPills(
@@ -84,8 +124,47 @@ fun MarketScreen(
                     )
                 }
 
-                items(filteredProducts) { product ->
-                    ProductCard(product = product)
+                if (filteredProducts.isEmpty()) {
+                    item {
+                        DojoCard(padding = 20.dp) {
+                            Column(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalAlignment = Alignment.CenterHorizontally,
+                                verticalArrangement = Arrangement.spacedBy(8.dp)
+                            ) {
+                                Text(
+                                    text = "No matching gear found",
+                                    color = Dojo.Text,
+                                    fontSize = 14.sp,
+                                    fontWeight = FontWeight.Bold
+                                )
+                                MonoLabel(
+                                    text = if (searchQuery.isNotBlank()) "No results for \"${searchQuery.trim()}\"" else "Try another category",
+                                    size = 10,
+                                    color = Dojo.Muted
+                                )
+                                if (searchQuery.isNotBlank() || selectedCategory != "All") {
+                                    Text(
+                                        text = "CLEAR FILTERS",
+                                        color = Dojo.CyanSoft,
+                                        fontFamily = Dojo.Mono,
+                                        fontSize = 11.sp,
+                                        fontWeight = FontWeight.Bold,
+                                        modifier = Modifier
+                                            .clickable {
+                                                searchQuery = ""
+                                                selectedCategory = "All"
+                                            }
+                                            .padding(top = 4.dp)
+                                    )
+                                }
+                            }
+                        }
+                    }
+                } else {
+                    items(filteredProducts) { product ->
+                        ProductCard(product = product)
+                    }
                 }
 
                 item { MemberBenefits() }
@@ -102,7 +181,10 @@ fun MarketScreen(
 }
 
 @Composable
-fun TopSection() {
+fun TopSection(
+    isSearchActive: Boolean = false,
+    onToggleSearch: () -> Unit = {}
+) {
     Row(
         modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.SpaceBetween,
@@ -114,7 +196,69 @@ fun TopSection() {
             MonoLabel("Official Equipment & Telemetry Gear", size = 10)
         }
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            IconBadge(Icons.Default.Search, size = 36.dp)
+            IconBadge(
+                icon = if (isSearchActive) Icons.Default.Close else Icons.Default.Search,
+                size = 36.dp,
+                onClick = onToggleSearch
+            )
+        }
+    }
+}
+
+@Composable
+fun MarketSearchBar(
+    query: String,
+    onQueryChange: (String) -> Unit,
+    onClear: () -> Unit
+) {
+    var isFocused by remember { mutableStateOf(false) }
+    val searchShape = RoundedCornerShape(10.dp)
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(searchShape)
+            .background(Dojo.Surface)
+            .border(1.dp, if (isFocused) Dojo.CyanSoft else Dojo.Border, searchShape)
+            .padding(horizontal = 12.dp, vertical = 11.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Icon(
+            Icons.Default.Search,
+            contentDescription = null,
+            tint = if (isFocused) Dojo.CyanSoft else Dojo.Muted,
+            modifier = Modifier.size(16.dp)
+        )
+        Spacer(Modifier.width(8.dp))
+        BasicTextField(
+            value = query,
+            onValueChange = onQueryChange,
+            singleLine = true,
+            textStyle = TextStyle(color = Dojo.Text, fontSize = 12.sp, fontFamily = Dojo.Mono),
+            cursorBrush = SolidColor(Dojo.CyanSoft),
+            modifier = Modifier
+                .weight(1f)
+                .onFocusChanged { isFocused = it.isFocused },
+            decorationBox = { innerTextField ->
+                Box(
+                    modifier = Modifier.fillMaxWidth(),
+                    contentAlignment = Alignment.CenterStart
+                ) {
+                    if (query.isEmpty() && !isFocused) {
+                        MonoLabel("Search gear, wraps, gloves...", size = 12)
+                    }
+                    innerTextField()
+                }
+            }
+        )
+        if (query.isNotEmpty()) {
+            Icon(
+                Icons.Default.Close,
+                contentDescription = "Clear search",
+                tint = Dojo.Muted,
+                modifier = Modifier
+                    .size(16.dp)
+                    .clickable { onClear() }
+            )
         }
     }
 }
