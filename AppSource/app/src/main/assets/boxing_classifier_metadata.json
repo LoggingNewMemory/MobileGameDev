@@ -26,6 +26,83 @@
     "Strike",
     "Guard / Idle"
   ],
-  "validation_accuracy": 0.9863724708557129,
-  "validation_loss": 0.06954644620418549
+  "feature_version": 2,
+  "velocity_reference_fps": 30.0,
+  "validation_accuracy": 0.32525951557093424,
+  "validation_split": "held-out videos (one per class)",
+  "arch": "tcn",
+  "held_out_videos": [
+    "Idle/20261021_083155.mp4",
+    "Left Hook/IMG_3672.MOV",
+    "Left Jab/IMG_3669.MOV",
+    "Left Uppercut/IMG_3677.MOV",
+    "Right Hook/IMG_3682.MOV",
+    "Right UpperCut/IMG_3687.MOV",
+    "Strike/20261021_083050.mp4"
+  ],
+  "confusion_matrix": [
+    [
+      0,
+      31,
+      7,
+      4,
+      0,
+      3,
+      0
+    ],
+    [
+      53,
+      0,
+      2,
+      1,
+      0,
+      0,
+      0
+    ],
+    [
+      0,
+      0,
+      15,
+      0,
+      0,
+      5,
+      0
+    ],
+    [
+      0,
+      2,
+      0,
+      16,
+      4,
+      3,
+      0
+    ],
+    [
+      0,
+      0,
+      2,
+      48,
+      0,
+      0,
+      0
+    ],
+    [
+      3,
+      0,
+      13,
+      0,
+      0,
+      9,
+      0
+    ],
+    [
+      0,
+      0,
+      8,
+      0,
+      0,
+      6,
+      54
+    ]
+  ]
 }

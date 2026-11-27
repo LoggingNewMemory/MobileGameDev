@@ -54,6 +54,9 @@ class AIPoseMovementClassifier(
     private var interpreter: Interpreter? = null
     private val labels = mutableListOf<String>()
     private val sequenceBuffer = ArrayDeque<FloatArray>(WINDOW_SIZE)
+    private val inputBuffer: ByteBuffer =
+        ByteBuffer.allocateDirect(1 * WINDOW_SIZE * FEATURE_DIM * 4).order(ByteOrder.nativeOrder())
+    private var outputArray: Array<FloatArray> = emptyArray()
     private var hasPrevLandmarks = false
     private val prevWristL = FloatArray(3)
     private val prevWristR = FloatArray(3)
@@ -78,6 +81,7 @@ class AIPoseMovementClassifier(
                 }
             }
         }
+        outputArray = Array(1) { FloatArray(labels.size) }
     }
 
     private fun loadModel() {
@@ -164,10 +168,7 @@ class AIPoseMovementClassifier(
             return null
         }
 
-        val inputBuffer = ByteBuffer.allocateDirect(1 * WINDOW_SIZE * FEATURE_DIM * 4).apply {
-            order(ByteOrder.nativeOrder())
-            rewind()
-        }
+        inputBuffer.rewind()
 
         for (frameFeatures in sequenceBuffer) {
             for (value in frameFeatures) {
@@ -175,7 +176,6 @@ class AIPoseMovementClassifier(
             }
         }
 
-        val outputArray = Array(1) { FloatArray(labels.size) }
         interpreter?.run(inputBuffer, outputArray)
 
         val probabilities = outputArray[0]

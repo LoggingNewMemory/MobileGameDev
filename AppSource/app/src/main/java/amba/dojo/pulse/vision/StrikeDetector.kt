@@ -102,7 +102,8 @@ data class StrikeDetectorConfig(
 
     // --- classification ---
     val minAcceptScore: Float = 0.30f,
-    val aiWeight: Float = 0.25f
+    val aiWeight: Float = 0.45f,
+    val aiFallbackMinProb: Float = 0.55f
 )
 
 /** Diagnostics for one candidate stroke, useful for logging and threshold tuning. */
@@ -575,8 +576,23 @@ class StrikeDetector(private val cfg: StrikeDetectorConfig = StrikeDetectorConfi
             } else g
             if (fused > bestScore) { bestScore = fused; bestKind = kind }
         }
-        if (bestKind == null || bestScore < cfg.minAcceptScore) return null
-        return StrikeEvent(arm, bestKind, bestScore, t, m)
+        if (bestKind != null && bestScore >= cfg.minAcceptScore) {
+            return StrikeEvent(arm, bestKind, bestScore, t, m)
+        }
+        // Fallback: stroke already passed isBallistic(m); if geometric thresholds missed (e.g. front-camera
+        // foreshortening), let a high-confidence AI prediction classify the arm's strike.
+        if (ai != null) {
+            var aiBestKind: StrikeKind? = null
+            var aiBestProb = 0f
+            for (kind in StrikeKind.entries) {
+                val p = ai.probability(arm, kind).coerceIn(0f, 1f)
+                if (p > aiBestProb) { aiBestProb = p; aiBestKind = kind }
+            }
+            if (aiBestKind != null && aiBestProb >= cfg.aiFallbackMinProb) {
+                return StrikeEvent(arm, aiBestKind, aiBestProb, t, m)
+            }
+        }
+        return null
     }
 
     private fun inGuard(p: Vec3, ownShoulder: Vec3): Boolean =
